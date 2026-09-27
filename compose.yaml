@@ -1,0 +1,72 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    # This box is shared with other services and has under 1 GB of RAM.
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    shm_size: 128mb
+    environment:
+      POSTGRES_USER: yapped
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-yapped}
+      POSTGRES_DB: yapped
+    volumes:
+      - yapped-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yapped -d yapped"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: applies migrations (and optionally the demo archive) before the
+  # app starts. Built from the `builder` stage so the Prisma CLI has every
+  # dependency it needs, rather than a hand-picked subset.
+  migrate:
+    build:
+      context: .
+      target: builder
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://yapped:${POSTGRES_PASSWORD:-yapped}@db:5432/yapped?schema=public
+      STORAGE_LOCAL_DIR: /app/var/uploads
+      SEED_MODE: ${SEED_MODE:-base}
+    volumes:
+      - yapped-uploads:/app/var/uploads
+    command: >-
+      sh -c "npx prisma migrate deploy &&
+             if [ \"$$SEED_MODE\" = demo ]; then npx prisma db seed; fi"
+
+  app:
+    build: .
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://yapped:${POSTGRES_PASSWORD:-yapped}@db:5432/yapped?schema=public
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_DIR: /app/var/uploads
+      # Empty by default — a real instance starts with no records at all.
+      # Set SEED_MODE=demo to boot with the fictional demo archive instead.
+      SEED_MODE: ${SEED_MODE:-base}
+    ports:
+      # Bound to loopback: the reverse proxy is the only way in.
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    volumes:
+      - yapped-uploads:/app/var/uploads
+
+volumes:
+  yapped-db:
+  yapped-uploads:

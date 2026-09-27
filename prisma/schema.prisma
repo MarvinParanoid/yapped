@@ -1,0 +1,348 @@
+// yapped. — enterprise-grade yapping infrastructure
+// Everything said in this office is now a row.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// A team owns an archive. Everything quotable belongs to exactly one, and
+/// membership is the only way in — see Invite.
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  memberships Membership[]
+  invites     Invite[]
+  yaps        Yap[]
+  cases       Case[]
+  tags        Tag[]
+  battles     Battle[]
+}
+
+model Membership {
+  id       String   @id @default(cuid())
+  teamId   String
+  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     TeamRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+/// An invite link. The token is the secret; everything else is bookkeeping so
+/// a link can be revoked, limited or left open.
+model Invite {
+  token       String    @id
+  teamId      String
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdById String?
+  createdBy   User?     @relation("InviteAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  note        String?
+  /// null means unlimited.
+  maxUses     Int?
+  uses        Int       @default(0)
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([teamId])
+}
+
+/// A person. May or may not have login credentials: a yapper can exist in the
+/// archive long before they ever claim an account.
+model User {
+  id           String   @id @default(cuid())
+  username     String?  @unique
+  passwordHash String?
+  displayName  String
+  handle       String?  @unique
+  avatarUrl    String?
+  title        String? /// "professional yapper"
+  bio          String?
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+
+  memberships  Membership[]
+  invitesMade  Invite[]          @relation("InviteAuthor")
+  yaps         Yap[]             @relation("SaidBy")
+  submissions  Yap[]             @relation("SubmittedBy")
+  reactions    Reaction[]
+  witnessed    Witness[]
+  sessions     Session[]
+  achievements UserAchievement[]
+  battleVotes  Battle[]          @relation("BattleVoter")
+  openedCases  Case[]
+
+  @@index([displayName])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+/// A quote. Integer id so it can be printed as #00420 and routed as /yap/420.
+model Yap {
+  id             Int            @id @default(autoincrement())
+  teamId         String
+  team           Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  text           String
+  lore           String?
+  saidAt         DateTime /// approximately when the words were uttered
+  createdAt      DateTime       @default(now()) /// archived at
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+  status         YapStatus      @default(ARCHIVED)
+  classification Classification @default(QUESTIONABLE)
+
+  /// Verification is a separate axis from aura: aura is how hard the office
+  /// reacted, verification is whether anyone will admit it was said.
+  verification Verification @default(UNVERIFIED)
+  witnessCount Int          @default(0)
+  denialCount  Int          @default(0)
+
+  /// The author's own position on the record. Acknowledgement is NOT a
+  /// witness statement: a witness is independent corroboration, and the person
+  /// who said it cannot corroborate themselves. The two are mutually exclusive.
+  acknowledgedAt   DateTime?
+  disputedAt       DateTime?
+  disputeStatement String?
+
+  /// Denormalized caches, recomputed by the ranking module on every reaction.
+  aura          Int @default(0)
+  reactionCount Int @default(0)
+  viewCount     Int @default(0)
+
+  /// Battle ratings live beside the yap but are owned by lib/ranking/elo.ts
+  eloRating    Int @default(1500)
+  battleWins   Int @default(0)
+  battleLosses Int @default(0)
+
+  authorId      String
+  author        User    @relation("SaidBy", fields: [authorId], references: [id], onDelete: Cascade)
+  submittedById String?
+  submittedBy   User?   @relation("SubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
+
+  reactions    Reaction[]
+  witnesses    Witness[]
+  tags         YapTag[]
+  evidence     Evidence[]
+  cases        CaseYap[]
+  battlesWon   Battle[]   @relation("BattleWinner")
+  battlesLost  Battle[]   @relation("BattleLoser")
+
+  @@index([teamId, deletedAt, createdAt])
+  @@index([deletedAt, createdAt])
+  @@index([deletedAt, aura])
+  @@index([deletedAt, saidAt])
+  @@index([authorId])
+  @@index([eloRating])
+  @@index([deletedAt, verification])
+}
+
+/// Lifecycle of the record itself. Verification lives on its own enum.
+enum YapStatus {
+  ARCHIVED
+  REDACTED
+}
+
+/// UNVERIFIED → WITNESSED → CONFIRMED → CERTIFIED, earned by people putting
+/// their own name behind "I was there". Thresholds live in lib/verification.ts.
+enum Verification {
+  UNVERIFIED
+  WITNESSED
+  CONFIRMED
+  CERTIFIED
+}
+
+enum Classification {
+  ROUTINE
+  QUESTIONABLE
+  UNHINGED
+  CLASSIFIED
+}
+
+/// One row per (yap, user, reaction type): a user may give each reaction once.
+/// Clicking again deletes the row.
+model Reaction {
+  id        String       @id @default(cuid())
+  type      ReactionType
+  yapId     Int
+  yap       Yap          @relation(fields: [yapId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+
+  @@unique([yapId, userId, type])
+  @@index([yapId])
+  @@index([userId])
+}
+
+enum ReactionType {
+  BASED /// 🔥
+  DEAD /// 💀
+  REAL /// 😭
+  CRINGE /// 🤡
+  STONE /// 🗿
+}
+
+/// Several records that belong to one incident. Lore stops being a paragraph
+/// attached to a single quote and becomes a documented episode.
+model Case {
+  id          Int        @id @default(autoincrement())
+  teamId      String
+  team        Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  title       String
+  summary     String?
+  status      CaseStatus @default(OPEN)
+  openedAt    DateTime   @default(now())
+  closedAt    DateTime?
+  createdById String?
+  createdBy   User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  records CaseYap[]
+
+  @@index([teamId, status, openedAt])
+}
+
+enum CaseStatus {
+  OPEN /// still unfolding
+  CLOSED /// the episode has an ending
+  COLD /// nobody ever found out what happened
+}
+
+model CaseYap {
+  caseId   Int
+  case     Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  yapId    Int
+  yap      Yap  @relation(fields: [yapId], references: [id], onDelete: Cascade)
+  position Int  @default(1)
+
+  @@id([caseId, yapId])
+  @@index([yapId])
+}
+
+/// One colleague going on the record about whether a statement happened.
+/// A person holds exactly one position per yap, and may change it.
+model Witness {
+  id        String        @id @default(cuid())
+  stance    WitnessStance @default(PRESENT)
+  yapId     Int
+  yap       Yap           @relation(fields: [yapId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+
+  @@unique([yapId, userId])
+  @@index([yapId])
+  @@index([userId])
+}
+
+enum WitnessStance {
+  PRESENT /// I was there
+  DENIED /// cap
+}
+
+/// Tags are per team: one office's #прод is not another's.
+model Tag {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  slug      String
+  label     String
+  createdAt DateTime @default(now())
+
+  yaps YapTag[]
+
+  @@unique([teamId, slug])
+  @@index([teamId])
+}
+
+model YapTag {
+  yapId Int
+  yap   Yap    @relation(fields: [yapId], references: [id], onDelete: Cascade)
+  tagId String
+  tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([yapId, tagId])
+  @@index([tagId])
+}
+
+/// EVIDENCE #01. The file itself lives behind the storage driver; the database
+/// only ever holds the key.
+model Evidence {
+  id         String   @id @default(cuid())
+  yapId      Int
+  yap        Yap      @relation(fields: [yapId], references: [id], onDelete: Cascade)
+  storageKey String
+  mimeType   String
+  width      Int?
+  height     Int?
+  caption    String?
+  position   Int      @default(1)
+  createdAt  DateTime @default(now())
+
+  @@index([yapId])
+}
+
+/// Journal of one head-to-head vote. Ratings can be recomputed by replaying it.
+model Battle {
+  id                 String   @id @default(cuid())
+  teamId             String
+  team               Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  winnerId           Int
+  winner             Yap      @relation("BattleWinner", fields: [winnerId], references: [id], onDelete: Cascade)
+  loserId            Int
+  loser              Yap      @relation("BattleLoser", fields: [loserId], references: [id], onDelete: Cascade)
+  voterId            String?
+  voter              User?    @relation("BattleVoter", fields: [voterId], references: [id], onDelete: SetNull)
+  winnerRatingBefore Int
+  loserRatingBefore  Int
+  ratingDelta        Int
+  createdAt          DateTime @default(now())
+
+  @@index([teamId, createdAt])
+  @@index([winnerId])
+  @@index([loserId])
+}
+
+/// The badge catalog lives in code (lib/achievements.ts); this table only
+/// records who has been awarded what, and when.
+model UserAchievement {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key       String
+  awardedAt DateTime @default(now())
+
+  @@unique([userId, key])
+  @@index([userId])
+}
+
+/// Opaque session token in an httpOnly cookie. Magic links can later create a
+/// row here with no client changes.
+model Session {
+  token     String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}

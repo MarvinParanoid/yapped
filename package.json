@@ -1,0 +1,54 @@
+{
+  "name": "yapped",
+  "version": "0.1.0",
+  "private": true,
+  "description": "yapped. \u2014 things that should've stayed in the meeting",
+  "scripts": {
+    "predev": "prisma generate",
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test:unit && npm run test:db",
+    "test:unit": "node --import tsx --test \"tests/unit/*.test.ts\"",
+    "test:db": "DATABASE_URL=\"$TEST_DATABASE_URL\" node --import tsx --test-concurrency=1 --test \"tests/db/*.test.ts\"",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "predb:seed": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset",
+    "db:studio": "prisma studio",
+    "db:seed:demo": "SEED_MODE=demo tsx prisma/seed.ts",
+    "grant:admin": "tsx scripts/grant-admin.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "7.10.0",
+    "@radix-ui/react-dialog": "1.1.23",
+    "dotenv": "^18.0.4",
+    "next": "16.3.6",
+    "pg": "^8.23.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "sharp": "0.35.4",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "26.6.3",
+    "@types/pg": "^8.23.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "prisma": "7.10.0",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.10.0": true,
+    "esbuild@0.28.2": true,
+    "prisma@7.10.0": true
+  }
+}

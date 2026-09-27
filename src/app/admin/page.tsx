@@ -1,0 +1,108 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ContentTable, RedactedTable } from "@/components/admin/content-table";
+import { InviteManager } from "@/components/admin/invite-manager";
+import { MemberTable } from "@/components/admin/member-table";
+import { RenameTeam } from "@/components/admin/team-settings";
+import { Panel } from "@/components/ui/panel";
+import { requireTeamAdmin } from "@/lib/auth/team";
+import { formatCount, formatDate } from "@/lib/format";
+import { listInvites } from "@/lib/services/invites";
+import { getTeamOverview, listMembers } from "@/lib/services/teams";
+import { listRedacted, listYaps } from "@/lib/services/yaps";
+
+export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = { title: "Administration" };
+
+export default async function AdminPage() {
+  const viewer = await requireTeamAdmin("/admin");
+  const teamId = viewer.team.id;
+  // Ownership is the line for changing who else is in the room; the instance
+  // operator crosses it too, because someone has to be able to fix a team that
+  // locked itself out.
+  const canManage = viewer.team.role === "OWNER" || viewer.user.isAdmin;
+
+  const [overview, members, invites, recent, redacted] = await Promise.all([
+    getTeamOverview(teamId),
+    listMembers(teamId),
+    listInvites(teamId),
+    listYaps({ teamId, sort: "fresh", take: 30 }),
+    listRedacted(teamId, 25),
+  ]);
+  if (!overview) notFound();
+
+  const live = invites.filter((invite) => invite.deadReason === null).length;
+  const figures = [
+    { value: formatCount(overview.memberCount), label: "Members" },
+    { value: formatCount(overview.accountCount), label: "With accounts" },
+    { value: formatCount(overview.yapCount), label: "Records" },
+    { value: formatCount(live), label: "Live invites" },
+  ];
+
+  return (
+    <div>
+      <div className="on-ink grid-ghost border-b border-ink">
+        <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+          <span className="label">
+            Administration · {viewer.team.role.toLowerCase()}
+            {viewer.user.isAdmin ? (
+              <>
+                {" · "}
+                <Link href="/admin/instance" className="hover:text-acid">
+                  every archive →
+                </Link>
+              </>
+            ) : null}
+          </span>
+          <h1 className="quote mt-3 text-[clamp(2rem,6vw,3.6rem)] text-paper">{overview.name}</h1>
+          <p className="label mt-3">
+            opened {formatDate(overview.createdAt)} · /{overview.slug}
+          </p>
+
+          <dl className="mt-8 grid grid-cols-2 border-l border-t border-paper/20 sm:grid-cols-4">
+            {figures.map((cell) => (
+              <div key={cell.label} className="border-b border-r border-paper/20 px-4 py-4">
+                <dd className="mono tabnums text-[24px] font-bold leading-none text-acid sm:text-[28px]">
+                  {cell.value}
+                </dd>
+                <dt className="label mt-2">{cell.label}</dt>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-[1200px] space-y-6 px-4 py-8 pb-20 sm:px-6 lg:px-8">
+        <Panel label="Invite links" bodyClassName="p-0">
+          <InviteManager invites={invites} showAuthor />
+        </Panel>
+
+        <Panel label={`Members — ${formatCount(members.length)}`} bodyClassName="p-0">
+          <MemberTable members={members} canManage={canManage} viewerId={viewer.user.id} />
+        </Panel>
+
+        <Panel label="Recent records" bodyClassName="p-0">
+          <ContentTable
+            rows={recent.map((yap) => ({
+              id: yap.id,
+              code: yap.code,
+              text: yap.text,
+              author: yap.author.displayName,
+              saidAt: yap.saidAt,
+            }))}
+          />
+        </Panel>
+
+        <Panel label="Redacted" bodyClassName="p-0">
+          <RedactedTable rows={redacted} />
+        </Panel>
+
+        <Panel label="This team">
+          <RenameTeam name={overview.name} />
+        </Panel>
+      </div>
+    </div>
+  );
+}
