@@ -1,0 +1,52 @@
+# Mirrors .github/workflows/ci.yml — same checks, same order, so whichever
+# forge a push lands on gives the same answer.
+#
+# Postgres runs as a service container. The service tests truncate every table,
+# which is why they refuse to run unless DATABASE_URL equals TEST_DATABASE_URL
+# (see tests/db/setup.ts); both point at a throwaway database here.
+
+default:
+  image: node:24-alpine
+  interruptible: true
+
+variables:
+  POSTGRES_DB: yapped_test
+  POSTGRES_USER: yapped
+  POSTGRES_PASSWORD: yapped
+  # `postgres` is the service's hostname on the job network.
+  DATABASE_URL: "postgresql://yapped:yapped@postgres:5432/yapped_test?schema=public"
+  TEST_DATABASE_URL: "postgresql://yapped:yapped@postgres:5432/yapped_test?schema=public"
+  # Prisma downloads its engines at install time; keep them out of the cache key.
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+
+stages:
+  - check
+
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - .npm/
+  policy: pull-push
+
+check:
+  stage: check
+  services:
+    - name: postgres:17-alpine
+      alias: postgres
+  before_script:
+    - npm ci --cache .npm --prefer-offline
+    - npx prisma generate
+    # The service container is up before the job starts, but not necessarily
+    # accepting connections; migrate deploy is the first thing that needs it.
+    - until nc -z postgres 5432; do sleep 1; done
+    - npx prisma migrate deploy
+  script:
+    - npm run typecheck
+    - npm run test:unit
+    - npm run test:db
+    - npx next build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

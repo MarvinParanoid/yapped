@@ -6,16 +6,66 @@
 
 *enterprise-grade yapping infrastructure*
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-0C0C0C.svg)](LICENSE)
+[![CI](https://github.com/MarvinParanoid/yapped/actions/workflows/ci.yml/badge.svg)](https://github.com/MarvinParanoid/yapped/actions/workflows/ci.yml)
+![Next.js 16](https://img.shields.io/badge/Next.js-16-0C0C0C)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-0C0C0C)
+![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-0C0C0C)
+
 </div>
+
+![The feed](docs/screenshots/feed.png)
 
 ---
 
-Yapped is a social quote archive. Someone says something unhinged in a meeting; you file it;
-it is permanently on record, reacted to, scored, ranked and occasionally put in a head-to-head
-battle with another statement. The joke is that completely unserious statements are treated
-with the seriousness of a records-management system.
+Yapped is a social quote archive for a small team. Someone says something unhinged in a
+meeting; you file it; it is permanently on record, reacted to, scored, ranked and occasionally
+put in a head-to-head battle with another statement. The joke is that completely unserious
+statements are treated with the seriousness of a records-management system.
+
+It is built for **5–15 people and a few quotes a week**, not for scale. That constraint shows
+up everywhere: trending decays over sixty days instead of a day, Wrapped refuses to analyse
+fewer than ten records, and a count of `3` is presented with the same gravity as a count of
+three thousand — because at this size the small numbers *are* the joke.
 
 Bilingual by design — the archive handles Russian and English side by side.
+
+## The idea worth stealing
+
+Three questions about a quote are kept strictly apart, and most of the design falls out of
+that separation:
+
+| Question | Answered by | Never confused with |
+|---|---|---|
+| How hard did the room react? | **aura** — weighted reactions | whether it was really said |
+| Will anyone admit it happened? | **verification** — the witness ladder | how funny it was |
+| Who said it vs. who filed it? | **author** and **submitter**, stored separately | each other |
+
+The seed deliberately contains a record with 900 aura and **zero** witnesses, because that
+gap is the most interesting thing the archive can show you.
+
+## Screens
+
+| | |
+|---|---|
+| <img src="docs/screenshots/record.png" alt="A record" width="100%"> | <img src="docs/screenshots/profile.png" alt="A yapper's profile" width="100%"> |
+| **A record.** Lore, evidence, the verification ladder and the chain of testimony. | **A yapper.** Said vs. filed, battle record, known associates, frequent vocabulary. |
+| <img src="docs/screenshots/battle.png" alt="Yap battle" width="100%"> | <img src="docs/screenshots/wrapped.png" alt="Wrapped" width="100%"> |
+| **Yap battle.** Two quotes, one vote, Elo underneath. | **Wrapped.** The period, quantified after the fact. |
+| <img src="docs/screenshots/cases.png" alt="Case files" width="100%"> | <img src="docs/screenshots/market.png" alt="Aura market" width="100%"> |
+| **Case files.** When one statement turns into four, the archive opens a case. | **Aura market.** Movers, new listings and dormant records. Entirely meaningless. |
+
+<details>
+<summary><b>Teams, invites and administration</b></summary>
+
+| | |
+|---|---|
+| <img src="docs/screenshots/join.png" alt="An invitation" width="100%"> | <img src="docs/screenshots/invite.png" alt="Minting an invite" width="100%"> |
+| **The only door.** There is no open registration and no anonymous browsing. | **Any member can bring someone in** — not just admins. |
+| <img src="docs/screenshots/admin.png" alt="Administration" width="100%"> | <img src="docs/screenshots/mobile.png" alt="On a phone" width="60%"> |
+| **Administration.** Invites, members and roles, content moderation. | **On a phone.** |
+
+</details>
 
 ## Stack
 
@@ -44,8 +94,20 @@ npx prisma dev --name yapped  # prints a postgres:// URL — put it in .env
 Also set `DATABASE_POOL_MAX=3` for that one: `prisma dev` is backed by PGlite and
 drops connections past a handful of concurrent clients. A real Postgres needs no such limit.
 
-Seeded login: **anna** / **yapped123** (every seeded yapper shares that password;
-`dima` is an admin). Browsing works signed out — only reacting, voting and filing need an account.
+Seeded login: **anna** / **yapped123** — every seeded yapper shares that password, and `dima`
+is the instance operator. The login screen says so too, but only on an instance where the demo
+archive is actually loaded.
+
+**Starting a real archive instead?** Seed the empty baseline and open the first door by hand:
+
+```bash
+npm run db:seed                # inserts nothing, by design
+npm run bootstrap              # the first team and its owner — asks four questions
+```
+
+The archive is invite-only all the way down: registration needs a link, a link needs a team,
+and a team needs a member. That is airtight once an archive exists and unopenable before one
+does, so `bootstrap` is the one way in. It refuses to run once any account exists.
 
 ## Run it with Docker
 
@@ -58,8 +120,16 @@ A one-shot `migrate` service applies migrations (and the demo archive, if asked)
 app starts; it is built from the `builder` stage so the Prisma CLI has its full dependency
 tree. Hand-picking pieces of `node_modules` into the runtime image does not work — it misses
 transitive dependencies and fails only at runtime.
-**It starts with an empty archive** — no fictional users, no sample quotes.
-Uploads live on the `yapped-uploads` volume, the database on `yapped-db`.
+**It starts with an empty archive** — no fictional users, no sample quotes. Open the first
+door once the stack is up:
+
+```bash
+docker compose run --rm migrate npm run bootstrap
+```
+
+The `migrate` container, not `app`: the runtime image is a Next standalone build and carries
+neither the scripts nor tsx. Uploads live on the `yapped-uploads` volume, the database on
+`yapped-db`.
 
 To boot a populated instance for a demo instead: `SEED_MODE=demo docker compose up --build`.
 
@@ -69,7 +139,8 @@ To boot a populated instance for a demo instead: `SEED_MODE=demo docker compose 
 # on the VPS
 git clone <this repo> yapped && cd yapped
 printf 'POSTGRES_PASSWORD=%s\nAPP_URL=https://yapped.duckdns.org\nAPP_PORT=3000\n' "$(openssl rand -hex 16)" > .env
-SEED_ON_START=true docker compose up -d --build
+docker compose up -d --build
+docker compose run --rm migrate npm run bootstrap
 ```
 
 Then point a reverse proxy (Caddy is one line, nginx is a few) at `127.0.0.1:3000` and
@@ -83,6 +154,9 @@ cases, leaderboard, battles and Wrapped. Nothing crosses between them.
 
 Access is by invitation only — there is no open registration and no anonymous browsing.
 
+* **The first account** on a fresh instance comes from `npm run bootstrap`, because the rest
+  of this list is circular: a link needs a team and a team needs a member. The script creates
+  one team and one owner, and refuses once any account exists.
 * **Invite links** (`/join/<token>`) are minted at `/invite` by **any member** — bringing
   someone in is not an admin job, and making people ask an owner first just means invites
   stop happening. A member sees and revokes their own links; owners and admins see and
@@ -273,6 +347,7 @@ tests at a throwaway database. CI runs typecheck, both layers and a build on eve
 | `npm run db:seed:demo` | load the fictional demo archive |
 | `npm run db:reset` | drop, migrate and reseed |
 | `npm run db:studio` | browse the data |
+| `npm run bootstrap` | the first team and owner on an empty instance |
 | `npm run grant:admin` | list instance operators |
 | `npm run grant:admin -- <username>` | grant the instance role (`--revoke` takes it back) |
 
@@ -285,6 +360,34 @@ tests at a throwaway database. CI runs typecheck, both layers and a build on eve
 | `APP_URL` | `http://localhost:3000` | public origin, used for share links |
 | `STORAGE_DRIVER` | `local` | `local` or `s3` |
 | `STORAGE_LOCAL_DIR` | `./var/uploads` | evidence files, kept outside the database. **Use an absolute path in production** — the standalone server runs from `.next/standalone`, so a relative path lands in the wrong place. Docker already sets `/app/var/uploads`. |
+
+## Continuous integration
+
+The same checks run on both forges, in the same order — typecheck, unit tests, service tests
+against a real Postgres, then a production build:
+
+* GitHub Actions — [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+* GitLab CI — [`.gitlab-ci.yml`](.gitlab-ci.yml)
+
+## Contributing
+
+It is a small project with opinions. Two worth knowing before you open a pull request:
+
+* **`teamId` is a required argument, never an optional filter.** If you add a service
+  function that reads or writes archive data, it takes the team explicitly — forgetting it
+  should be a compile error, not a quiet leak.
+* **Comments explain *why*, not *what*.** Most of the ones in this codebase exist because
+  something was surprising, was argued about, or shipped broken once.
+
+Run `npm test` before pushing; `tests/README.md` explains what each layer protects and how to
+point the service tests at a throwaway database.
+
+## License
+
+[MIT](LICENSE) © Aleksei
+
+The screenshots above are from the demo archive (`npm run db:seed:demo`) — every person and
+every quote in them is fictional.
 
 ---
 

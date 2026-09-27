@@ -133,7 +133,12 @@ Three role questions, kept apart:
 ### 1.4 Auth (invitation only)
 
 There is no anonymous browsing and no open registration: an archive is closed, and the only
-door is a link (`/join/<token>`) someone inside handed out. Any member may mint one — bringing
+door is a link (`/join/<token>`) someone inside handed out.
+
+That rule is circular on an empty instance — a link needs a team, a team needs a member — so
+the very first account is created out of band by `npm run bootstrap`, which refuses to run
+once any account exists. Without it a fresh production install is unopenable, which is exactly
+what shipped before this was noticed. Any member may mint one — bringing
 someone in is not an admin job — with an optional note, use limit and expiry; spending a use is
 a conditional `UPDATE`, so two people opening the last seat cannot both take it. A member may
 revoke the links they issued; owners, admins and the operator may revoke any.
