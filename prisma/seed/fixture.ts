@@ -111,7 +111,10 @@ export const YAPS: SeedYap[] = [
   {
     text: "Плесень хайпует.",
     author: "Anna",
-    daysAgo: 2,
+    // The founding incident sits a month back, not yesterday: it is the
+    // archive's origin story, and leaving it on top made every default view
+    // read as though this office only ever discussed mould.
+    daysAgo: 28,
     hour: 14,
     minute: 37,
     tags: ["плесень", "хайп", "классика", "дизайн"],
@@ -581,7 +584,7 @@ export const YAPS: SeedYap[] = [
   {
     text: "Запиши это.",
     author: "Dima",
-    daysAgo: 2,
+    daysAgo: 28,
     hour: 14,
     minute: 37,
     tags: ["плесень", "архив", "основание"],
@@ -591,7 +594,7 @@ export const YAPS: SeedYap[] = [
   {
     text: "Зачем?",
     author: "Anna",
-    daysAgo: 2,
+    daysAgo: 28,
     hour: 14,
     minute: 38,
     tags: ["плесень", "вопрос"],
@@ -600,7 +603,7 @@ export const YAPS: SeedYap[] = [
   {
     text: "Уберите плесень с макета.",
     author: "Yulia",
-    daysAgo: 1,
+    daysAgo: 27,
     hour: 11,
     minute: 4,
     tags: ["плесень", "дизайн", "просьба"],
@@ -609,7 +612,7 @@ export const YAPS: SeedYap[] = [
   {
     text: "Плесень — это фича.",
     author: "Misha",
-    daysAgo: 1,
+    daysAgo: 27,
     hour: 11,
     minute: 9,
     tags: ["плесень", "фича", "классика"],

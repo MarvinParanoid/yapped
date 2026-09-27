@@ -453,7 +453,10 @@ export async function seedDemo(): Promise<void> {
   console.log(`  ${certified} certified yaps`);
   console.log(`  ${battleRows.length} battles`);
   console.log(`  login: anna / yapped123`);
-  console.log(`  ${UNCLAIMED_YAPPER} is quoted but has no account — claimable on /register`);
+  console.log(
+    `  ${UNCLAIMED_YAPPER} is quoted but has no account — claimable by registering` +
+      ` under that exact name through an invite link`,
+  );
 }
 
 
