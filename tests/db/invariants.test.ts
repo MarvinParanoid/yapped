@@ -131,6 +131,30 @@ describe("the author's own position", () => {
 });
 
 describe("aura", () => {
+  test("the author cannot score their own statement", async () => {
+    const author = await makeUser("Author");
+    const reader = await makeUser("Reader");
+    const yap = await makeYap({ authorId: author.id });
+
+    // The archive already refused to let them witness it. Letting them add to
+    // its aura anyway was the same rule enforced in one place and not the
+    // other — a reader found the gap by using the thing for a day.
+    await assert.rejects(
+      () => toggleReaction(yap.id, TEAM, author.id, "BASED"),
+      /AUTHOR_CANNOT_REACT/,
+    );
+    const untouched = await prisma.yap.findUniqueOrThrow({ where: { id: yap.id } });
+    assert.equal(untouched.aura, 0);
+    assert.equal(untouched.reactionCount, 0);
+
+    // Everyone else still may, and acknowledging still moves nothing.
+    await toggleReaction(yap.id, TEAM, reader.id, "BASED");
+    await acknowledgeYap(yap.id, TEAM, author.id);
+    const after = await prisma.yap.findUniqueOrThrow({ where: { id: yap.id } });
+    assert.equal(after.aura, REACTION_WEIGHTS.BASED);
+    assert.ok(after.acknowledgedAt, "I SAID THAT is the author's channel, and it costs nothing");
+  });
+
   test("a reaction round-trips exactly", async () => {
     const author = await makeUser();
     const reader = await makeUser();

@@ -3,6 +3,7 @@ import { yapCode } from "@/lib/format";
 import { evaluateAchievements, type Achievement, type YapperStats } from "@/lib/achievements";
 import { titleFor, type Title } from "@/lib/titles";
 import { isContested } from "@/lib/verification";
+import { validateName } from "@/lib/names";
 import type { LeaderboardEntry, RangeKey, YapperRef } from "@/lib/types";
 
 function toYapperRef(user: {
@@ -327,7 +328,9 @@ export async function listYappers(teamId: string): Promise<YapperRef[]> {
 
 /** The person who said it may not have an account yet. Make them one anyway. */
 export async function findOrCreateYapper(displayName: string, teamId: string): Promise<string> {
-  const name = displayName.trim();
+  const named = validateName(displayName, "A yapper's name");
+  if (!named.ok) throw new Error(named.error);
+  const name = named.name;
   // Scoped to the team: two archives may each have their own Diana, and they
   // are not the same person.
   const existing = await prisma.user.findFirst({

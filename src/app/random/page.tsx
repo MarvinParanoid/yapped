@@ -75,6 +75,7 @@ export default async function RandomPage({
 
           <div className="mt-8">
             <ReactionBar
+              isAuthor={yap.author.id === user.id}
               yapId={yap.id}
               counts={yap.counts}
               viewerReactions={yap.viewerReactions}

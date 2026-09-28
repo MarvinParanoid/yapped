@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
+import { validateName } from "@/lib/names";
 
 export type AccountResult = { ok: true; userId: string } | { ok: false; error: string };
 
@@ -83,7 +84,10 @@ export async function registerAccount(
   const valid = await validateRegistration(username, password);
   if (!valid.ok) return valid;
 
-  const name = displayName.trim() || login;
+  const named = validateName(displayName.trim() || login, "A display name");
+  if (!named.ok) return { ok: false, error: named.error };
+
+  const name = named.name;
   const passwordHash = await hashPassword(password);
 
   // A yapper may already exist in the archive without credentials — let them

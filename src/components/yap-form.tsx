@@ -4,6 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import { submitYapAction, type SubmitState } from "@/app/actions";
 import { cn } from "@/lib/cn";
 import { slugifyTag } from "@/lib/format";
+import { NAME_MAX } from "@/lib/names";
 import type { YapperRef } from "@/lib/types";
 
 const NEW_YAPPER = "__new__";
@@ -94,6 +95,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
                 className="field mt-2"
                 autoComplete="off"
                 autoFocus
+                maxLength={NAME_MAX}
               />
             ) : null}
           </div>

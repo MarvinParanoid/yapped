@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { reactAction } from "@/app/actions";
+import { AuraInfo } from "@/components/aura-info";
 import { cn } from "@/lib/cn";
 import {
   REACTION_KEYS,
@@ -52,6 +53,7 @@ export function ReactionBar({
   size = "sm",
   showAura = true,
   signedIn = true,
+  isAuthor = false,
 }: {
   yapId: number;
   counts: ReactionCounts;
@@ -60,6 +62,8 @@ export function ReactionBar({
   size?: Size;
   showAura?: boolean;
   signedIn?: boolean;
+  /** The viewer said this. They may acknowledge it; they may not score it. */
+  isAuthor?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -77,6 +81,14 @@ export function ReactionBar({
       router.push(`/login?next=${encodeURIComponent(pathname)}`);
       return;
     }
+    // Said up front rather than as a rollback: the optimistic bump followed by
+    // a silent revert is exactly what makes a control feel broken.
+    if (isAuthor) {
+      setDenied(true);
+      setTimeout(() => setDenied(false), 2200);
+      return;
+    }
+
     const has = mine.includes(key);
     const delta = has ? -REACTION_WEIGHTS[key] : REACTION_WEIGHTS[key];
 
@@ -111,7 +123,7 @@ export function ReactionBar({
           outright rather than leaving it to a hover state. */}
       {size === "lg" || size === "feature" ? (
         <span className="label mr-3 self-center">
-          {signedIn ? "React" : "Sign in to react"}
+          {!signedIn ? "Sign in to react" : isAuthor ? "Your own words" : "React"}
         </span>
       ) : null}
       <div className="flex flex-wrap items-center gap-1.5">
@@ -126,32 +138,38 @@ export function ReactionBar({
               onClick={() => react(key)}
               title={meta.label}
               aria-pressed={active}
-              aria-label={`${meta.label}: ${counts[key]}`}
+              aria-disabled={isAuthor}
+              aria-label={
+                isAuthor
+                  ? `${meta.label}: ${counts[key]} — you cannot react to your own statement`
+                  : `${meta.label}: ${counts[key]}`
+              }
               className={cn(
                 "relative inline-flex items-center border border-ink font-mono tabnums leading-none transition-[background,color,border-color] duration-100",
                 CHIP[size],
-                active ? "bg-ink text-paper" : "bg-transparent hover:bg-paper-3",
+                active ? "bg-ink text-paper" : "bg-transparent",
+                isAuthor ? "cursor-not-allowed opacity-60" : "hover:bg-paper-3",
                 pulsing && pulse.delta > 0 && "chip-pop",
               )}
             >
               <span className={EMOJI[size]}>{meta.emoji}</span>
-              {/* Zero is not information. At this archive's scale most chips sit
-                  at nothing, and a row of noughts reads as a broken widget.
-                  The slot still takes up its width, though — an emoji rattling
-                  around in a narrower box next to its neighbours is what makes
-                  an untouched reaction look like a rendering failure rather
-                  than an invitation. */}
+              {/* The zero is printed, dimmed.
+                  It used to be hidden, on the theory that at this archive's
+                  scale a row of noughts reads as a broken widget. A reader
+                  settled it within a day of using the thing: an emoji with
+                  nothing beside it does not read as "nobody yet", it reads as
+                  "this has not loaded". A quiet 0 is information; a blank is a
+                  question about whether the page is working. */}
               <span
-                aria-hidden={counts[key] === 0}
                 // Keyed on the value so the number visibly ticks over.
                 key={counts[key]}
                 className={cn(
                   "tick inline-block text-center font-medium",
                   COUNT_SLOT[size],
-                  counts[key] === 0 && "opacity-0",
+                  counts[key] === 0 && !active && "opacity-35",
                 )}
               >
-                {counts[key] > 0 ? counts[key] : 0}
+                {counts[key]}
               </span>
               {pulsing ? (
                 <span
@@ -177,7 +195,10 @@ export function ReactionBar({
             size === "feature" ? "sm:ml-5 sm:pl-5" : "sm:ml-3 sm:pl-3",
           )}
         >
-          <span className="label hidden sm:block">Aura</span>
+          <span className="label hidden items-center gap-1.5 sm:flex">
+            Aura
+            {size === "lg" || size === "feature" ? <AuraInfo /> : null}
+          </span>
           <span
             key={aura}
             className={cn(
@@ -193,7 +214,11 @@ export function ReactionBar({
         </div>
       ) : null}
 
-      {denied ? <span className="label ml-3 self-center text-red">sign in to react</span> : null}
+      {denied ? (
+        <span className="label ml-3 self-center text-red">
+          {isAuthor ? "your own statement — use I SAID THAT instead" : "sign in to react"}
+        </span>
+      ) : null}
     </div>
   );
 }

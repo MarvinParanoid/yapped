@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { after } from "next/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AuraInfo } from "@/components/aura-info";
 import { EvidencePanel } from "@/components/evidence-panel";
 import { CaseFiler } from "@/components/case-filer";
 import { DisputePanel } from "@/components/dispute-panel";
@@ -134,12 +135,16 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
                 {yap.aura >= 0 ? "+" : ""}
                 {formatCount(yap.aura)}
               </div>
-              <div className="label mt-1.5">aura</div>
+              <div className="label mt-1.5 flex items-center gap-1.5">
+                aura
+                <AuraInfo />
+              </div>
             </div>
           </div>
 
           <div className="mt-8">
             <ReactionBar
+              isAuthor={isAuthor}
               yapId={yap.id}
               counts={yap.counts}
               viewerReactions={yap.viewerReactions}

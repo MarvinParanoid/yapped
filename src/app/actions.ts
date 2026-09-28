@@ -52,7 +52,7 @@ import { findOrCreateYapper, syncAchievements } from "@/lib/services/yappers";
 
 export type ReactionResult =
   | { ok: true; state: ToggleResult }
-  | { ok: false; error: "AUTH_REQUIRED" | "FAILED" };
+  | { ok: false; error: "AUTH_REQUIRED" | "AUTHOR_CANNOT_REACT" | "FAILED" };
 
 export async function reactAction(yapId: number, type: ReactionKey): Promise<ReactionResult> {
   const viewer = await getViewer();
@@ -60,7 +60,10 @@ export async function reactAction(yapId: number, type: ReactionKey): Promise<Rea
   try {
     const state = await toggleReaction(yapId, viewer.team.id, viewer.user.id, type);
     return { ok: true, state };
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "AUTHOR_CANNOT_REACT") {
+      return { ok: false, error: "AUTHOR_CANNOT_REACT" };
+    }
     return { ok: false, error: "FAILED" };
   }
 }
@@ -167,7 +170,13 @@ export async function submitYapAction(
   const newAuthorName = String(formData.get("authorName") ?? "").trim();
   if (!existingAuthorId && !newAuthorName) return { error: "Someone had to say it." };
 
-  const authorId = existingAuthorId || (await findOrCreateYapper(newAuthorName, teamId));
+  let authorId: string;
+  try {
+    authorId = existingAuthorId || (await findOrCreateYapper(newAuthorName, teamId));
+  } catch (error) {
+    // findOrCreateYapper rejects a name the archive will not print.
+    return { error: error instanceof Error ? error.message : "That name will not do." };
+  }
 
   const saidAtRaw = String(formData.get("saidAt") ?? "").trim();
   const saidAt = saidAtRaw ? new Date(saidAtRaw) : new Date();

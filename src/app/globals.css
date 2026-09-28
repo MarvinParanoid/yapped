@@ -223,6 +223,18 @@
     color: var(--color-paper);
   }
 
+  /* A light panel opened from inside a dark block is still a light panel.
+     Without this, .label-strong stays paper-coloured and the panel's own
+     heading is white on white — the same way Wrapped's figures once vanished
+     into their slabs. `.on-paper` is the way out of an `.on-ink` context. */
+  .on-ink .on-paper .label {
+    color: var(--color-muted);
+  }
+
+  .on-ink .on-paper .label-strong {
+    color: var(--color-ink);
+  }
+
   .on-ink .btn {
     border-color: rgba(242, 240, 233, 0.3);
     color: var(--color-paper);

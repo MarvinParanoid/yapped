@@ -424,8 +424,17 @@ export async function toggleReaction(
   userId: string,
   type: ReactionKey,
 ): Promise<ToggleResult> {
-  const owned = await prisma.yap.findFirst({ where: { id: yapId, teamId }, select: { id: true } });
+  const owned = await prisma.yap.findFirst({
+    where: { id: yapId, teamId },
+    select: { id: true, authorId: true },
+  });
   if (!owned) throw new Error("NOT_FOUND");
+
+  // Aura measures how hard the room reacted, and the author is not the room.
+  // The archive already refused to let them witness their own statement; being
+  // able to add to its score anyway was the same rule enforced in one place and
+  // not the other. Their channel is I SAID THAT, which moves no numbers.
+  if (owned.authorId === userId) throw new Error("AUTHOR_CANNOT_REACT");
 
   const existing = await prisma.reaction.findUnique({
     where: { yapId_userId_type: { yapId, userId, type } },

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { validateName } from "@/lib/names";
 import type { TeamRole } from "@/lib/auth/team";
 
 export type MemberRow = {
@@ -207,9 +208,9 @@ export async function removeMember(teamId: string, userId: string): Promise<Role
 }
 
 export async function renameTeam(teamId: string, name: string): Promise<RoleChange> {
-  const trimmed = name.trim();
-  if (trimmed.length < 2) return { ok: false, error: "A team needs a name." };
-  await prisma.team.update({ where: { id: teamId }, data: { name: trimmed } });
+  const named = validateName(name, "A team name");
+  if (!named.ok) return { ok: false, error: named.error };
+  await prisma.team.update({ where: { id: teamId }, data: { name: named.name } });
   return { ok: true };
 }
 
@@ -217,8 +218,9 @@ export type TeamCreation = { ok: true; teamId: string; slug: string } | { ok: fa
 
 /** Creating a team makes the creator its owner; there is no other way in. */
 export async function createTeam(name: string, ownerId: string): Promise<TeamCreation> {
-  const trimmed = name.trim();
-  if (trimmed.length < 2) return { ok: false, error: "A team needs a name." };
+  const named = validateName(name, "A team name");
+  if (!named.ok) return { ok: false, error: named.error };
+  const trimmed = named.name;
 
   const base = slugifyTeam(trimmed) || "team";
   let slug = base;

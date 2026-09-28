@@ -70,6 +70,7 @@ export function YapCard({
               aura={yap.aura}
               size="compact"
               signedIn={Boolean(viewerId)}
+              isAuthor={yap.author.id === viewerId}
             />
           </div>
         </div>
@@ -169,6 +170,7 @@ export function YapCard({
               aura={yap.aura}
               size={feature ? "feature" : "sm"}
               signedIn={Boolean(viewerId)}
+              isAuthor={yap.author.id === viewerId}
             />
           </div>
         </div>

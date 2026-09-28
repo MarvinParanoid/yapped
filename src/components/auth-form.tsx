@@ -8,6 +8,7 @@ import {
   registerAction,
   type AuthState,
 } from "@/app/actions";
+import { NAME_MAX } from "@/lib/names";
 import { formatAura } from "@/lib/ranking/aura";
 import type { ClaimPreview } from "@/lib/services/accounts";
 
@@ -72,6 +73,7 @@ export function AuthForm({
               onChange={(event) => setDisplayName(event.target.value)}
               className="field mt-2"
               autoComplete="name"
+              maxLength={NAME_MAX}
             />
             {claim ? (
               <div
