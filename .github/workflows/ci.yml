@@ -136,6 +136,12 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
         run: |
+          # Not configured yet is not a failure: a fork, or a repository whose
+          # owner has not set the secrets, still gets a green build.
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "::notice::DEPLOY_KEY is not set — skipping the rollout."
+            exit 0
+          fi
           install -m 700 -d ~/.ssh
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
