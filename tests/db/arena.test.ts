@@ -6,6 +6,7 @@ import {
   distinctPairs,
   getArenaState,
   getBattlePair,
+  recordBattle,
 } from "@/lib/services/battles";
 
 before(async () => {
@@ -27,8 +28,9 @@ describe("the arena knows when it has nothing to ask", () => {
       const state = await getArenaState(TEAM);
       assert.equal(state.open, false, `${filed} records must not open the arena`);
       if (!state.open) {
+        assert.equal(state.reason, "thin");
         assert.equal(state.records, filed);
-        assert.equal(state.needed, MIN_ARENA_RECORDS - filed);
+        assert.equal(state.reason === "thin" && state.needed, MIN_ARENA_RECORDS - filed);
       }
       await makeYap({ authorId: author.id });
     }
@@ -66,6 +68,50 @@ describe("the arena knows when it has nothing to ask", () => {
         "the arena repeated the pair it was told to avoid",
       );
     }
+  });
+
+  test("never asks the same question twice", async () => {
+    await resetDatabase();
+    const author = await makeUser("Author");
+    const voter = await makeUser("Voter");
+    const ids: number[] = [];
+    for (let i = 0; i < 4; i += 1) ids.push((await makeYap({ authorId: author.id })).id);
+
+    // Four records make six pairs. Judge every one of them and the arena has
+    // nothing left to ask — it says so instead of starting over, which is what
+    // a reader ran into after ten rounds.
+    const seen = new Set<string>();
+    for (let round = 0; round < 6; round += 1) {
+      const state = await getArenaState(TEAM, voter.id);
+      assert.equal(state.open, true, `round ${round} should still have a question`);
+      if (!state.open) break;
+      const [a, b] = state.pair;
+      const key = [a.id, b.id].sort((x, y) => x - y).join(":");
+      assert.equal(seen.has(key), false, "the arena repeated a pair this voter already judged");
+      seen.add(key);
+      await recordBattle(a.id, b.id, TEAM, voter.id);
+    }
+
+    const exhausted = await getArenaState(TEAM, voter.id);
+    assert.equal(exhausted.open, false);
+    assert.equal(exhausted.open === false && exhausted.reason, "exhausted");
+  });
+
+  test("one person's history does not limit another's", async () => {
+    await resetDatabase();
+    const author = await makeUser("Author");
+    const a = await makeUser("A");
+    const b = await makeUser("B");
+    const ids: number[] = [];
+    for (let i = 0; i < 4; i += 1) ids.push((await makeYap({ authorId: author.id })).id);
+
+    for (let round = 0; round < 6; round += 1) {
+      const state = await getArenaState(TEAM, a.id);
+      if (!state.open) break;
+      await recordBattle(state.pair[0].id, state.pair[1].id, TEAM, a.id);
+    }
+    assert.equal((await getArenaState(TEAM, a.id)).open, false, "A has judged everything");
+    assert.equal((await getArenaState(TEAM, b.id)).open, true, "B has judged nothing");
   });
 
   test("prefers two different mouths when it can", async () => {

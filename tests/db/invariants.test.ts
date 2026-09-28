@@ -10,6 +10,7 @@ import {
   refreshAura,
   setWitnessStance,
   softDeleteYap,
+  editYap,
   toggleReaction,
 } from "@/lib/services/yaps";
 import { addYapToCase, createCase, getCase } from "@/lib/services/cases";
@@ -277,5 +278,105 @@ describe("cases", () => {
       "filing a record later must not put it last",
     );
     assert.equal(file?.recordCount, 2);
+  });
+});
+
+describe("the default view keeps everything", () => {
+  test("trending ranks an old record low, it does not drop it", async () => {
+    await resetDatabase();
+    const author = await makeUser("Founder");
+
+    // Old in both senses: said long ago and filed long ago. Trending decays by
+    // when a record was *filed*, so a two-year-old quote entered today is new
+    // to the archive and ranks accordingly.
+    const ancient = await makeYap({
+      authorId: author.id,
+      text: "Раньше мы такого не записывали.",
+      saidAt: new Date(Date.now() - 400 * 86_400_000),
+      aura: 60,
+    });
+    await prisma.yap.update({
+      where: { id: ancient.id },
+      data: { createdAt: new Date(Date.now() - 400 * 86_400_000) },
+    });
+
+    const today = await makeYap({ authorId: author.id, text: "Свежее.", aura: 10 });
+
+    // The window used to cut anything said more than sixty days ago, which
+    // quietly removed the archive's founding records from its own front page.
+    const ids = (await listYaps({ teamId: TEAM, sort: "trending" })).map((yap) => yap.id);
+    assert.ok(ids.includes(ancient.id), "an old record must stay reachable from the default view");
+    assert.deepEqual(ids, [today.id, ancient.id], "decay ranks it last rather than hiding it");
+  });
+
+  test("a quote said years ago but filed today is not old news", async () => {
+    await resetDatabase();
+    const author = await makeUser("Archivist");
+    const dugUp = await makeYap({
+      authorId: author.id,
+      saidAt: new Date(Date.now() - 900 * 86_400_000),
+      aura: 40,
+    });
+
+    const ids = (await listYaps({ teamId: TEAM, sort: "trending" })).map((yap) => yap.id);
+    assert.deepEqual(ids, [dugUp.id], "filed today, so it belongs on the front page today");
+  });
+});
+
+describe("correcting a misquote", () => {
+  test("changes the words and nothing the record has earned", async () => {
+    await resetDatabase();
+    const author = await makeUser("Author");
+    const filer = await makeUser("Filer");
+    const witness = await makeUser("Witness");
+    const reader = await makeUser("Reader");
+
+    const yap = await makeYap({ text: "Рот стовлю.", authorId: author.id, submittedById: filer.id });
+    await toggleReaction(yap.id, TEAM, reader.id, "BASED");
+    await setWitnessStance(yap.id, TEAM, witness.id, "PRESENT");
+    await acknowledgeYap(yap.id, TEAM, author.id);
+
+    const before = await prisma.yap.findUniqueOrThrow({ where: { id: yap.id } });
+    assert.equal((await editYap(yap.id, TEAM, filer.id, { text: "Рот ставлю.", lore: "опечатка" })).ok, true);
+
+    const after = await prisma.yap.findUniqueOrThrow({ where: { id: yap.id } });
+    assert.equal(after.text, "Рот ставлю.");
+    assert.equal(after.lore, "опечатка");
+    // A typo fixed is not a different statement: everyone who went on the
+    // record did so about these words.
+    assert.equal(after.aura, before.aura);
+    assert.equal(after.witnessCount, before.witnessCount);
+    assert.equal(after.verification, before.verification);
+    assert.ok(after.acknowledgedAt);
+  });
+
+  test("a stranger cannot rewrite someone else's filing", async () => {
+    await resetDatabase();
+    const author = await makeUser("Author");
+    const filer = await makeUser("Filer");
+    const stranger = await makeUser("Stranger");
+    const yap = await makeYap({ text: "Как было.", authorId: author.id, submittedById: filer.id });
+
+    assert.equal((await editYap(yap.id, TEAM, stranger.id, { text: "Как не было.", lore: null })).ok, false);
+    assert.equal((await prisma.yap.findUniqueOrThrow({ where: { id: yap.id } })).text, "Как было.");
+  });
+
+  test("the same length rules as filing it in the first place", async () => {
+    await resetDatabase();
+    const author = await makeUser("Author");
+    const yap = await makeYap({ text: "Как было.", authorId: author.id, submittedById: author.id });
+
+    assert.equal((await editYap(yap.id, TEAM, author.id, { text: "я", lore: null })).ok, false);
+    assert.equal((await editYap(yap.id, TEAM, author.id, { text: "я".repeat(401), lore: null })).ok, false);
+    assert.equal((await prisma.yap.findUniqueOrThrow({ where: { id: yap.id } })).text, "Как было.");
+  });
+
+  test("a redacted record is not quietly edited back into shape", async () => {
+    await resetDatabase();
+    const author = await makeUser("Author");
+    const yap = await makeYap({ authorId: author.id, submittedById: author.id });
+    await softDeleteYap(yap.id, TEAM, author.id);
+
+    assert.equal((await editYap(yap.id, TEAM, author.id, { text: "Новое.", lore: null })).ok, false);
   });
 });
