@@ -20,7 +20,7 @@ export const en = {
 
   nav: {
     trending: "Trending",
-    fresh: "Fresh",
+    fresh: "All",
     top: "Top",
     yappers: "Yappers",
     cases: "Cases",
@@ -178,6 +178,14 @@ export const en = {
     caseIntro: "when one statement turns into four, the archive opens a case.",
     rankedByElo: "Ranked by head-to-head rating",
     fieldTooThin: "The field is too thin.",
+    fieldTooThinBody:
+      "the arena needs at least {min} records to ask a question worth answering. there {n} on file — {needed} more and it opens.",
+    allJudged: "You have judged them all.",
+    allJudgedBody:
+      "Every possible pairing of the {n} records on file has had your vote. The archive has to grow before the arena can ask you anything new.",
+    fileAYap: "File a yap",
+    backToArchive: "Back to the archive",
+    upsetBody: "the underdog was {gap} elo behind and won +{delta}",
     startBattle: "start a battle",
     chronology: "Chronology",
     caseFile: "Case file",
@@ -237,6 +245,11 @@ export const en = {
   admin: {
     administration: "Administration",
     members: "Members",
+    OWNER: "Owner",
+    ADMIN: "Admin",
+    MEMBER: "Member",
+    OPERATOR: "Operator",
+    membersCount: "Members — {n}",
     withAccounts: "With accounts",
     records: "Records",
     liveInvites: "Live invites",
@@ -256,6 +269,14 @@ export const en = {
     reallyRemove: "really remove?",
     refused: "Refused.",
     redact: "redact",
+    edit: "edit",
+    editHeading: "Correct the wording",
+    editNote:
+      "Only the words change. Aura, witnesses and the author's position stay — a typo fixed is not a different statement.",
+    quoteText: "What was said",
+    loreText: "Context / lore",
+    save: "Save",
+    cancel: "Cancel",
     reallyRedact: "really redact?",
     restore: "restore",
     redactedAt: "redacted {date}",

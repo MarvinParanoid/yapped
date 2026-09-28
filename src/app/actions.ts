@@ -49,6 +49,7 @@ import {
   softDeleteYap,
   toggleReaction,
   withdrawDispute,
+  editYap,
   restoreYap,
   type ToggleResult,
   type WitnessState,
@@ -258,6 +259,30 @@ export async function deleteYapAction(yapId: number): Promise<{ ok: boolean }> {
     revalidatePath(`/yap/${yapId}`);
   }
   return { ok };
+}
+
+/**
+ * Correct a misquote. The archive keeps what was said, so the wording is the
+ * one thing worth being able to fix — everything the record has earned since
+ * stays put.
+ */
+export async function editYapAction(
+  yapId: number,
+  text: string,
+  lore: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const viewer = await requireViewer("/admin");
+  const trimmed = text.trim();
+  if (trimmed.length < 2) return { ok: false, error: await say({ code: "TEXT_TOO_SHORT" }) };
+  if (trimmed.length > 400) return { ok: false, error: await say({ code: "TEXT_TOO_LONG" }) };
+
+  const result = await editYap(yapId, viewer.team.id, viewer.user.id, { text: trimmed, lore });
+  if (result.ok) {
+    revalidatePath("/");
+    revalidatePath("/admin");
+    revalidatePath(`/yap/${yapId}`);
+  }
+  return result.ok ? { ok: true } : { ok: false, error: await say({ code: "REFUSED" }) };
 }
 
 /** Admin panel: put a redacted record back on the shelf. */

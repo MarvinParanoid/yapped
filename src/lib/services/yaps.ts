@@ -3,7 +3,6 @@ import { storage } from "@/lib/storage";
 import { yapCode } from "@/lib/format";
 import {
   EMPTY_COUNTS,
-  TRENDING_LOOKBACK_DAYS,
   computeAura,
   type ReactionCounts,
   type ReactionKey,
@@ -189,10 +188,12 @@ export type ListYapsOptions = {
  */
 function buildWhere(options: ListYapsOptions) {
   const { teamId, sort, range = "all", query, tag, authorId, filter } = options;
-  const since =
-    sort === "trending"
-      ? new Date(Date.now() - TRENDING_LOOKBACK_DAYS * 24 * 60 * 60 * 1000)
-      : rangeFilter(range);
+  // Trending used to cut everything older than sixty days. The decay already
+  // sinks an old record to the bottom, so the cut only ever removed it from the
+  // view entirely — and Trending is the default view. An archive whose motto is
+  // "the internet forgets, we don't" should not quietly stop showing its own
+  // founding records after two months. Ranking, yes; hiding, no.
+  const since = sort === "trending" ? null : rangeFilter(range);
 
   // saidAt can be constrained by the window and by before:/after: at once.
   const saidAt: { gte?: Date; lt?: Date } = {};
@@ -669,6 +670,43 @@ export async function createYap(input: CreateYapInput): Promise<number> {
     },
   });
   return yap.id;
+}
+
+/**
+ * Correct the wording of a record.
+ *
+ * The archive exists to keep what was said, so this is deliberately narrow: it
+ * changes the text and the lore and nothing else. Aura, witnesses, the author's
+ * acknowledgement and the verification rung all stand — a typo fixed is not a
+ * different statement, and people who went on the record about it did so about
+ * these words.
+ *
+ * Whoever runs the team may do it. A misquote is exactly the kind of thing the
+ * person quoted will want fixed, and until now the only remedy was redaction.
+ */
+export async function editYap(
+  yapId: number,
+  teamId: string,
+  userId: string,
+  input: { text: string; lore: string | null },
+): Promise<{ ok: boolean }> {
+  const text = input.text.trim();
+  if (text.length < 2 || text.length > 400) return { ok: false };
+
+  const yap = await prisma.yap.findFirst({
+    where: { id: yapId, teamId },
+    select: { submittedById: true, deletedAt: true },
+  });
+  if (!yap || yap.deletedAt) return { ok: false };
+  if (yap.submittedById !== userId && !(await canModerateTeam(teamId, userId))) {
+    return { ok: false };
+  }
+
+  await prisma.yap.update({
+    where: { id: yapId },
+    data: { text, lore: input.lore?.trim() || null },
+  });
+  return { ok: true };
 }
 
 /** REMOVE FROM THE HISTORICAL RECORD? — soft delete, the archive forgets nothing. */

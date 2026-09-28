@@ -39,8 +39,8 @@ export const ru: Dictionary = {
   },
 
   nav: {
-    trending: "В движении",
-    fresh: "Новое",
+    trending: "Актуальное",
+    fresh: "Всё",
     top: "Топ",
     yappers: "Ораторы",
     cases: "Дела",
@@ -199,6 +199,14 @@ export const ru: Dictionary = {
     caseIntro: "когда одна фраза превращается в четыре, архив заводит дело.",
     rankedByElo: "Рейтинг по личным встречам",
     fieldTooThin: "Поле слишком редкое.",
+    fieldTooThinBody:
+      "арене нужно хотя бы {min} записей, чтобы задать вопрос, на который стоит отвечать. сейчас в архиве {n} — ещё {needed}, и она откроется.",
+    allJudged: "Вы рассудили всё.",
+    allJudgedBody:
+      "Все возможные пары из {n} записей уже получили ваш голос. Пока архив не пополнится, арене нечего у вас спросить.",
+    fileAYap: "Внести цитату",
+    backToArchive: "Назад в архив",
+    upsetBody: "аутсайдер отставал на {gap} и выиграл +{delta}",
     startBattle: "начать баттл",
     chronology: "Хронология",
     caseFile: "Дело",
@@ -258,6 +266,11 @@ export const ru: Dictionary = {
   admin: {
     administration: "Администрирование",
     members: "Участники",
+    OWNER: "Владелец",
+    ADMIN: "Админ",
+    MEMBER: "Участник",
+    OPERATOR: "Оператор",
+    membersCount: "Участники — {n}",
     withAccounts: "С аккаунтами",
     records: "Записей",
     liveInvites: "Живых приглашений",
@@ -277,6 +290,14 @@ export const ru: Dictionary = {
     reallyRemove: "точно удалить?",
     refused: "Отказано.",
     redact: "изъять",
+    edit: "править",
+    editHeading: "Исправить формулировку",
+    editNote:
+      "Меняются только слова. Аура, свидетели и позиция автора остаются — исправленная опечатка не делает высказывание другим.",
+    quoteText: "Что было сказано",
+    loreText: "Контекст / предыстория",
+    save: "Сохранить",
+    cancel: "Отмена",
     reallyRedact: "точно изъять?",
     restore: "вернуть",
     redactedAt: "изъято {date}",

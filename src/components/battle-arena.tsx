@@ -8,6 +8,7 @@ import { QuoteText } from "@/components/quote-text";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import { useD } from "@/lib/i18n/client";
+import { fill } from "@/lib/i18n/locale";
 import { formatDate } from "@/lib/format";
 import type { YapView } from "@/lib/types";
 
@@ -95,7 +96,9 @@ export function BattleArena({
           <span className="mono text-[11px] text-muted">🔥 {yap.counts.BASED}</span>
           <span className="mono text-[11px] text-muted">💀 {yap.counts.DEAD}</span>
           <span className="mono text-[11px] text-muted">😭 {yap.counts.REAL}</span>
-          <span className="mono ml-auto text-[11px] text-muted">elo {yap.eloRating}</span>
+          <span className="mono ml-auto text-[11px] text-muted">
+            {d.sections.elo.toLowerCase()} {yap.eloRating}
+          </span>
         </div>
       </div>
 
@@ -126,7 +129,7 @@ export function BattleArena({
         <div className="yap-in mt-4 flex flex-wrap items-center justify-center gap-3 border border-ink bg-acid px-4 py-2">
           <span className="label-strong">{d.sections.upset}</span>
           <span className="mono text-[12px]">
-            the underdog was {upset.gap} elo behind and won +{upset.delta}
+            {fill(d.sections.upsetBody, { gap: upset.gap, delta: upset.delta })}
           </span>
         </div>
       ) : null}

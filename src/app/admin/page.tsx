@@ -53,7 +53,7 @@ export default async function AdminPage() {
       <div className="on-ink grid-ghost border-b border-ink">
         <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
           <span className="label">
-            {d.admin.administration} · {viewer.team.role.toLowerCase()}
+            {d.admin.administration} · {d.admin[viewer.team.role].toLowerCase()}
             {viewer.user.isAdmin ? (
               <>
                 {" · "}
@@ -86,7 +86,7 @@ export default async function AdminPage() {
           <InviteManager invites={invites} showAuthor />
         </Panel>
 
-        <Panel label={`Members — ${formatCount(members.length)}`} bodyClassName="p-0">
+        <Panel label={fill(d.admin.membersCount, { n: formatCount(members.length) })} bodyClassName="p-0">
           <MemberTable members={members} canManage={canManage} viewerId={viewer.user.id} />
         </Panel>
 
@@ -96,6 +96,7 @@ export default async function AdminPage() {
               id: yap.id,
               code: yap.code,
               text: yap.text,
+              lore: yap.lore,
               author: yap.author.displayName,
               saidAt: yap.saidAt,
             }))}

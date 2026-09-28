@@ -14,51 +14,103 @@ export const MIN_ARENA_RECORDS = 4;
 
 export type ArenaState =
   | { open: true; pair: [YapView, YapView] }
-  | { open: false; records: number; needed: number };
+  /** Too few records to ask a question worth answering. */
+  | { open: false; reason: "thin"; records: number; needed: number }
+  /** Every pair has been judged by this person. The archive has to grow first. */
+  | { open: false; reason: "exhausted"; records: number };
 
-/** Two random contenders. Never the same yap, never the same mouth twice. */
+/** How many records the arena will enumerate every pair of before sampling. */
+const PAIRWISE_LIMIT = 120;
+
+const pairKey = (a: number, b: number) => (a < b ? `${a}:${b}` : `${b}:${a}`);
+
+/**
+ * Two contenders the viewer has not already judged.
+ *
+ * It used to pick at random, avoiding only the pair just voted on — so with a
+ * small archive the same match-ups came back within a handful of rounds. A
+ * reader put it exactly: "я все 10 натыкала, а потом счётчик обновился и
+ * заново". Voting on a question you have already answered is not a vote.
+ *
+ * Every vote is journalled with its voter, so what they have seen is already
+ * known. Below PAIRWISE_LIMIT records every possible pair is enumerated and the
+ * seen ones removed, which is exact; above it that is too many combinations, so
+ * it samples and settles for "probably new".
+ *
+ * Returns null when the viewer has judged every pair there is — the caller
+ * says so rather than starting the archive over.
+ */
 export async function getBattlePair(
   teamId: string,
   viewerId?: string | null,
   excludeIds: number[] = [],
 ): Promise<[YapView, YapView] | null> {
-  const total = await prisma.yap.count({ where: { teamId, deletedAt: null } });
-  if (total < 2) return null;
+  const records = await prisma.yap.findMany({
+    where: { teamId, deletedAt: null },
+    select: { id: true, authorId: true },
+  });
+  if (records.length < 2) return null;
 
-  // Avoid handing back the pair just voted on, unless the archive is so small
-  // that there is nothing else to offer.
-  const avoid = total > excludeIds.length + 1 ? excludeIds : [];
+  const judged = viewerId
+    ? await prisma.battle.findMany({
+        where: { teamId, voterId: viewerId },
+        select: { winnerId: true, loserId: true },
+      })
+    : [];
+  const seen = new Set(judged.map((row) => pairKey(row.winnerId, row.loserId)));
+  // The pair just voted on, so the next screen is never the previous one.
+  if (excludeIds.length === 2) seen.add(pairKey(excludeIds[0]!, excludeIds[1]!));
 
-  const pick = async (excludeIds: number[], excludeAuthorId?: string) => {
-    const where = {
-      teamId,
-      deletedAt: null,
-      ...(excludeIds.length ? { id: { notIn: excludeIds } } : {}),
-      ...(excludeAuthorId ? { authorId: { not: excludeAuthorId } } : {}),
-    };
-    const count = await prisma.yap.count({ where });
-    if (count === 0) return null;
-    return prisma.yap.findFirst({
-      where,
-      select: { id: true, authorId: true },
-      skip: Math.floor(Math.random() * count),
-    });
-  };
-
-  const first = (await pick(avoid)) ?? (await pick([]));
-  if (!first) return null;
-  const second =
-    (await pick([first.id, ...avoid], first.authorId)) ??
-    (await pick([first.id], first.authorId)) ??
-    (await pick([first.id]));
-  if (!second) return null;
+  const chosen =
+    records.length <= PAIRWISE_LIMIT
+      ? pickExactly(records, seen)
+      : pickBySampling(records, seen);
+  if (!chosen) return null;
 
   const [a, b] = await Promise.all([
-    getYap(first.id, teamId, viewerId),
-    getYap(second.id, teamId, viewerId),
+    getYap(chosen[0], teamId, viewerId),
+    getYap(chosen[1], teamId, viewerId),
   ]);
   if (!a || !b) return null;
   return [a, b];
+}
+
+type Contender = { id: number; authorId: string };
+
+/** Every unseen pair, with two different mouths preferred over one. */
+function pickExactly(records: Contender[], seen: Set<string>): [number, number] | null {
+  const fresh: Array<[number, number]> = [];
+  const sameMouth: Array<[number, number]> = [];
+
+  for (let i = 0; i < records.length; i += 1) {
+    for (let j = i + 1; j < records.length; j += 1) {
+      const a = records[i]!;
+      const b = records[j]!;
+      if (seen.has(pairKey(a.id, b.id))) continue;
+      (a.authorId === b.authorId ? sameMouth : fresh).push([a.id, b.id]);
+    }
+  }
+
+  // Only pit someone against themselves when nothing else is left unseen.
+  const pool = fresh.length > 0 ? fresh : sameMouth;
+  if (pool.length === 0) return null;
+  return pool[Math.floor(Math.random() * pool.length)]!;
+}
+
+/** Too many combinations to list: try a few at random and take the first unseen. */
+function pickBySampling(records: Contender[], seen: Set<string>): [number, number] | null {
+  const draw = () => records[Math.floor(Math.random() * records.length)]!;
+  let fallback: [number, number] | null = null;
+
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const a = draw();
+    const b = draw();
+    if (a.id === b.id) continue;
+    if (!fallback) fallback = [a.id, b.id];
+    if (a.authorId === b.authorId) continue;
+    if (!seen.has(pairKey(a.id, b.id))) return [a.id, b.id];
+  }
+  return fallback;
 }
 
 /**
@@ -249,10 +301,10 @@ export async function getArenaState(
 ): Promise<ArenaState> {
   const records = await prisma.yap.count({ where: { teamId, deletedAt: null } });
   if (records < MIN_ARENA_RECORDS) {
-    return { open: false, records, needed: MIN_ARENA_RECORDS - records };
+    return { open: false, reason: "thin", records, needed: MIN_ARENA_RECORDS - records };
   }
   const pair = await getBattlePair(teamId, viewerId, excludeIds);
-  if (!pair) return { open: false, records, needed: MIN_ARENA_RECORDS - records };
+  if (!pair) return { open: false, reason: "exhausted", records };
   return { open: true, pair };
 }
 

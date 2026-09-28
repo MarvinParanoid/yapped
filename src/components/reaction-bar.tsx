@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { reactAction } from "@/app/actions";
 import { AuraInfo } from "@/components/aura-info";
 import { useD } from "@/lib/i18n/client";
+import { publishAura } from "@/lib/live-aura";
 import { cn } from "@/lib/cn";
 import {
   REACTION_KEYS,
@@ -97,7 +98,11 @@ export function ReactionBar({
     // Optimistic: the archive is fast, or it is nothing.
     setCounts((prev) => ({ ...prev, [key]: Math.max(0, prev[key] + (has ? -1 : 1)) }));
     setMine((prev) => (has ? prev.filter((item) => item !== key) : [...prev, key]));
-    setAura((prev) => prev + delta);
+    setAura((prev) => {
+      // The headline figure elsewhere on the page follows this.
+      publishAura(yapId, prev + delta);
+      return prev + delta;
+    });
     setPulse({ key, delta, id: Date.now() });
 
     startTransition(async () => {
@@ -106,11 +111,13 @@ export function ReactionBar({
         setCounts(result.state.counts);
         setMine(result.state.viewerReactions);
         setAura(result.state.aura);
+        publishAura(yapId, result.state.aura);
         return;
       }
       setCounts(initialCounts);
       setMine(initialMine);
       setAura(initialAura);
+      publishAura(yapId, initialAura);
       setPulse(null);
       if (result.error === "AUTH_REQUIRED") {
         setDenied(true);

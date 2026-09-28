@@ -71,12 +71,12 @@ export function MemberTable({
                 >
                   {ROLES.map((role) => (
                     <option key={role} value={role}>
-                      {role}
+                      {d.admin[role]}
                     </option>
                   ))}
                 </select>
               ) : (
-                <span className="label">{member.role}</span>
+                <span className="label">{d.admin[member.role]}</span>
               )}
 
               {canManage && member.userId !== viewerId ? (

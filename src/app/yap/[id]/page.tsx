@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { after } from "next/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AuraInfo } from "@/components/aura-info";
+import { RecordAura } from "@/components/record-aura";
 import { fill, plural } from "@/lib/i18n/locale";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { EvidencePanel } from "@/components/evidence-panel";
@@ -132,25 +132,18 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
                 </span>
                 {yap.disputedAt ? (
                   <span className="label-strong text-red">
-                    ✕ Denied by {yap.author.displayName}
+                    ✕ {fill(d.verification.deniedBy, { name: yap.author.displayName })}
                   </span>
                 ) : yap.acknowledgedAt ? (
                   <span className="label-strong text-acid">
-                    ✓ Acknowledged by {yap.author.displayName}
+                    ✓ {fill(d.verification.acknowledgedBy, { name: yap.author.displayName })}
                   </span>
                 ) : null}
               </div>
             </div>
 
             <div className="border-t border-paper/20 pt-4 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-              <div className="mono tabnums text-[34px] font-bold leading-none text-acid">
-                {yap.aura >= 0 ? "+" : ""}
-                {formatCount(yap.aura)}
-              </div>
-              <div className="label mt-1.5 flex items-center gap-1.5">
-                {d.reactions.aura}
-                <AuraInfo />
-              </div>
+              <RecordAura yapId={yap.id} initial={yap.aura} />
             </div>
           </div>
 

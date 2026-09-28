@@ -62,15 +62,12 @@ export const TRENDING_GRAVITY = 1.5;
 export const TRENDING_OFFSET_HOURS = 2;
 
 /**
- * How far back Trending looks.
- *
- * This is a low-volume archive: a handful of people, a few statements a week,
- * sometimes a week of nothing. A hard 24-hour window would be empty most of
- * the time and a 7-day one would hold two records. Trending instead reaches
- * back two months and lets the decay do the ranking, so it always has
- * something to say at this scale.
+ * Trending has no window at all: the decay below already sinks an old record to
+ * the bottom, and a hard cutoff on top of that only ever removed it from the
+ * view entirely. This is a low-volume archive whose whole claim is that it does
+ * not forget, so its default view does not stop showing the founding records
+ * after two months. Ranking, yes; hiding, no.
  */
-export const TRENDING_LOOKBACK_DAYS = 60;
 
 export function trendingScore(aura: number, ageHours: number): number {
   return aura / Math.pow(Math.max(ageHours, 0) + TRENDING_OFFSET_HOURS, TRENDING_GRAVITY);

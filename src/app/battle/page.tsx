@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BattleArena } from "@/components/battle-arena";
 import { requireViewer } from "@/lib/auth/team";
+import { fill } from "@/lib/i18n/locale";
 import { getDictionary } from "@/lib/i18n/server";
 import { formatCount } from "@/lib/format";
 import {
@@ -57,22 +58,28 @@ export default async function BattlePage({
             rounds={Math.min(10, distinctPairs(MIN_ARENA_RECORDS + 2))}
           />
         ) : (
-          /* One possible pair is not a tournament: every vote would re-ask the
-             same question and the ratings would just oscillate. */
+          /* Two ways the arena stays shut, and they are different problems: too
+             few records to ask anything, or this person has answered every
+             question there is. */
           <div className="border border-ink bg-paper-2 px-6 py-16 text-center">
-            <p className="quote text-[clamp(1.4rem,3.6vw,2.4rem)]">{d.sections.fieldTooThin}</p>
+            <p className="quote text-[clamp(1.4rem,3.6vw,2.4rem)]">
+              {arena.reason === "thin" ? d.sections.fieldTooThin : d.sections.allJudged}
+            </p>
             <p className="label mx-auto mt-4 max-w-[52ch] leading-[1.6]">
-              the arena needs at least {MIN_ARENA_RECORDS} records to ask a question worth
-              answering. there {arena.records === 1 ? "is" : "are"} {formatCount(arena.records)}
-              {arena.records === 1 ? " record" : " records"} on file —{" "}
-              {formatCount(arena.needed)} more and it opens.
+              {arena.reason === "thin"
+                ? fill(d.sections.fieldTooThinBody, {
+                    min: MIN_ARENA_RECORDS,
+                    n: formatCount(arena.records),
+                    needed: formatCount(arena.needed),
+                  })
+                : fill(d.sections.allJudgedBody, { n: formatCount(arena.records) })}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/submit" className="btn btn-acid">
-                File a yap →
+                {d.sections.fileAYap} →
               </Link>
               <Link href="/" className="btn">
-                Back to the archive
+                {d.sections.backToArchive}
               </Link>
             </div>
           </div>
