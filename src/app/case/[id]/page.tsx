@@ -7,7 +7,7 @@ import { getDictionary } from "@/lib/i18n/server";
 import { cn } from "@/lib/cn";
 import { formatCount, formatDate } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
-import { CASE_STATUS_META, caseCode, getCase } from "@/lib/services/cases";
+import { caseCode, getCase } from "@/lib/services/cases";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +49,7 @@ export default async function CasePage({ params }: Params) {
               ← Case files
             </Link>
             <span className="mono text-[11px] tracking-[0.1em] text-muted-dark">
-              Case {file.code}
+              {d.sections.caseFile} {file.code}
             </span>
             <span
               className={cn(
@@ -61,7 +61,7 @@ export default async function CasePage({ params }: Params) {
                     : "border-paper text-paper",
               )}
             >
-              {CASE_STATUS_META[file.status].label}
+              {d.sections[file.status]}
             </span>
           </div>
 
@@ -72,7 +72,7 @@ export default async function CasePage({ params }: Params) {
             {file.to && file.from && file.to.getTime() !== file.from.getTime()
               ? ` — ${formatDate(file.to, months)}`
               : ""}{" "}
-            · {CASE_STATUS_META[file.status].blurb}
+            · {d.sections[`${file.status}blurb`]}
           </p>
 
           {file.summary ? (

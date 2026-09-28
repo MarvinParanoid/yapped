@@ -22,7 +22,7 @@ import { VerificationBadge } from "@/components/ui/verification-badge";
 import { getViewer, requireViewer } from "@/lib/auth/team";
 import { formatCount, formatDate, formatStamp } from "@/lib/format";
 import { getYapBattleRecord } from "@/lib/services/battles";
-import { CASE_STATUS_META, getCasesForYap, listFilableCases } from "@/lib/services/cases";
+import { getCasesForYap, listFilableCases } from "@/lib/services/cases";
 import {
   getRelatedYaps,
   getYap,
@@ -246,12 +246,12 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
           <div className="border-b border-r border-ink px-3 py-3">
             <dt className="label">{d.record.classification}</dt>
             <dd className="mono mt-1.5 text-[13px] underline decoration-dotted underline-offset-4">
-              {yap.classification}
+              {d.sections[yap.classification]}
             </dd>
           </div>
           <div className="border-b border-r border-ink px-3 py-3">
             <dt className="label">{d.record.verification}</dt>
-            <dd className="mono mt-1.5 text-[13px]">{yap.verification}</dd>
+            <dd className="mono mt-1.5 text-[13px]">{d.verification[yap.verification]}</dd>
           </div>
           <div className="border-b border-r border-ink px-3 py-3">
             <dt className="label">{d.record.views}</dt>
@@ -265,7 +265,7 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
             <header className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2">
               <span className="label-strong">{d.sections.caseFile}</span>
               <Link href="/cases" className="label hover:text-ink">
-                All cases →
+                {d.sections.allCases} →
               </Link>
             </header>
             <div className="flex flex-wrap items-center gap-3 px-3 py-3">
@@ -276,15 +276,16 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
                     href={`/case/${file.id}`}
                     className="group flex flex-wrap items-baseline gap-2 border border-ink px-3 py-2 transition-colors duration-100 hover:bg-paper-2"
                   >
-                    <span className="mono text-[11px] text-muted">Case {file.code}</span>
+                    <span className="mono text-[11px] text-muted">{d.sections.caseFile} {file.code}</span>
                     <span className="text-[15px] font-bold">{file.title}</span>
                     <span className="label">
-                      {file.recordCount} records · {CASE_STATUS_META[file.status].label}
+                      {fill(d.sections.recordsIn, { n: file.recordCount })} ·{" "}
+                      {d.sections[file.status]}
                     </span>
                   </Link>
                 ))
               ) : (
-                <span className="label">not part of any case</span>
+                <span className="label">{d.sections.noCase}</span>
               )}
               {user ? <CaseFiler yapId={yap.id} cases={openCases} /> : null}
             </div>
@@ -296,16 +297,17 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
           <header className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2">
             <span className="label-strong">{d.sections.battleRecord}</span>
             <Link href="/battle/hall" className="label hover:text-ink">
-              Hall of Yap →
+              {d.profile.hallOfYap} →
             </Link>
           </header>
           <div className="grid gap-px bg-ink sm:grid-cols-4">
             <div className="bg-paper px-3 py-3">
-              <span className="label">{d.sections.recordLabel}</span>
+              <span className="label">
+                {d.sections.wins} / {d.sections.losses}
+              </span>
               <p className="mono tabnums mt-1.5 text-[19px] font-bold leading-none">
-                {battleRecord.wins}
-                <span className="text-muted">W</span> / {battleRecord.losses}
-                <span className="text-muted">L</span>
+                {battleRecord.wins} <span className="text-muted">/</span>{" "}
+                {battleRecord.losses}
               </p>
             </div>
             <div className="bg-paper px-3 py-3">
@@ -325,7 +327,7 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
               {battleRecord.last ? (
                 <p className="mt-1.5 text-[12px] leading-[1.4]">
                   <span className={battleRecord.last.won ? "font-bold" : "font-bold text-red"}>
-                    {battleRecord.last.won ? "WON" : "LOST"}
+                    {battleRecord.last.won ? d.sections.won : d.sections.lost}
                   </span>{" "}
                   <span className="mono">
                     {battleRecord.last.delta > 0 ? "+" : ""}
@@ -341,7 +343,7 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
                   </Link>
                 </p>
               ) : (
-                <p className="label mt-1.5">never fought</p>
+                <p className="label mt-1.5">{d.sections.neverFought}</p>
               )}
             </div>
           </div>
@@ -349,10 +351,10 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
 
         <div className="mt-4 flex flex-wrap gap-3">
           <Link href={`/yap/${yap.id}/share`} className="btn">
-            Share card ↗
+            {d.sections.shareCardShort} ↗
           </Link>
           <Link href="/random" className="btn">
-            Random yap →
+            {d.sections.randomYap} →
           </Link>
         </div>
 

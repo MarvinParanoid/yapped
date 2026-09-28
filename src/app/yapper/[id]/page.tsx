@@ -147,9 +147,8 @@ export default async function YapperPage({ params }: Params) {
           <Panel label={d.profile.battleRecord}>
             <div className="flex items-baseline gap-4">
               <span className="mono tabnums text-[30px] font-bold leading-none">
-                {profile.stats.battleWins}
-                <span className="text-muted">W</span> / {profile.stats.battleLosses}
-                <span className="text-muted">L</span>
+                {profile.stats.battleWins} <span className="text-muted">/</span>{" "}
+                {profile.stats.battleLosses}
               </span>
             </div>
             <dl className="mt-4 space-y-1.5">

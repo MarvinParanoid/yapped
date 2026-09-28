@@ -6,7 +6,7 @@ import { formatCount, formatDate } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
 import { requireViewer } from "@/lib/auth/team";
 import { getDictionary } from "@/lib/i18n/server";
-import { CASE_STATUS_META, listCases } from "@/lib/services/cases";
+import { listCases } from "@/lib/services/cases";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +50,7 @@ export default async function CasesPage() {
               >
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="mono text-[11px] tracking-[0.1em] text-muted">
-                    Case {file.code}
+                    {d.sections.caseFile} {file.code}
                   </span>
                   <span
                     className={cn(
@@ -62,7 +62,7 @@ export default async function CasesPage() {
                           : "border-ink bg-acid",
                     )}
                   >
-                    {CASE_STATUS_META[file.status].label}
+                    {d.sections[file.status]}
                   </span>
                   <span className="label">
                     {file.from ? formatDate(file.from, months) : "—"}

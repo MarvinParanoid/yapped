@@ -3,18 +3,32 @@ import type { Dictionary } from "./en";
 /**
  * The interface, in Russian.
  *
- * Not a literal translation — the archive's joke is that it treats banter with
- * the gravity of a records department, and that has to survive the crossing.
- * The vocabulary was chosen to keep it:
+ * THE RULE, and it is not "translate the English":
+ *
+ *   Russian Yapped should read like a cross between an archive, a civil
+ *   service and a police file — and stay short. Product terms may stay in
+ *   English where they read as the system's own vocabulary: Elo, BASED.
+ *
+ * That rule is what produces «ПРИОБЩИТЬ К ДЕЛУ» instead of the limp «ДОБАВИТЬ
+ * В КЕЙС», and it is most of the identity. The joke is that banter is handled
+ * with the gravity of a records department; bureaucratic Russian carries that
+ * further than the English original does.
+ *
+ * Vocabulary the rule settled on:
  *
  *   yap      → цитата      (a quote; "яп" means nothing here)
  *   yapper   → оратор      ironic-formal, the way a minutes-taker would put it
  *   lore     → предыстория
  *   evidence → улика       the word a case file would use
+ *   case     → дело        and filing into one is «приобщить»
  *   cap      → врёшь       the slang the denial button is actually making
  *
  * "Оратор" rather than "трепло" on purpose: the second is funnier for a second
  * and rude for a year, and these are people's colleagues.
+ *
+ * Russian agrees verbs with gender and the archive does not know anyone's, so
+ * every line about a person is phrased to sidestep the question rather than
+ * print "сказал(а)", which reads like a form to be filled in.
  */
 export const ru: Dictionary = {
   brand: {
@@ -26,7 +40,7 @@ export const ru: Dictionary = {
 
   nav: {
     trending: "В движении",
-    fresh: "Свежее",
+    fresh: "Новое",
     top: "Топ",
     yappers: "Ораторы",
     cases: "Дела",
@@ -188,6 +202,28 @@ export const ru: Dictionary = {
     startBattle: "начать баттл",
     chronology: "Хронология",
     caseFile: "Дело",
+    OPEN: "В работе",
+    CLOSED: "Закрыто",
+    COLD: "Глухарь",
+    OPENblurb: "Ещё разворачивается.",
+    CLOSEDblurb: "У эпизода есть развязка.",
+    COLDblurb: "Так и не выяснили, что произошло.",
+    won: "Победа",
+    lost: "Поражение",
+    recordsIn: "записей: {n}",
+    caseNumber: "Дело №{n}",
+    ROUTINE: "Рядовое",
+    QUESTIONABLE: "Сомнительное",
+    UNHINGED: "Невменяемое",
+    CLASSIFIED: "Секретно",
+    allCases: "Все дела",
+    noCase: "Не приобщено ни к одному делу",
+    fileUnderCase: "Приобщить к делу",
+    neverFought: "баттлов не было",
+    wins: "Победы",
+    losses: "Поражения",
+    shareCardShort: "Карточка",
+    randomYap: "Случайная цитата",
     battleRecord: "Баттлы",
     recordLabel: "Счёт",
     elo: "Рейтинг",
@@ -208,7 +244,7 @@ export const ru: Dictionary = {
     newListings: "Новые позиции",
     dormant: "Затихшие",
     aroundThisTime: "Примерно в это же время",
-    fileUnder: "Приобщить запись к делу",
+    fileUnder: "Приобщить к делу",
     closed: "закрыто",
     noCasesYet: "дел пока не заводили",
     openNewCase: "Или завести новое дело…",
@@ -466,7 +502,7 @@ export const ru: Dictionary = {
     notRemoved: "Запись не удаляется. Свидетели остаются при своих показаниях.",
     fileDisputeBtn: "Подать возражение",
     cancel: "Отмена",
-    owningUpNote: "Признание — не подтверждение: оно не засчитывается в заверение.",
+    owningUpNote: "Признание авторства не является свидетельством и не учитывается при заверении.",
     withdraw: "Отозвать",
     acknowledged: "{name} признаёт это своим",
     disputed: "{name} это оспаривает",
@@ -487,10 +523,10 @@ export const ru: Dictionary = {
     CERTIFIED: "Заверено",
     blurbUNVERIFIED: "Это пока никто не подтвердил.",
     blurbWITNESSED: "Один коллега подтверждает, что был при этом.",
-    blurbCONFIRMED: "Два независимых свидетеля. Отыграть назад уже сложно.",
+    blurbCONFIRMED: "Два независимых свидетеля. Отпираться уже поздно.",
     blurbCERTIFIED: "Три свидетеля и больше. Запись считается установленной.",
-    moreNeededOne: " Ещё {n} свидетель — и станет «{rung}».",
-    moreNeededMany: " Ещё {n} свидетеля — и станет «{rung}».",
+    moreNeededOne: " До статуса «{rung}» не хватает одного свидетеля.",
+    moreNeededMany: " До статуса «{rung}» не хватает {n} свидетелей.",
     saysNeverHappened: "утверждает, что этого не было",
   },
 
@@ -575,7 +611,7 @@ export const ru: Dictionary = {
     kicker: "Позвать своего",
     heading: "Приглашение в «{team}»",
     warning:
-      "кто откроет ссылку — попадёт в архив и увидит в нём всё. полумер нет, так что выдавайте её как ключ.",
+      "кто получит ссылку — получит доступ ко всему архиву. обращайтесь с ней как с ключом.",
     yourLinks: "Ваши ссылки-приглашения",
     note: "Пометка",
     notePlaceholder: "для Кати",

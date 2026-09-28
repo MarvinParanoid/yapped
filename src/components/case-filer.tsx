@@ -25,14 +25,14 @@ export function CaseFiler({
   if (!open) {
     return (
       <button type="button" className="btn" onClick={() => setOpen(true)}>
-        File under a case
+        {d.sections.fileUnderCase}
       </button>
     );
   }
 
   return (
     <div className="w-full border border-ink bg-paper-2 px-3 py-3">
-      <span className="label">{d.sections.fileUnder}</span>
+      <span className="label">{d.sections.fileUnderCase}</span>
 
       {cases.length > 0 ? (
         <div className="mt-2 flex flex-wrap gap-2">

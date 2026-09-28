@@ -28,7 +28,13 @@ up everywhere: trending decays over sixty days instead of a day, Wrapped refuses
 fewer than ten records, and a count of `3` is presented with the same gravity as a count of
 three thousand — because at this size the small numbers *are* the joke.
 
-Bilingual by design — the archive handles Russian and English side by side.
+Bilingual by design — the archive handles Russian and English side by side, and the
+interface itself speaks both. The Russian is **not a translation of the English**: it reads
+like a cross between an archive, a civil service and a police file, because the joke is that
+banter is handled with the gravity of a records department, and bureaucratic Russian carries
+that further than the original does. Filing a quote into a case is *приобщить к делу*, not
+*добавить в кейс*. The rule, and the vocabulary it settled, are written down in
+[`src/lib/i18n/ru.ts`](src/lib/i18n/ru.ts).
 
 ## The idea worth stealing
 
