@@ -2,6 +2,8 @@ import "dotenv/config";
 import { createInterface } from "node:readline/promises";
 import { hashPassword } from "../src/lib/auth/password";
 import { prisma } from "../src/lib/db";
+import { en } from "../src/lib/i18n/en";
+import { fill } from "../src/lib/i18n/locale";
 import { createTeam } from "../src/lib/services/teams";
 
 /**
@@ -73,7 +75,9 @@ async function main(): Promise<void> {
     });
 
     const team = await createTeam(teamName, owner.id);
-    if (!team.ok) throw new Error(team.error);
+    // A CLI run by whoever owns the box: English, straight from the source
+    // dictionary, rather than guessing at a locale nobody has chosen yet.
+    if (!team.ok) throw new Error(fill(en.errors[team.code], team.vars ?? {}));
 
     console.log("");
     console.log(`Archive "${teamName}" opened at /${team.slug}.`);

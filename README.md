@@ -183,14 +183,29 @@ server with a read-only token instead.
 The packages link themselves back to the repository — `docker/metadata-action` writes the
 `org.opencontainers.image.source` label and the publish step passes it through.
 
-**Every time after that:**
+**Every time after that: nothing.** A push to `main` that passes `check` publishes the images
+and then tells the server to roll them out, so the sequence is push → green CI → live.
+
+The last hop is an SSH key pinned to one command in the server's `authorized_keys`:
+
+```
+command="cd /root/yapped && ./scripts/deploy.sh",restrict ssh-ed25519 AAAA...
+```
+
+It opens no shell, forwards nothing and ignores whatever the client asks for — the whole power
+of a leaked `DEPLOY_KEY` is "redeploy whatever is on `main`", which a push already decided. The
+host key is pinned too, so a hijacked DNS record cannot collect the secret. Four repository
+secrets carry it: `DEPLOY_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_HOST_KEY`.
+
+A failed rollout shows up as a red job on the commit that caused it, which is the argument for
+doing it this way rather than having the server poll: a poller that fails, fails silently.
+
+**By hand, when you need it:**
 
 ```bash
 ssh your-box 'cd yapped && ./scripts/deploy.sh'
 ```
 
-| | |
-|---|---|
 | `./scripts/deploy.sh` | pull the newest published commit and roll it out |
 | `./scripts/deploy.sh --tag <sha>` | roll out one specific commit |
 | `./scripts/deploy.sh --rollback` | return to the commit the last deploy replaced |

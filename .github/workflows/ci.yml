@@ -108,3 +108,37 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.target }}
           cache-to: type=gha,mode=max,scope=${{ matrix.target }}
+
+  # The last hop: tell the server to roll out the images that were just
+  # published. It runs only after `publish`, so the tag it deploys exists.
+  #
+  # The key in DEPLOY_KEY is pinned to one command in the server's
+  # authorized_keys — it opens no shell, forwards nothing, and takes no
+  # arguments. Its whole power is "redeploy whatever is on origin/main", which
+  # is what a push already decided. The host key is pinned too, so a hijacked
+  # DNS record cannot collect the secret.
+  deploy:
+    needs: publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # One rollout at a time, and never cancelled halfway: the script restarts
+    # containers, and an interrupted run would leave the checkout ahead of the
+    # image it is serving.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+
+    steps:
+      - name: Roll out
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST_KEY: ${{ secrets.DEPLOY_HOST_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_HOST_KEY" > ~/.ssh/known_hosts
+          # No command is passed: the server decides what this key may run.
+          ssh -i ~/.ssh/id_ed25519 -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST"
