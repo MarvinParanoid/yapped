@@ -61,6 +61,16 @@ export const ru: Dictionary = {
   },
 
   feed: {
+    pageOf: "страница {page} из {pages}",
+    onFileOne: "в архиве {n} запись",
+    onFileFew: "в архиве {n} записи",
+    onFileMany: "в архиве {n} записей",
+    yapCountOne: "{n} цитата",
+    yapCountFew: "{n} цитаты",
+    yapCountMany: "{n} цитат",
+    today: "Сегодня",
+    selectingContenders: "подбираем претендентов...",
+    rankingYappers: "выстраиваем ораторов...",
     furtherBack: "Ещё раньше",
     openRecord: "Открыть запись",
     noYappers: "ораторы не установлены",
@@ -107,6 +117,14 @@ export const ru: Dictionary = {
   },
 
   empty: {
+    nothingInWindow: "в этом окне пусто — возьмите шире",
+    nothingToTrade: "архиву нечем торговать",
+    nothingMoved: "в этом окне ничто не двигалось",
+    noRecordsFiled: "в этом окне ничего не заносили",
+    everythingReacted: "на всё отреагировали хотя бы раз",
+    nobodyOnRecord: "в протоколе пока никого",
+    nobodySaidInWindow: "в этом окне никто ничего не сказал",
+    nothingSaidYet: "ничего пока не сказано.",
     noResults: "НИЧЕГО НЕ НАЙДЕНО. ПОДОЗРИТЕЛЬНО.",
     noResultsHint: "ни одна запись под это не подходит",
     firstRecord: "Архив начинается здесь",
@@ -193,6 +211,23 @@ export const ru: Dictionary = {
   },
 
   sections: {
+    wholeRecordSoFar: "весь архив с начала",
+    thisTimeOfYear: "в это время года, в прошлые годы",
+    toTheDay: "день в день",
+    listedOne: "в обращении {n} запись",
+    listedFew: "в обращении {n} записи",
+    listedMany: "в обращении {n} записей",
+    fromIndex: "от {aura}",
+    yearsAgoOne: "{n} год назад",
+    yearsAgoFew: "{n} года назад",
+    yearsAgoMany: "{n} лет назад",
+    recordCountOne: "{n} запись",
+    recordCountFew: "{n} записи",
+    recordCountMany: "{n} записей",
+    contenderA: "Претендент А",
+    contenderB: "Претендент Б",
+    thisOneWins: "Эта сильнее",
+    signInToVote: "Войдите, чтобы голосовать",
     marketDisclaimer: "аура восстановлена по времени реакций · запись может только расти, обвала не предвидится · выражайтесь ответственно",
     dayBefore: "Днём раньше",
     dayAfter: "Днём позже",
@@ -323,6 +358,12 @@ export const ru: Dictionary = {
   },
 
   wrapped: {
+    peopleOne: "{n} участник",
+    peopleFew: "{n} участника",
+    peopleMany: "{n} участников",
+    statementsOne: "{n} высказывание",
+    statementsFew: "{n} высказывания",
+    statementsMany: "{n} высказываний",
     contributors: "в записях отметились: {n}",
     sparseBody: "либо ничего не происходило, либо никто не вёл протокол",
     loreCarries: "записей с обстоятельствами: {n}",
@@ -446,6 +487,7 @@ export const ru: Dictionary = {
   },
 
   pageTitles: {
+    onRecordShort: "навсегда в архиве",
     signIn: "Вход",
     register: "Регистрация",
     invitation: "Приглашение",
@@ -551,6 +593,7 @@ export const ru: Dictionary = {
   },
 
   submit: {
+    sixIsPlenty: "шести достаточно",
     uploadImage: "Приложить изображение",
     orDragDrop: "или перетащите сюда",
     verbatimHint: "дословно. обстоятельства — ниже.",
@@ -612,6 +655,7 @@ export const ru: Dictionary = {
   },
 
   join: {
+    refused: "Архив отклонил это приглашение.",
     invitedTo: "Вас пригласили в",
     what: "бессрочный архив сомнительных высказываний. всё занесённое остаётся навсегда, и это видят все внутри.",
     joinTeam: "Вступить в «{team}»",

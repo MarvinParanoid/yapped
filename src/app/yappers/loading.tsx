@@ -1,5 +1,7 @@
 import { ArchiveLoading } from "@/components/ui/archive-loading";
+import { getDictionary } from "@/lib/i18n/server";
 
-export default function Loading() {
-  return <ArchiveLoading label="ranking the yappers..." />;
+export default async function Loading() {
+  const d = await getDictionary();
+  return <ArchiveLoading label={d.feed.rankingYappers} />;
 }

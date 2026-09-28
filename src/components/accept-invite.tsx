@@ -47,7 +47,7 @@ export function AcceptInvite({
                 router.replace("/");
                 router.refresh();
               } else {
-                setError(result.error ?? "The archive refused this invitation.");
+                setError(result.error ?? d.join.refused);
               }
             })
           }

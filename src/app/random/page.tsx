@@ -36,8 +36,8 @@ export default async function RandomPage({
     return (
       <div className="mx-auto max-w-[1400px] px-4 py-20 sm:px-6 lg:px-8">
         <EmptyState
-          title="NOTHING TO YAP."
-          hint="the archive is empty"
+          title={d.empty.nothingToYap}
+          hint={d.empty.nothingToYapHint}
           action={
             <Link href="/submit" className="btn btn-acid">
               {d.sections.fileFirstYap} →

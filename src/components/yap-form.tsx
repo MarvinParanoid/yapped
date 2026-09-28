@@ -161,7 +161,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
                 if (event.key === "Backspace" && !tagDraft) setTags(tags.slice(0, -1));
               }}
               onBlur={() => commitTag(tagDraft)}
-              placeholder={tags.length >= 6 ? "six is plenty" : "+ add tag"}
+              placeholder={tags.length >= 6 ? d.submit.sixIsPlenty : d.submit.addTag}
               disabled={tags.length >= 6}
               className="min-w-[110px] flex-1 bg-transparent px-1 py-1 font-mono text-[12px] outline-none"
             />

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getDictionary } from "@/lib/i18n/server";
 import { WrappedReportView } from "@/components/wrapped-report";
 import { requireViewer } from "@/lib/auth/team";
 import { getWrapped, listPeriods, periodLabel } from "@/lib/services/wrapped";
@@ -17,7 +18,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { year } = await params;
   const parsed = parseYear(year);
   if (!parsed) notFound();
-  return { title: `${periodLabel({ year: parsed, month: null })} wrapped` };
+  const d = await getDictionary();
+  return { title: `${periodLabel({ year: parsed, month: null })} ${d.pageTitles.wrapped}` };
 }
 
 export default async function WrappedYearPage({ params }: Params) {

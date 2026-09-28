@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { YapCard } from "@/components/yap-card";
 import { requireViewer } from "@/lib/auth/team";
-import { getDictionary } from "@/lib/i18n/server";
+import { fill, plural } from "@/lib/i18n/locale";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { formatDate } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
 import { getOnThisDay } from "@/lib/services/on-this-day";
@@ -33,7 +34,7 @@ export default async function OnThisDayPage({
 }) {
   const { date: dateParam } = await searchParams;
   const { user, team } = await requireViewer("/on-this-day");
-  const d = await getDictionary();
+  const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
   const months = d.profile.months.split(" ");
   const report = await getOnThisDay(team.id, parseDate(dateParam), user.id);
   const today = report.date;
@@ -51,7 +52,7 @@ export default async function OnThisDayPage({
               ? `what was said around this time in ${report.anniversaries
                   .map((entry) => entry.year)
                   .join(", ")}`
-              : "this time of year, in earlier years"}
+              : d.sections.thisTimeOfYear}
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -79,7 +80,7 @@ export default async function OnThisDayPage({
             <p className="label mt-4 leading-[1.6]">
               {report.archiveStart
                 ? `the record begins ${formatDate(report.archiveStart, months)}. nothing was said within a week of this date in any earlier year — this page fills itself in as the archive ages.`
-                : "nothing has been said yet."}
+                : d.empty.nothingSaidYet}
             </p>
             {report.firstAnniversary ? (
               <p className="label mt-2">
@@ -98,12 +99,26 @@ export default async function OnThisDayPage({
               <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-ink pb-2">
                 <h2 className="quote text-[clamp(1.4rem,3vw,2rem)]">
                   {entry.exact
-                    ? `${entry.yearsAgo} ${entry.yearsAgo === 1 ? "year" : "years"} ago`
+                    ? fill(
+                        plural(locale, entry.yearsAgo, [
+                          d.sections.yearsAgoOne,
+                          d.sections.yearsAgoFew,
+                          d.sections.yearsAgoMany,
+                        ]),
+                        { n: entry.yearsAgo },
+                      )
                     : d.sections.aroundThisTime}
                 </h2>
                 <span className="label">
-                  {entry.year} · {entry.records.length}{" "}
-                  {entry.records.length === 1 ? "record" : "records"}
+                  {entry.year} ·{" "}
+                  {fill(
+                    plural(locale, entry.records.length, [
+                      d.sections.recordCountOne,
+                      d.sections.recordCountFew,
+                      d.sections.recordCountMany,
+                    ]),
+                    { n: entry.records.length },
+                  )}
                 </span>
               </div>
 
@@ -116,7 +131,7 @@ export default async function OnThisDayPage({
                     <div className="-mt-px flex flex-wrap items-center gap-x-6 gap-y-1 border border-ink bg-paper-2 px-4 py-2">
                       <span className="label">
                         <span className="mono font-bold text-ink">{record.daysAgo}</span> days ago
-                        {record.offsetDays === 0 ? " · to the day" : ""}
+                        {record.offsetDays === 0 ? ` · ${d.sections.toTheDay}` : ""}
                       </span>
                       <span className="label">
                         aura that day{" "}

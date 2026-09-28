@@ -42,9 +42,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const yap = await getYapSummary(Number(id), viewer.team.id);
   // Raised here as well as in the page so the response carries a real 404.
   if (!yap) notFound();
+  const d = await getDictionary();
   return {
     title: `“${yap.text}” — ${yap.author}`,
-    description: yap.lore ?? "permanently on record",
+    description: yap.lore ?? d.pageTitles.onRecordShort,
     openGraph: {
       title: `“${yap.text}”`,
       description: `— ${yap.author}`,

@@ -23,18 +23,23 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "yapped.",
-    template: "%s — yapped.",
-  },
-  description: "things that should've stayed in the meeting",
-  openGraph: {
-    title: "yapped.",
-    description: "things that should've stayed in the meeting",
-    siteName: "yapped.",
-  },
-};
+// The tagline is interface text like any other, so it is read rather than
+// written out here — which means this is generateMetadata, not a static const.
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return {
+    title: {
+      default: "yapped.",
+      template: "%s — yapped.",
+    },
+    description: d.brand.tagline,
+    openGraph: {
+      title: "yapped.",
+      description: d.brand.tagline,
+      siteName: "yapped.",
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#0C0C0C",

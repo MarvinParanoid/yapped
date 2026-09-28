@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/cn";
+import { fill, plural } from "@/lib/i18n/locale";
+import { getLocale } from "@/lib/i18n/server";
 import { formatCount } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
 import { MOMENTUM_META } from "@/lib/ranking/momentum";
@@ -89,7 +91,7 @@ export default async function MarketPage({
   const selected =
     WINDOWS.find((entry) => String(entry.hours) === windowParam) ?? WINDOWS[1];
   const { team } = await requireViewer("/market");
-  const d = await getDictionary();
+  const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
   const market = await getMarket(team.id, selected.hours);
 
   const up = market.indexPercent !== null && market.indexPercent > 0;
@@ -117,7 +119,7 @@ export default async function MarketPage({
               </span>
               <span className="label mt-2 block">
                 {market.indexPercent === null
-                  ? "the whole record so far"
+                  ? d.sections.wholeRecordSoFar
                   : `over ${selected.label}`}
               </span>
             </div>
@@ -129,8 +131,22 @@ export default async function MarketPage({
               </span>
               <span className="label mt-2 block">
                 {market.indexPercent === null
-                  ? `${market.tracked === 1 ? "record" : "records"} listed`
-                  : `from ${formatAura(market.indexThen)} · ${formatCount(market.tracked)} listed`}
+                  ? fill(
+                      plural(locale, market.tracked, [
+                        d.sections.listedOne,
+                        d.sections.listedFew,
+                        d.sections.listedMany,
+                      ]),
+                      { n: formatCount(market.tracked) },
+                    )
+                  : `${fill(d.sections.fromIndex, { aura: formatAura(market.indexThen) })} · ${fill(
+                      plural(locale, market.tracked, [
+                        d.sections.listedOne,
+                        d.sections.listedFew,
+                        d.sections.listedMany,
+                      ]),
+                      { n: formatCount(market.tracked) },
+                    )}`}
               </span>
             </div>
           </div>
@@ -156,25 +172,25 @@ export default async function MarketPage({
 
       <div className="mx-auto max-w-[1200px] px-4 py-8 pb-20 sm:px-6 lg:px-8">
         {market.tracked === 0 ? (
-          <EmptyState title={d.sections.noListings} hint="the archive has nothing to trade" />
+          <EmptyState title={d.sections.noListings} hint={d.empty.nothingToTrade} />
         ) : (
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="lg:col-span-2">
               <Table
                 title={`Movers — ${selected.label}`}
                 rows={market.movers}
-                empty="nothing moved in this window"
+                empty={d.empty.nothingMoved}
               />
             </div>
             <Table
               title={d.sections.newListings}
               rows={market.newcomers}
-              empty="no records filed in this window"
+              empty={d.empty.noRecordsFiled}
             />
             <Table
               title={d.sections.dormant}
               rows={market.dormant}
-              empty="everything got at least one reaction"
+              empty={d.empty.everythingReacted}
             />
           </div>
         )}

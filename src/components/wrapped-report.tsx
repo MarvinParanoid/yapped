@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
 import type { Dictionary } from "@/lib/i18n/en";
-import { fill } from "@/lib/i18n/locale";
-import { getDictionary } from "@/lib/i18n/server";
+import { fill, plural } from "@/lib/i18n/locale";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { formatCount } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
 import { periodSlug, type WrappedPeriod, type WrappedReport } from "@/lib/services/wrapped";
@@ -75,7 +75,7 @@ export async function WrappedReportView({
   previous: WrappedPeriod | null;
   next: WrappedPeriod | null;
 }) {
-  const d = await getDictionary();
+  const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
   const empty = report.yapCount === 0;
   const peakLoad = Math.max(...report.hours, 1);
 
@@ -150,7 +150,7 @@ export async function WrappedReportView({
             ) : null}
             <p className="label border-t border-ink px-5 py-3 text-center">
               {formatCount(report.activeYappers)}{" "}
-              {report.activeYappers === 1 ? "person" : "people"} contributed ·{" "}
+              {fill(plural(locale, report.activeYappers, [d.wrapped.peopleOne, d.wrapped.peopleFew, d.wrapped.peopleMany]), { n: formatCount(report.activeYappers) })} contributed ·{" "}
               {formatCount(report.witnessCount)} witnesses · full reports need{" "}
               {10} records
             </p>
@@ -202,7 +202,7 @@ export async function WrappedReportView({
                     <p className="label mt-1.5">
                       {formatAura(report.topYapper.aura)} aura from{" "}
                       {formatCount(report.topYapper.yapCount)}{" "}
-                      {report.topYapper.yapCount === 1 ? "statement" : "statements"}
+                      {fill(plural(locale, report.topYapper.yapCount, [d.wrapped.statementsOne, d.wrapped.statementsFew, d.wrapped.statementsMany]), { n: formatCount(report.topYapper.yapCount) })}
                     </p>
                   </div>
                 </Link>
@@ -219,7 +219,7 @@ export async function WrappedReportView({
                   </p>
                   <p className="label mt-1.5">
                     {formatCount(report.topTag.count)}{" "}
-                    {report.topTag.count === 1 ? "record" : "records"}
+                    {fill(plural(locale, report.topTag.count, [d.sections.recordCountOne, d.sections.recordCountFew, d.sections.recordCountMany]), { n: formatCount(report.topTag.count) })}
                   </p>
                 </Link>
               ) : null}

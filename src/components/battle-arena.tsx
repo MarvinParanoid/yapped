@@ -77,7 +77,7 @@ export function BattleArena({
       )}
     >
       <div className="flex items-center gap-3 border-b border-ink px-3 py-2">
-        <span className="label">{side === "left" ? "Contender A" : "Contender B"}</span>
+        <span className="label">{side === "left" ? d.sections.contenderA : d.sections.contenderB}</span>
         <Link href={`/yap/${yap.id}`} className="mono ml-auto text-[11px] text-muted hover:text-ink">
           {yap.code}
         </Link>
@@ -108,7 +108,7 @@ export function BattleArena({
         disabled={pending}
         className="btn btn-solid w-full border-x-0 border-b-0 py-3.5 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {signedIn ? "This one wins" : "Sign in to vote"}
+        {signedIn ? d.sections.thisOneWins : d.sections.signInToVote}
       </button>
     </div>
   );

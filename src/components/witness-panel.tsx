@@ -16,7 +16,7 @@ import { fill } from "@/lib/i18n/locale";
 import type { WitnessStance, YapperRef } from "@/lib/types";
 import {
   VERIFICATION_LADDER,
-  VERIFICATION_META,
+  VERIFICATION_RUNG,
   nextRung,
   type Verification,
 } from "@/lib/verification";
@@ -96,7 +96,7 @@ export function WitnessPanel({
   }
 
   const next = nextRung(count);
-  const currentRung = VERIFICATION_META[verification].rung;
+  const currentRung = VERIFICATION_RUNG[verification];
   const present = witnesses.filter((entry) => entry.stance === "PRESENT");
   const denied = witnesses.filter((entry) => entry.stance === "DENIED");
 

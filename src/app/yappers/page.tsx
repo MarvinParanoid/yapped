@@ -67,8 +67,8 @@ export default async function YappersPage({
             title={d.sections.noKnownYappers}
             hint={
               range === "all"
-                ? "nobody is on the record yet"
-                : "nobody said anything in this window"
+                ? d.empty.nobodyOnRecord
+                : d.empty.nobodySaidInWindow
             }
           />
         </div>

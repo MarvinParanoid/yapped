@@ -35,30 +35,20 @@ export const WITNESS_THRESHOLDS: Record<Verification, number> = {
   CERTIFIED: 3,
 };
 
-export const VERIFICATION_META: Record<
-  Verification,
-  { label: string; blurb: string; rung: number }
-> = {
-  UNVERIFIED: {
-    label: "Unverified",
-    blurb: "No one has corroborated this statement yet.",
-    rung: 0,
-  },
-  WITNESSED: {
-    label: "Witnessed",
-    blurb: "One colleague confirms they were present.",
-    rung: 1,
-  },
-  CONFIRMED: {
-    label: "Confirmed",
-    blurb: "Two independent witnesses place this statement in the room.",
-    rung: 2,
-  },
-  CERTIFIED: {
-    label: "Certified",
-    blurb: "Three or more witnesses. The record is considered settled.",
-    rung: 3,
-  },
+/**
+ * Where each rung sits on the ladder, and nothing else.
+ *
+ * It used to carry an English `label` and `blurb` as well, which the badge
+ * rendered — a second copy of interface text living outside `lib/i18n`, quietly
+ * disagreeing with the translated one. The words are in the dictionary under
+ * `verification.*` and `verification.blurb*`; the number is a rule, so it lives
+ * here with the rest of the ladder.
+ */
+export const VERIFICATION_RUNG: Record<Verification, number> = {
+  UNVERIFIED: 0,
+  WITNESSED: 1,
+  CONFIRMED: 2,
+  CERTIFIED: 3,
 };
 
 /** The formula. Denials are recorded but never demote a record — see disputes. */

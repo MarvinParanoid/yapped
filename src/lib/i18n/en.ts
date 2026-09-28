@@ -42,6 +42,16 @@ export const en = {
   },
 
   feed: {
+    pageOf: "page {page} of {pages}",
+    onFileOne: "{n} record on file",
+    onFileFew: "{n} records on file",
+    onFileMany: "{n} records on file",
+    yapCountOne: "{n} yap",
+    yapCountFew: "{n} yaps",
+    yapCountMany: "{n} yaps",
+    today: "Today",
+    selectingContenders: "selecting contenders...",
+    rankingYappers: "ranking the yappers...",
     furtherBack: "Further back",
     openRecord: "Open record",
     noYappers: "no known yappers",
@@ -88,6 +98,14 @@ export const en = {
   },
 
   empty: {
+    nothingInWindow: "nothing in this window — try a wider one",
+    nothingToTrade: "the archive has nothing to trade",
+    nothingMoved: "nothing moved in this window",
+    noRecordsFiled: "no records filed in this window",
+    everythingReacted: "everything got at least one reaction",
+    nobodyOnRecord: "nobody is on the record yet",
+    nobodySaidInWindow: "nobody said anything in this window",
+    nothingSaidYet: "nothing has been said yet.",
     noResults: "NO YAPS FOUND. SUSPICIOUS.",
     noResultsHint: "no record matches that",
     firstRecord: "The record starts here",
@@ -173,6 +191,23 @@ export const en = {
   },
 
   sections: {
+    wholeRecordSoFar: "the whole record so far",
+    thisTimeOfYear: "this time of year, in earlier years",
+    toTheDay: "to the day",
+    listedOne: "{n} record listed",
+    listedFew: "{n} records listed",
+    listedMany: "{n} records listed",
+    fromIndex: "from {aura}",
+    yearsAgoOne: "{n} year ago",
+    yearsAgoFew: "{n} years ago",
+    yearsAgoMany: "{n} years ago",
+    recordCountOne: "{n} record",
+    recordCountFew: "{n} records",
+    recordCountMany: "{n} records",
+    contenderA: "Contender A",
+    contenderB: "Contender B",
+    thisOneWins: "This one wins",
+    signInToVote: "Sign in to vote",
     marketDisclaimer: "aura is reconstructed from reaction timestamps · a record can only gain, so there is no crash to report · yap responsibly",
     dayBefore: "Day before",
     dayAfter: "Day after",
@@ -303,6 +338,12 @@ export const en = {
   },
 
   wrapped: {
+    peopleOne: "{n} person",
+    peopleFew: "{n} people",
+    peopleMany: "{n} people",
+    statementsOne: "{n} statement",
+    statementsFew: "{n} statements",
+    statementsMany: "{n} statements",
     contributors: "{n} people contributed to the record",
     sparseBody: "either nothing happened or nobody was taking notes",
     loreCarries: "{n} of the records carry context",
@@ -426,6 +467,7 @@ export const en = {
   },
 
   pageTitles: {
+    onRecordShort: "permanently on record",
     signIn: "Sign in",
     register: "Register",
     invitation: "Invitation",
@@ -531,6 +573,7 @@ export const en = {
   },
 
   submit: {
+    sixIsPlenty: "six is plenty",
     uploadImage: "Upload image",
     orDragDrop: "or drag and drop",
     verbatimHint: "verbatim, please. context goes below.",
@@ -591,6 +634,7 @@ export const en = {
   },
 
   join: {
+    refused: "The archive refused this invitation.",
     invitedTo: "You have been invited to",
     what: "a permanent record of questionable statements. everything filed here stays filed, and everyone inside can see it.",
     joinTeam: "Join {team}",

@@ -87,15 +87,44 @@ describe("interface text", () => {
       /^(anna|yapped123)$/i,
     ];
 
+    // Text between tags is only the first hiding place. Most of what was found
+    // was somewhere else: a prop (`hint="the archive has nothing to trade"`)
+    // or a ternary picking between two English strings. Both are checked, and
+    // both were silent while the sentence-in-the-markup rule passed.
+    const attribute = /([A-Za-z][\w-]*)="([^"\n]+)"/g;
+    const ternary = /\?\s*"([^"\n]+)"\s*:\s*"([^"\n]+)"/g;
+    // Props whose value is an identifier, a URL or a class list, never a
+    // sentence — a match there is a false alarm, and one false alarm is how a
+    // rule like this gets deleted.
+    const technical =
+      /^(className|class|href|src|srcSet|alt|id|key|name|type|role|rel|target|accept|autoComplete|inputMode|style|method|action|encType|pattern|value|defaultValue|charSet|sizes|as|scope|dir|lang|slot|form|list|step|min|max|data-[\w-]+|aria-[\w-]+)$/;
+
     for (const file of tsxFiles(SRC)) {
-      for (const match of readFileSync(file, "utf8").matchAll(textNodes)) {
+      const source = readFileSync(file, "utf8");
+      const where = path.relative(SRC, file);
+
+      for (const match of source.matchAll(textNodes)) {
         // `&apos;` is text, but both its semicolon and the apostrophe it
         // stands for would read as code, so it goes before the check.
         const text = match[1]!.replace(/&[a-z]+;/g, "").trim();
         if (!text || code.test(text)) continue;
         if (allowed.some((pattern) => pattern.test(text))) continue;
         if (!prose.test(text)) continue;
-        offenders.push(`${path.relative(SRC, file)}: ${JSON.stringify(text)}`);
+        offenders.push(`${where}: ${JSON.stringify(text)}`);
+      }
+
+      for (const match of source.matchAll(attribute)) {
+        const [, attr, text] = match;
+        if (technical.test(attr!) || !prose.test(text!)) continue;
+        offenders.push(`${where}: ${attr}=${JSON.stringify(text)}`);
+      }
+
+      for (const match of source.matchAll(ternary)) {
+        for (const text of [match[1]!, match[2]!]) {
+          // A hyphen or colon means a class list, not a sentence.
+          if (!prose.test(text) || /[-:]/.test(text)) continue;
+          offenders.push(`${where}: ${JSON.stringify(text)}`);
+        }
       }
     }
 

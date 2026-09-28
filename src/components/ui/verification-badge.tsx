@@ -1,7 +1,7 @@
 import { cn } from "@/lib/cn";
 import { fill, plural } from "@/lib/i18n/locale";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
-import { VERIFICATION_META, type Verification } from "@/lib/verification";
+import { type Verification } from "@/lib/verification";
 
 /**
  * Where a record sits on the verification ladder. In the feed only records that
@@ -22,7 +22,6 @@ export async function VerificationBadge({
   if (context === "feed" && verification === "UNVERIFIED") return null;
 
   const certified = verification === "CERTIFIED";
-  const meta = VERIFICATION_META[verification];
   const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
 
   return (
@@ -34,7 +33,7 @@ export async function VerificationBadge({
         certified ? "border border-ink px-2 py-1 font-bold" : "text-muted",
         className,
       )}
-      title={meta.blurb}
+      title={d.verification[`blurb${verification}`]}
     >
       {certified ? <span aria-hidden>✓</span> : null}
       {d.verification[verification]}

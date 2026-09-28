@@ -324,7 +324,7 @@ export async function registerAction(_previous: AuthState, formData: FormData): 
   const displayName = String(formData.get("displayName") ?? "");
 
   const invite = await inspectInvite(token);
-  if (!invite.ok) return { error: INVITE_ERRORS[invite.reason] };
+  if (!invite.ok) return { error: await inviteProblem(invite.reason) };
 
   // Order matters. Check the form first, so a rejected password does not burn a
   // single-use link; then take the seat, so two people racing for the last one
@@ -334,7 +334,7 @@ export async function registerAction(_previous: AuthState, formData: FormData): 
   if (!valid.ok) return { error: await say(valid) };
 
   const spent = await consumeInvite(token);
-  if (!spent.ok) return { error: INVITE_ERRORS[spent.reason] };
+  if (!spent.ok) return { error: await inviteProblem(spent.reason) };
 
   const result = await registerAccount(username, password, displayName, invite.teamId);
   if (!result.ok) {
@@ -348,12 +348,17 @@ export async function registerAction(_previous: AuthState, formData: FormData): 
   redirect("/");
 }
 
-const INVITE_ERRORS: Record<"UNKNOWN" | "REVOKED" | "EXPIRED" | "EXHAUSTED", string> = {
-  UNKNOWN: "That invite does not exist.",
-  REVOKED: "That invite has been revoked.",
-  EXPIRED: "That invite has expired.",
-  EXHAUSTED: "That invite has been used up.",
-};
+/**
+ * Why a link did not work, in the reader's language. The join page already
+ * words all four reasons; this is the same copy reaching the form that failed,
+ * rather than a second English set nobody remembered to translate.
+ */
+async function inviteProblem(
+  reason: "UNKNOWN" | "REVOKED" | "EXPIRED" | "EXHAUSTED",
+): Promise<string> {
+  const d = await getDictionary();
+  return d.join[`${reason}Hint`];
+}
 
 async function setTeamCookie(slug: string): Promise<void> {
   const jar = await cookies();
@@ -371,7 +376,7 @@ export async function acceptInviteAction(token: string): Promise<{ ok: boolean; 
   if (!user) return { ok: false, error: await say({ code: "SIGN_IN_FIRST" }) };
 
   const invite = await inspectInvite(token);
-  if (!invite.ok) return { ok: false, error: INVITE_ERRORS[invite.reason] };
+  if (!invite.ok) return { ok: false, error: await inviteProblem(invite.reason) };
 
   // Already inside: joining again would quietly eat a seat for nothing.
   const teams = await listMemberships(user.id);
@@ -382,7 +387,7 @@ export async function acceptInviteAction(token: string): Promise<{ ok: boolean; 
   }
 
   const spent = await consumeInvite(token);
-  if (!spent.ok) return { ok: false, error: INVITE_ERRORS[spent.reason] };
+  if (!spent.ok) return { ok: false, error: await inviteProblem(spent.reason) };
 
   await joinTeam(user.id, invite.teamId);
   await setTeamCookie(invite.teamSlug);

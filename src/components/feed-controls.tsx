@@ -14,13 +14,16 @@ import type { RangeKey, SortKey } from "@/lib/types";
  * months and ranks by decay — at this archive's volume a 24-hour window would
  * usually be empty — and Fresh is simply ordered by arrival.
  */
-const WINDOWS: Record<SortKey, Array<{ key: RangeKey; label: string }>> = {
+const WINDOWS: Record<
+  SortKey,
+  Array<{ key: RangeKey; dict: "today" | "thisWeek" | "thisMonth" | "allTime" }>
+> = {
   trending: [],
   top: [
-    { key: "today", label: "Today" },
-    { key: "week", label: "This week" },
-    { key: "month", label: "This month" },
-    { key: "all", label: "All time" },
+    { key: "today", dict: "today" },
+    { key: "week", dict: "thisWeek" },
+    { key: "month", dict: "thisMonth" },
+    { key: "all", dict: "allTime" },
   ],
   fresh: [],
 };
@@ -62,7 +65,7 @@ export function FeedControls({ sort, range }: { sort: SortKey; range: RangeKey }
                 : "text-muted hover:bg-paper-3 hover:text-ink",
             )}
           >
-            {item.label}
+            {d.feed[item.dict]}
           </button>
         ))}
       </div>

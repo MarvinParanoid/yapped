@@ -14,6 +14,7 @@ import { requireViewer } from "@/lib/auth/team";
 import type { Dictionary } from "@/lib/i18n/en";
 import { fill, plural } from "@/lib/i18n/locale";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
+import { formatCount } from "@/lib/format";
 import { countYaps, getArchiveStats, listTags, listYaps } from "@/lib/services/yaps";
 import { getLeaderboard } from "@/lib/services/yappers";
 import { getMomentum } from "@/lib/services/aura-history";
@@ -239,9 +240,7 @@ export default async function FeedPage({
             {yaps.length === 0 ? (
               <EmptyState
                 hint={
-                  query || tag
-                    ? "no record matches that"
-                    : "nothing in this window — try a wider one"
+                  query || tag ? d.empty.noResultsHint : d.empty.nothingInWindow
                 }
               />
             ) : (
@@ -267,8 +266,8 @@ export default async function FeedPage({
                 <span />
               )}
               <span className="label">
-                page {page} of {pageCount} · {total}{" "}
-                {total === 1 ? "record" : "records"} on file
+                {fill(d.feed.pageOf, { page, pages: pageCount })} ·{" "}
+                {fill(plural(locale, total, [d.feed.onFileOne, d.feed.onFileFew, d.feed.onFileMany]), { n: formatCount(total) })}
               </span>
               {page < pageCount ? (
                 <Link href={pageHref(page + 1)} className="btn">
@@ -294,7 +293,7 @@ export default async function FeedPage({
                   <Link
                     key={item.slug}
                     href={`/?tag=${encodeURIComponent(item.slug)}`}
-                    title={`${item.count} ${item.count === 1 ? "yap" : "yaps"}`}
+                    title={fill(plural(locale, item.count, [d.feed.yapCountOne, d.feed.yapCountFew, d.feed.yapCountMany]), { n: formatCount(item.count) })}
                     className={cn(
                       "font-mono leading-tight transition-colors duration-100 hover:text-acid-deep",
                       TAG_STYLES[tagWeight(item.count, maxTagCount)],
