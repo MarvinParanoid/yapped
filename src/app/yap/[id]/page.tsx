@@ -6,7 +6,6 @@ import { RecordAura } from "@/components/record-aura";
 import { fill, plural } from "@/lib/i18n/locale";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { EvidencePanel } from "@/components/evidence-panel";
-import { CaseFiler } from "@/components/case-filer";
 import { DisputePanel } from "@/components/dispute-panel";
 import { LorePanel } from "@/components/lore-panel";
 import { WitnessPanel } from "@/components/witness-panel";
@@ -22,7 +21,6 @@ import { VerificationBadge } from "@/components/ui/verification-badge";
 import { getViewer, requireViewer } from "@/lib/auth/team";
 import { formatCount, formatDate, formatStamp } from "@/lib/format";
 import { getYapBattleRecord } from "@/lib/services/battles";
-import { getCasesForYap, listFilableCases } from "@/lib/services/cases";
 import {
   getRelatedYaps,
   getYap,
@@ -64,18 +62,16 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
   const yap = await getYap(yapId, team.id, user.id);
   if (!yap) notFound();
 
-  const [related, battleRecord, cases, openCases, witnesses, query] = await Promise.all([
+  const [related, battleRecord, witnesses, query] = await Promise.all([
     getRelatedYaps(team.id, yap.author.id, yap.id, 3, user.id),
     getYapBattleRecord(yap.id, team.id),
-    getCasesForYap(yap.id, team.id),
-    listFilableCases(team.id),
     listWitnesses(yap.id, team.id),
     searchParams,
   ]);
   const isAuthor = yap.author.id === user.id;
   // Runs once the response is sent, instead of a floating promise that can
   // outlive the render and hold a connection open.
-  after(() => recordView(yap.id));
+  after(() => recordView(yap.id, team.id));
 
   const evidence = yap.evidence[0];
 
@@ -251,39 +247,6 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
             <dd className="mono tabnums mt-1.5 text-[13px]">{formatCount(yap.viewCount)}</dd>
           </div>
         </dl>
-
-        {/* Where this record sits in a larger episode. */}
-        {cases.length > 0 || user ? (
-          <section className="mt-6 border border-ink">
-            <header className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2">
-              <span className="label-strong">{d.sections.caseFile}</span>
-              <Link href="/cases" className="label hover:text-ink">
-                {d.sections.allCases} →
-              </Link>
-            </header>
-            <div className="flex flex-wrap items-center gap-3 px-3 py-3">
-              {cases.length > 0 ? (
-                cases.map((file) => (
-                  <Link
-                    key={file.id}
-                    href={`/case/${file.id}`}
-                    className="group flex flex-wrap items-baseline gap-2 border border-ink px-3 py-2 transition-colors duration-100 hover:bg-paper-2"
-                  >
-                    <span className="mono text-[11px] text-muted">{d.sections.caseFile} {file.code}</span>
-                    <span className="text-[15px] font-bold">{file.title}</span>
-                    <span className="label">
-                      {fill(d.sections.recordsIn, { n: file.recordCount })} ·{" "}
-                      {d.sections[file.status]}
-                    </span>
-                  </Link>
-                ))
-              ) : (
-                <span className="label">{d.sections.noCase}</span>
-              )}
-              {user ? <CaseFiler yapId={yap.id} cases={openCases} /> : null}
-            </div>
-          </section>
-        ) : null}
 
         {/* Battle history, so the arena and the Hall stop being an island. */}
         <section className="mt-6 border border-ink">

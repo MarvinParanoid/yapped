@@ -19,6 +19,52 @@ import {
  * snapshotted — the history is a consequence of the data, not a second copy of
  * it.
  */
+const MARKET_SELECT = {
+  id: true,
+  text: true,
+  aura: true,
+  createdAt: true,
+  author: { select: { id: true, displayName: true } },
+} as const;
+
+type MarketRecord = {
+  id: number;
+  text: string;
+  aura: number;
+  createdAt: Date;
+  author: { id: string; displayName: string };
+};
+
+/**
+ * Aura as of a different moment for each record, in one query.
+ *
+ * "On this day" asks what each anniversary was worth at the end of its own day,
+ * so every record has its own cutoff — which used to mean a query per record.
+ * One read covers them all: fetch up to the latest cutoff and apply each
+ * record's own in memory.
+ */
+export async function auraAsOfEach(cutoffs: Map<number, Date>): Promise<Map<number, number>> {
+  const ids = [...cutoffs.keys()];
+  const result = new Map<number, number>();
+  if (ids.length === 0) return result;
+
+  const latest = new Date(Math.max(...[...cutoffs.values()].map((date) => date.getTime())));
+  const reactions = await prisma.reaction.findMany({
+    where: { yapId: { in: ids }, createdAt: { lte: latest } },
+    select: { yapId: true, type: true, createdAt: true },
+  });
+
+  const counts = new Map<number, ReactionCounts>();
+  for (const reaction of reactions) {
+    if (reaction.createdAt > cutoffs.get(reaction.yapId)!) continue;
+    const bucket = counts.get(reaction.yapId) ?? { ...EMPTY_COUNTS };
+    bucket[reaction.type as ReactionKey] += 1;
+    counts.set(reaction.yapId, bucket);
+  }
+  for (const id of ids) result.set(id, computeAura(counts.get(id) ?? EMPTY_COUNTS));
+  return result;
+}
+
 export async function auraAsOf(yapIds: number[], cutoff: Date): Promise<Map<number, number>> {
   const result = new Map<number, number>();
   if (yapIds.length === 0) return result;
@@ -103,40 +149,93 @@ export type MarketReport = {
   tracked: number;
 };
 
-/** The whole archive as an index, because the numbers are meaningless anyway. */
+/**
+ * The whole archive as an index, because the numbers are meaningless anyway.
+ *
+ * It used to pull every record in the team into memory and then compute the
+ * same history twice — `auraAsOf` ran once inside `getMomentum` and again
+ * beside it, with identical arguments. Nothing here reads a row it does not
+ * put on the screen any more:
+ *
+ *   The index is arithmetic, not a listing. `computeAura` is a weighted sum, so
+ *   summing it per record equals computing it once over all the counts —
+ *   two aggregates, no rows transferred, cost flat in the size of the archive.
+ *
+ *   The three lists are bounded by activity rather than by archive size. A
+ *   record is DORMANT precisely when nothing reacted to it inside the window
+ *   (delta === 0), so the movers and newcomers can only come from records filed
+ *   or reacted to since the cutoff — and the dormant list wants the loudest few
+ *   of the rest, which is a `take: 8`.
+ */
 export async function getMarket(teamId: string, windowHours = 24 * 7): Promise<MarketReport> {
   const cutoff = new Date(Date.now() - windowHours * 60 * 60 * 1000);
+  const newCutoff = new Date(Date.now() - NEW_HOURS * 60 * 60 * 1000);
+  const live = { teamId, deletedAt: null };
 
-  const yaps = await prisma.yap.findMany({
-    where: { teamId, deletedAt: null },
-    select: {
-      id: true,
-      text: true,
-      aura: true,
-      createdAt: true,
-      author: { select: { id: true, displayName: true } },
-    },
-  });
+  /** Filed inside the window, or reacted to inside it — everything else is dormant. */
+  const stirred = {
+    ...live,
+    OR: [
+      { createdAt: { gte: cutoff } },
+      { reactions: { some: { createdAt: { gt: cutoff } } } },
+    ],
+  };
 
-  const ids = yaps.map((yap) => yap.id);
-  const [momentum, before] = await Promise.all([
-    getMomentum(ids, windowHours),
-    auraAsOf(ids, cutoff),
+  const [totals, historic, active, quiet] = await Promise.all([
+    prisma.yap.aggregate({ where: live, _sum: { aura: true }, _count: { _all: true } }),
+    prisma.reaction.groupBy({
+      by: ["type"],
+      where: { yap: live, createdAt: { lte: cutoff } },
+      _count: { _all: true },
+    }),
+    prisma.yap.findMany({
+      where: stirred,
+      select: MARKET_SELECT,
+    }),
+    prisma.yap.findMany({
+      where: { ...live, NOT: stirred.OR.length ? { OR: stirred.OR } : undefined },
+      select: MARKET_SELECT,
+      orderBy: { aura: "desc" },
+      take: 8,
+    }),
   ]);
 
-  const rows: MarketRow[] = yaps.map((yap) => {
-    const entry = momentum.get(yap.id)!;
+  const before = await auraAsOf(
+    active.map((yap) => yap.id),
+    cutoff,
+  );
+
+  const toRow = (yap: MarketRecord, then: number): MarketRow => {
+    const ageDays = Math.floor((Date.now() - yap.createdAt.getTime()) / (24 * 60 * 60 * 1000));
+    const { delta, percent, state } = classifyMomentum({
+      now: yap.aura,
+      then,
+      ageDays,
+      filedInLastDay: yap.createdAt >= newCutoff,
+    });
     return {
-      ...entry,
+      yapId: yap.id,
       id: yap.id,
       code: `#${String(yap.id).padStart(5, "0")}`,
       text: yap.text,
       author: yap.author,
+      now: yap.aura,
+      then,
+      delta,
+      percent,
+      state,
+      ageDays,
     };
-  });
+  };
 
-  const indexNow = yaps.reduce((sum, yap) => sum + yap.aura, 0);
-  const indexThen = ids.reduce((sum, id) => sum + (before.get(id) ?? 0), 0);
+  const rows = active.map((yap) => toRow(yap, before.get(yap.id) ?? 0));
+  // Untouched inside the window by construction, so `then` equals `now`.
+  const dormant = quiet.map((yap) => toRow(yap, yap.aura));
+
+  const indexNow = totals._sum.aura ?? 0;
+  const indexThen = computeAura(
+    Object.fromEntries(historic.map((row) => [row.type, row._count._all])) as ReactionCounts,
+  );
 
   return {
     windowHours,
@@ -153,10 +252,7 @@ export async function getMarket(teamId: string, windowHours = 24 * 7): Promise<M
       .filter((row) => row.state === "NEW")
       .sort((a, b) => b.now - a.now)
       .slice(0, 8),
-    dormant: rows
-      .filter((row) => row.state === "DORMANT")
-      .sort((a, b) => b.now - a.now)
-      .slice(0, 8),
-    tracked: rows.length,
+    dormant: dormant.sort((a, b) => b.now - a.now).slice(0, 8),
+    tracked: totals._count._all,
   };
 }

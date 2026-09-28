@@ -58,8 +58,8 @@ gap is the most interesting thing the archive can show you.
 | **A record.** Lore, evidence, the verification ladder and the chain of testimony. | **A yapper.** Said vs. filed, battle record, known associates, frequent vocabulary. |
 | <img src="docs/screenshots/battle.png" alt="Yap battle" width="100%"> | <img src="docs/screenshots/wrapped.png" alt="Wrapped" width="100%"> |
 | **Yap battle.** Two quotes, one vote, Elo underneath. | **Wrapped.** The period, quantified after the fact. |
-| <img src="docs/screenshots/cases.png" alt="Case files" width="100%"> | <img src="docs/screenshots/market.png" alt="Aura market" width="100%"> |
-| **Case files.** When one statement turns into four, the archive opens a case. | **Aura market.** Movers, new listings and dormant records. Entirely meaningless. |
+| <img src="docs/screenshots/market.png" alt="Aura market" width="100%"> | |
+| **Aura market.** Movers, new listings and dormant records. Entirely meaningless. | |
 
 <details>
 <summary><b>Teams, invites and administration</b></summary>
@@ -394,10 +394,6 @@ aura reconstructed as it stood back then from reaction timestamps.
 
 **Wrapped** — `src/lib/services/wrapped.ts`. Monthly and yearly reports, derived on read from
 existing timestamps — no snapshot tables, so any past period can be opened at any time.
-
-**Cases** — `src/lib/services/cases.ts`. Grouping records into a documented episode. Member
-order is always derived from when things were said, so filing a record into a case re-sequences
-it automatically.
 
 **Search qualifiers** — `src/lib/search.ts`. `from:` `by:` `tag:` `aura:>500` `status:certified`
 `has:evidence` `before:` `after:` `case:`, plus free text. Adding one is an entry in the parser

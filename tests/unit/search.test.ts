@@ -15,7 +15,7 @@ describe("search qualifiers", () => {
 
   test("parses every supported qualifier", () => {
     const f = parseSearch(
-      'плесень from:anna by:dima tag:прод aura:>500 status:certified has:evidence has:lore before:2026-10-01 after:2026-01-01 case:7',
+      'плесень from:anna by:dima tag:прод aura:>500 status:certified has:evidence has:lore before:2026-10-01 after:2026-01-01',
     );
     assert.equal(f.text, "плесень");
     assert.equal(f.author, "anna");
@@ -24,7 +24,6 @@ describe("search qualifiers", () => {
     assert.deepEqual(f.aura, { op: ">", value: 500 });
     assert.equal(f.verification, "CERTIFIED");
     assert.deepEqual(f.has.sort(), ["evidence", "lore"]);
-    assert.equal(f.caseId, 7);
     assert.equal(f.before?.toISOString().slice(0, 10), "2026-10-01");
     assert.equal(f.after?.toISOString().slice(0, 10), "2026-01-01");
     assert.deepEqual(f.unknown, []);

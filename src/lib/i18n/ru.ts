@@ -9,10 +9,10 @@ import type { Dictionary } from "./en";
  *   service and a police file — and stay short. Product terms may stay in
  *   English where they read as the system's own vocabulary: Elo, BASED.
  *
- * That rule is what produces «ПРИОБЩИТЬ К ДЕЛУ» instead of the limp «ДОБАВИТЬ
- * В КЕЙС», and it is most of the identity. The joke is that banter is handled
- * with the gravity of a records department; bureaucratic Russian carries that
- * further than the English original does.
+ * That rule is what produces «ОРАТОР» and «УЛИКА» instead of the limp «ЮЗЕР»
+ * and «ФАЙЛ», and it is most of the identity. The joke is that banter is
+ * handled with the gravity of a records department; bureaucratic Russian
+ * carries that further than the English original does.
  *
  * Vocabulary the rule settled on:
  *
@@ -20,7 +20,6 @@ import type { Dictionary } from "./en";
  *   yapper   → оратор      ironic-formal, the way a minutes-taker would put it
  *   lore     → предыстория
  *   evidence → улика       the word a case file would use
- *   case     → дело        and filing into one is «приобщить»
  *   cap      → врёшь       the slang the denial button is actually making
  *
  * "Оратор" rather than "трепло" on purpose: the second is funnier for a second
@@ -43,7 +42,6 @@ export const ru: Dictionary = {
     fresh: "Всё",
     top: "Топ",
     yappers: "Ораторы",
-    cases: "Дела",
     battle: "Баттл",
     random: "Наугад",
     home: "Лента",
@@ -111,8 +109,6 @@ export const ru: Dictionary = {
     fileFirst: "Внести первую цитату",
     nothingOnRecord: "В АРХИВЕ ПУСТО.",
     nothingOnRecordHint: "от этого человека пока нет ничего, достойного записи",
-    noCases: "ДЕЛ НЕ ЗАВЕДЕНО.",
-    noCasesHint: "пока ничто не переросло в инцидент",
     noBattles: "НИ ОДНОГО БАТТЛА. ПОДОЗРИТЕЛЬНО.",
     nothingToWrap: "ПОДВОДИТЬ НЕЧЕГО.",
     nothingToWrapHint: "архив пока пуст",
@@ -195,8 +191,6 @@ export const ru: Dictionary = {
     window: "Окно",
     feedWindow: "Окно ленты",
     episodes: "Эпизоды, а не отдельные фразы",
-    caseFiles: "Дела",
-    caseIntro: "когда одна фраза превращается в четыре, архив заводит дело.",
     rankedByElo: "Рейтинг по личным встречам",
     fieldTooThin: "Поле слишком редкое.",
     fieldTooThinBody:
@@ -209,24 +203,16 @@ export const ru: Dictionary = {
     upsetBody: "аутсайдер отставал на {gap} и выиграл +{delta}",
     startBattle: "начать баттл",
     chronology: "Хронология",
-    caseFile: "Дело",
-    OPEN: "В работе",
-    CLOSED: "Закрыто",
     COLD: "Глухарь",
     OPENblurb: "Ещё разворачивается.",
     CLOSEDblurb: "У эпизода есть развязка.",
     COLDblurb: "Так и не выяснили, что произошло.",
     won: "Победа",
     lost: "Поражение",
-    recordsIn: "записей: {n}",
-    caseNumber: "Дело №{n}",
     ROUTINE: "Рядовое",
     QUESTIONABLE: "Сомнительное",
     UNHINGED: "Невменяемое",
     CLASSIFIED: "Секретно",
-    allCases: "Все дела",
-    noCase: "Не приобщено ни к одному делу",
-    fileUnderCase: "Приобщить к делу",
     neverFought: "баттлов не было",
     wins: "Победы",
     losses: "Поражения",
@@ -254,9 +240,6 @@ export const ru: Dictionary = {
     aroundThisTime: "Примерно в это же время",
     fileUnder: "Приобщить к делу",
     closed: "закрыто",
-    noCasesYet: "дел пока не заводили",
-    openNewCase: "Или завести новое дело…",
-    reopensQuestion: "Дело закрыто — приобщение откроет вопрос заново",
     couldNotFile: "Не получилось приобщить запись.",
     records: "Записей",
     witnesses: "Свидетелей",
@@ -425,6 +408,8 @@ export const ru: Dictionary = {
     OWNER_ONLY_REMOVE: "Удалять участников может только владелец.",
     NOT_YOURSELF: "Себя удалить нельзя.",
     PICK_ANOTHER_NAME: "Выберите другое название.",
+    INVITE_USES_INVALID: "Использований: целое число от 1 до {n}, либо пусто — без ограничения.",
+    INVITE_DAYS_INVALID: "Срок: целое число дней от 1 до {n}, либо пусто — бессрочно.",
     INVITE_CREATED: "Приглашение выпущено.",
     RENAMED: "Переименовано.",
   },
@@ -437,10 +422,8 @@ export const ru: Dictionary = {
     statuses: "не проверено · есть свидетель · подтверждено · заверено",
     haves: "улика · предыстория · свидетели · возражение",
     alsoAfter: "а также after:",
-    inOneCase: "записи одного дела",
     saidBy: "сказал(а) {name}",
     filedBy: "внёс(ла) {name}",
-    caseChip: "дело №{n}",
     auraChip: "аура {op} {value}",
     hasChip: "есть {what}",
     disputedChip: "оспаривается",
@@ -455,7 +438,6 @@ export const ru: Dictionary = {
     inviteSomeone: "Позвать своего",
     addYap: "Новая цитата",
     topYappers: "Лучшие ораторы",
-    caseFiles: "Дела",
     battle: "Баттл цитат",
     hallOfYap: "Зал славы",
     randomYap: "Случайная цитата",

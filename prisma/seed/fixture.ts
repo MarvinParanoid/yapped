@@ -56,56 +56,6 @@ export const AUDIENCE = [
   "Slava", "Алёна", "Zhenya", "Inna", "Valera", "Юра", "Kostya", "Dasha",
 ];
 
-export type SeedCase = {
-  title: string;
-  summary: string;
-  status: "OPEN" | "CLOSED" | "COLD";
-  /** Members are matched by exact quote text, so record ids can shift freely. */
-  members: string[];
-};
-
-/**
- * Cases turn a handful of records into a documented episode. Members are the
- * quotes above, in the order they were said.
- */
-export const CASES: SeedCase[] = [
-  {
-    title: "The mold incident",
-    summary:
-      "Обсуждение нового дизайна. На фотографии в хедере макета была плесень. Её заметили, обсудили, попросили убрать, объявили фичей и оставили ещё на две недели. По итогам инцидента был основан этот архив.",
-    status: "CLOSED",
-    members: [
-      "Плесень хайпует.",
-      "Запиши это.",
-      "Зачем?",
-      "Уберите плесень с макета.",
-      "Плесень — это фича.",
-    ],
-  },
-  {
-    title: "The Friday deployment",
-    summary:
-      "Пятница, вечер. Вопрос «деплоим или нет» был решён уверенностью, а не тестами. Прод лёг в 21:47 и поднимался до полуночи. Никто не признал связи между событиями.",
-    status: "CLOSED",
-    members: [
-      "Рот ставлю.",
-      "Прод — это тоже стейдж, если не бояться.",
-      "Он не упал, он прилёг.",
-      "Давайте просто перезапустим.",
-    ],
-  },
-  {
-    title: "The production intrusion",
-    summary:
-      "В проде обнаружились тестовые данные и следы ручных правок. Расследование зашло в тупик на первом же вопросе.",
-    status: "COLD",
-    members: [
-      "Кто трогал прод? — Никто.",
-      "Я это в проде проверил, ничего не случилось.",
-      "Почему в проде тестовые данные? — Для реализма.",
-    ],
-  },
-];
 
 export const YAPS: SeedYap[] = [
   {

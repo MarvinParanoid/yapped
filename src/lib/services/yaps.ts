@@ -226,9 +226,6 @@ function buildWhere(options: ListYapsOptions) {
       },
     });
   }
-  if (filter?.caseId !== undefined) {
-    and.push({ cases: { some: { caseId: filter.caseId } } });
-  }
   if (filter?.aura) {
     const { op, value } = filter.aura;
     const clause =
@@ -319,6 +316,29 @@ export async function countYaps(options: ListYapsOptions): Promise<number> {
   return prisma.yap.count({ where: buildWhere(options) });
 }
 
+/**
+ * Several records at once, hydrated in one pass.
+ *
+ * `getYap` in a loop was three queries per record; "On this day" could show a
+ * dozen anniversaries and did exactly that.
+ */
+export async function getYaps(
+  ids: number[],
+  teamId: string,
+  viewerId?: string | null,
+): Promise<YapView[]> {
+  if (ids.length === 0) return [];
+  const rows = await prisma.yap.findMany({
+    where: { id: { in: ids }, teamId, deletedAt: null },
+    include: yapInclude,
+  });
+  const views = await hydrate(rows, viewerId);
+  // The caller chose the order; preserve it rather than whatever the database
+  // felt like returning.
+  const byId = new Map(views.map((view) => [view.id, view]));
+  return ids.map((id) => byId.get(id)).filter((view): view is YapView => view !== undefined);
+}
+
 export async function getYap(
   id: number,
   teamId: string,
@@ -345,9 +365,13 @@ export async function getYapSummary(
   return row ? { text: row.text, lore: row.lore, author: row.author.displayName } : null;
 }
 
-export async function recordView(id: number): Promise<void> {
+export async function recordView(id: number, teamId: string): Promise<void> {
+  // The team is not load-bearing today — the only caller has already resolved
+  // the record inside its own archive. It is required anyway, because every
+  // other write in this file takes it, and the one that does not is the one
+  // that quietly stops being checked when a second caller appears.
   await prisma.yap
-    .update({ where: { id }, data: { viewCount: { increment: 1 } } })
+    .updateMany({ where: { id, teamId }, data: { viewCount: { increment: 1 } } })
     .catch(() => undefined);
 }
 
@@ -644,6 +668,18 @@ export type CreateYapInput = {
 };
 
 export async function createYap(input: CreateYapInput): Promise<number> {
+  // Both people on a record must belong to the team it is filed under. The
+  // author arrives from a form field, so without this a tampered submission
+  // could credit a quote to someone in another archive — and that name would
+  // then print on the record, in the leaderboard and on their profile.
+  // Quoted-only people are members too (findOrCreateYapper enrols them), so
+  // this rejects nothing the interface can legitimately ask for.
+  const people = [...new Set([input.authorId, input.submittedById])];
+  const belong = await prisma.membership.count({
+    where: { teamId: input.teamId, userId: { in: people } },
+  });
+  if (belong !== people.length) throw new Error("NOT_A_MEMBER");
+
   const tagRecords = await Promise.all(
     input.tags.map((slug) =>
       prisma.tag.upsert({
@@ -800,13 +836,31 @@ export async function listTags(
   teamId: string,
   take = 24,
 ): Promise<Array<{ slug: string; label: string; count: number }>> {
-  const tags = await prisma.tag.findMany({
-    where: { teamId },
-    include: { _count: { select: { yaps: true } } },
-    orderBy: { yaps: { _count: "desc" } },
+  // Counted over living records only. A tag's size is a claim about what the
+  // archive currently holds, and a redacted record is not held: counting it
+  // both inflates the number and keeps tags in the list whose every record is
+  // gone, so the cloud offers a link to an empty page.
+  //
+  // The count has to drive the ordering too, which is why this groups the join
+  // table rather than asking for a filtered `_count` — `take` applied to the
+  // unfiltered order would pick the wrong tags before the filter ever ran.
+  const counts = await prisma.yapTag.groupBy({
+    by: ["tagId"],
+    where: { yap: { teamId, deletedAt: null } },
+    _count: { _all: true },
+    orderBy: { _count: { tagId: "desc" } },
     take,
   });
-  return tags
-    .filter((tag) => tag._count.yaps > 0)
-    .map((tag) => ({ slug: tag.slug, label: tag.label, count: tag._count.yaps }));
+  if (counts.length === 0) return [];
+
+  const tags = await prisma.tag.findMany({
+    where: { teamId, id: { in: counts.map((row) => row.tagId) } },
+    select: { id: true, slug: true, label: true },
+  });
+  const byId = new Map(tags.map((tag) => [tag.id, tag]));
+
+  return counts.flatMap((row) => {
+    const tag = byId.get(row.tagId);
+    return tag ? [{ slug: tag.slug, label: tag.label, count: row._count._all }] : [];
+  });
 }

@@ -100,6 +100,16 @@ export async function releaseInvite(token: string): Promise<void> {
   });
 }
 
+/** Nothing at all means "no limit"; anything present must be a real limit. */
+export const MAX_USES_CAP = 100;
+export const MAX_DAYS_CAP = 365;
+
+function bounded(value: number | null | undefined, cap: number, code: string): number | null {
+  if (value === null || value === undefined) return null;
+  if (!Number.isInteger(value) || value < 1 || value > cap) throw new Error(code);
+  return value;
+}
+
 export async function createInvite(input: {
   teamId: string;
   createdById: string;
@@ -107,6 +117,13 @@ export async function createInvite(input: {
   maxUses?: number | null;
   expiresInDays?: number | null;
 }): Promise<string> {
+  // A limit that cannot be understood is refused, never quietly widened. The
+  // old code coerced 0, -5 and NaN to null, and null means UNLIMITED — so a
+  // typo in the uses box produced the most permissive link available, which is
+  // the exact opposite of what the person typing "0" was asking for.
+  const maxUses = bounded(input.maxUses, MAX_USES_CAP, "INVITE_USES_INVALID");
+  const expiresInDays = bounded(input.expiresInDays, MAX_DAYS_CAP, "INVITE_DAYS_INVALID");
+
   const token = mintToken();
   await prisma.invite.create({
     data: {
@@ -114,11 +131,11 @@ export async function createInvite(input: {
       teamId: input.teamId,
       createdById: input.createdById,
       note: input.note?.trim() || null,
-      maxUses: input.maxUses && input.maxUses > 0 ? input.maxUses : null,
+      maxUses,
       expiresAt:
-        input.expiresInDays && input.expiresInDays > 0
-          ? new Date(Date.now() + input.expiresInDays * 24 * 60 * 60 * 1000)
-          : null,
+        expiresInDays === null
+          ? null
+          : new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000),
     },
   });
   return token;

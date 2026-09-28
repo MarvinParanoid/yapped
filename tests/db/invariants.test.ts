@@ -13,7 +13,6 @@ import {
   editYap,
   toggleReaction,
 } from "@/lib/services/yaps";
-import { addYapToCase, createCase, getCase } from "@/lib/services/cases";
 import { computeAura, REACTION_WEIGHTS } from "@/lib/ranking/aura";
 import { parseSearch } from "@/lib/search";
 
@@ -252,32 +251,6 @@ describe("listing", () => {
     assert.equal(await countYaps({ teamId: TEAM, filter: parseSearch("ПЛЕСЕНЬ") }), 1, "search is case-insensitive");
     assert.equal(await countYaps({ teamId: TEAM, filter: parseSearch("from:anna has:lore") }), 1);
     assert.equal(await countYaps({ teamId: TEAM, filter: parseSearch("status:certified") }), 0);
-  });
-});
-
-describe("cases", () => {
-  test("members are ordered by when things were said, not when they were filed", async () => {
-    await resetDatabase();
-    const author = await makeUser();
-    const archivist = await makeUser();
-    const late = await makeYap({ authorId: author.id, saidAt: new Date("2026-09-24T10:00:00Z") });
-    const early = await makeYap({ authorId: author.id, saidAt: new Date("2026-09-20T10:00:00Z") });
-
-    const caseId = await createCase({
-      teamId: TEAM,
-      title: "An episode",
-      createdById: archivist.id,
-      yapId: late.id,
-    });
-    await addYapToCase(caseId, early.id, TEAM);
-
-    const file = await getCase(caseId, TEAM);
-    assert.deepEqual(
-      file?.records.map((r) => r.id),
-      [early.id, late.id],
-      "filing a record later must not put it last",
-    );
-    assert.equal(file?.recordCount, 2);
   });
 });
 

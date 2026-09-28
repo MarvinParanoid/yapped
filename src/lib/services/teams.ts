@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import type { Failure } from "@/lib/errors";
 import { validateName } from "@/lib/names";
+import type { Prisma } from "@/generated/prisma/client";
 import type { TeamRole } from "@/lib/auth/team";
 
 export type MemberRow = {
@@ -162,6 +163,23 @@ export async function listOwners(teamIds: string[]): Promise<Map<string, string[
 export type RoleChange = { ok: true } | ({ ok: false } & Failure);
 
 /**
+ * "A team always keeps an owner" is a rule about the whole table, and a rule
+ * like that cannot be enforced by reading the table and then writing to it.
+ * Serializable is the isolation level that actually means it; a transaction
+ * that loses the race is aborted by Postgres, which is reported as a refusal
+ * rather than a crash.
+ */
+async function lastOwnerSafe(
+  work: (tx: Prisma.TransactionClient) => Promise<RoleChange>,
+): Promise<RoleChange> {
+  try {
+    return await prisma.$transaction(work, { isolationLevel: "Serializable" });
+  } catch {
+    return { ok: false, code: "REFUSED" };
+  }
+}
+
+/**
  * Roles move, but a team always keeps one owner — losing the last one would
  * leave an archive nobody can administer and nobody can delete.
  */
@@ -170,22 +188,28 @@ export async function setMemberRole(
   userId: string,
   role: TeamRole,
 ): Promise<RoleChange> {
-  const membership = await prisma.membership.findUnique({
-    where: { teamId_userId: { teamId, userId } },
-  });
-  if (!membership) return { ok: false, code: "NOT_A_MEMBER" };
-  if (membership.role === role) return { ok: true };
+  // Counting owners and then demoting one has to be a single decision: two
+  // owners demoting each other at the same moment would each count two, each
+  // be satisfied, and leave an archive with none. Serializable makes the
+  // database refuse the second one instead.
+  return lastOwnerSafe(async (tx) => {
+    const membership = await tx.membership.findUnique({
+      where: { teamId_userId: { teamId, userId } },
+    });
+    if (!membership) return { ok: false, code: "NOT_A_MEMBER" };
+    if (membership.role === role) return { ok: true };
 
-  if (membership.role === "OWNER") {
-    const owners = await prisma.membership.count({ where: { teamId, role: "OWNER" } });
-    if (owners <= 1) return { ok: false, code: "NEEDS_AN_OWNER" };
-  }
+    if (membership.role === "OWNER") {
+      const owners = await tx.membership.count({ where: { teamId, role: "OWNER" } });
+      if (owners <= 1) return { ok: false, code: "NEEDS_AN_OWNER" };
+    }
 
-  await prisma.membership.update({
-    where: { teamId_userId: { teamId, userId } },
-    data: { role },
+    await tx.membership.update({
+      where: { teamId_userId: { teamId, userId } },
+      data: { role },
+    });
+    return { ok: true };
   });
-  return { ok: true };
 }
 
 /**
@@ -194,18 +218,28 @@ export async function setMemberRole(
  * out a person would make it a record of who is currently around.
  */
 export async function removeMember(teamId: string, userId: string): Promise<RoleChange> {
-  const membership = await prisma.membership.findUnique({
-    where: { teamId_userId: { teamId, userId } },
-  });
-  if (!membership) return { ok: false, code: "NOT_A_MEMBER" };
-  if (membership.role === "OWNER") {
-    const owners = await prisma.membership.count({ where: { teamId, role: "OWNER" } });
-    if (owners <= 1) return { ok: false, code: "LAST_OWNER" };
-  }
+  return lastOwnerSafe(async (tx) => {
+    const membership = await tx.membership.findUnique({
+      where: { teamId_userId: { teamId, userId } },
+    });
+    if (!membership) return { ok: false, code: "NOT_A_MEMBER" };
+    if (membership.role === "OWNER") {
+      const owners = await tx.membership.count({ where: { teamId, role: "OWNER" } });
+      if (owners <= 1) return { ok: false, code: "LAST_OWNER" };
+    }
 
-  await prisma.membership.delete({ where: { teamId_userId: { teamId, userId } } });
-  await prisma.session.deleteMany({ where: { userId } });
-  return { ok: true };
+    await tx.membership.delete({ where: { teamId_userId: { teamId, userId } } });
+
+    // Access to an archive comes from the membership, not the session — the
+    // team cookie is checked against memberships on every request, so the door
+    // is already shut. Ending every session would also sign this person out of
+    // archives they are still a member of, which is somebody else's team
+    // punishing them for a decision made here.
+    const elsewhere = await tx.membership.count({ where: { userId } });
+    if (elsewhere === 0) await tx.session.deleteMany({ where: { userId } });
+
+    return { ok: true };
+  });
 }
 
 export async function renameTeam(teamId: string, name: string): Promise<RoleChange> {

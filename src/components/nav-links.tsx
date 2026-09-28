@@ -11,7 +11,6 @@ const LINKS = [
   { href: "/?sort=fresh", key: "fresh", match: (p: string, s: string) => p === "/" && s === "fresh" },
   { href: "/?sort=top", key: "top", match: (p: string, s: string) => p === "/" && s === "top" },
   { href: "/yappers", key: "yappers", match: (p: string) => p.startsWith("/yapper") },
-  { href: "/cases", key: "cases", match: (p: string) => p.startsWith("/case") },
   { href: "/battle", key: "battle", match: (p: string) => p.startsWith("/battle") },
   { href: "/random", key: "random", match: (p: string) => p.startsWith("/random") },
 ] as const;

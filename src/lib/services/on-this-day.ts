@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import type { YapView } from "@/lib/types";
-import { auraAsOf } from "./aura-history";
-import { getYap } from "./yaps";
+import { auraAsOfEach } from "./aura-history";
+import { getYaps } from "./yaps";
 
 /**
  * ON THIS DAY — this time of year, in earlier years.
@@ -100,18 +100,14 @@ export async function getOnThisDay(
         ]),
       );
 
-      const [records, ...auraByRow] = await Promise.all([
-        Promise.all(ids.map((id) => getYap(id, teamId, viewerId))),
-        ...ids.map((id) => auraAsOf([id], cutoffs.get(id)!)),
+      const [records, auraThen] = await Promise.all([
+        getYaps(ids, teamId, viewerId),
+        auraAsOfEach(cutoffs),
       ]);
-
-      const auraThen = new Map<number, number>();
-      auraByRow.forEach((map, index) => auraThen.set(ids[index], map.get(ids[index]) ?? 0));
 
       const saidAtById = new Map(rows.map((row) => [row.id, row.saidAt]));
       const hydrated = records
-        .filter((record): record is YapView => record !== null)
-        .map((record) => {
+        .map((record: YapView) => {
           const saidAt = saidAtById.get(record.id)!;
           const offset = Math.round(
             (Date.UTC(saidAt.getUTCFullYear(), saidAt.getUTCMonth(), saidAt.getUTCDate()) -

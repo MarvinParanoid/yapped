@@ -21,7 +21,6 @@ model Team {
   memberships Membership[]
   invites     Invite[]
   yaps        Yap[]
-  cases       Case[]
   tags        Tag[]
   battles     Battle[]
 }
@@ -87,7 +86,6 @@ model User {
   sessions     Session[]
   achievements UserAchievement[]
   battleVotes  Battle[]          @relation("BattleVoter")
-  openedCases  Case[]
 
   @@index([displayName])
 }
@@ -143,7 +141,6 @@ model Yap {
   witnesses    Witness[]
   tags         YapTag[]
   evidence     Evidence[]
-  cases        CaseYap[]
   battlesWon   Battle[]   @relation("BattleWinner")
   battlesLost  Battle[]   @relation("BattleLoser")
 
@@ -202,41 +199,6 @@ enum ReactionType {
   STONE /// 🗿
 }
 
-/// Several records that belong to one incident. Lore stops being a paragraph
-/// attached to a single quote and becomes a documented episode.
-model Case {
-  id          Int        @id @default(autoincrement())
-  teamId      String
-  team        Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  title       String
-  summary     String?
-  status      CaseStatus @default(OPEN)
-  openedAt    DateTime   @default(now())
-  closedAt    DateTime?
-  createdById String?
-  createdBy   User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
-
-  records CaseYap[]
-
-  @@index([teamId, status, openedAt])
-}
-
-enum CaseStatus {
-  OPEN /// still unfolding
-  CLOSED /// the episode has an ending
-  COLD /// nobody ever found out what happened
-}
-
-model CaseYap {
-  caseId   Int
-  case     Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  yapId    Int
-  yap      Yap  @relation(fields: [yapId], references: [id], onDelete: Cascade)
-  position Int  @default(1)
-
-  @@id([caseId, yapId])
-  @@index([yapId])
-}
 
 /// One colleague going on the record about whether a statement happened.
 /// A person holds exactly one position per yap, and may change it.

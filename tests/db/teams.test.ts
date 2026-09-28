@@ -19,9 +19,8 @@ import {
   toggleReaction,
 } from "@/lib/services/yaps";
 import { findOrCreateYapper, getLeaderboard, getYapperProfile } from "@/lib/services/yappers";
-import { addYapToCase, createCase, getCase, listCases } from "@/lib/services/cases";
 import { getArenaState } from "@/lib/services/battles";
-import { previewClaim, registerAccount, validateRegistration } from "@/lib/services/accounts";
+import { joinTeam, previewClaim, registerAccount, validateRegistration } from "@/lib/services/accounts";
 import {
   consumeInvite,
   createInvite,
@@ -143,7 +142,7 @@ describe("one instance, separate archives", () => {
     );
   });
 
-  test("tags, cases and the arena are per-team", async () => {
+  test("tags and the arena are per-team", async () => {
     await resetDatabase();
     const other = await makeTeam("other", "Other Corp");
     const mine = await makeUser("Mine", TEAM);
@@ -169,27 +168,10 @@ describe("one instance, separate archives", () => {
     assert.deepEqual((await listTags(TEAM)).map((tag) => tag.slug), ["деплой"]);
     assert.deepEqual((await listTags(other.id)).map((tag) => tag.slug), ["deploy"]);
 
-    const caseId = await createCase({ teamId: TEAM, title: "Ours", createdById: mine.id });
-    assert.equal((await listCases(other.id)).length, 0);
-    assert.equal(await getCase(caseId, other.id), null);
-
     // Four records here, one there: the arena opens on one side only.
     for (let i = 0; i < 4; i += 1) await makeYap({ authorId: mine.id });
     assert.equal((await getArenaState(TEAM)).open, true);
     assert.equal((await getArenaState(other.id)).open, false);
-  });
-
-  test("a case will not swallow another team's record", async () => {
-    const { here, there } = await twoTeams();
-    const archivist = await makeUser("Archivist", TEAM);
-    const caseId = await createCase({ teamId: TEAM, title: "Episode", createdById: archivist.id });
-
-    // Loud, not silent: filing across the wall is a mistake worth surfacing.
-    await assert.rejects(() => addYapToCase(caseId, there.id, TEAM), /NOT_FOUND/);
-    await addYapToCase(caseId, here.id, TEAM);
-
-    const file = await getCase(caseId, TEAM);
-    assert.deepEqual(file?.records.map((record) => record.id), [here.id]);
   });
 });
 
@@ -412,6 +394,34 @@ describe("running a team", () => {
     assert.equal(await prisma.session.count({ where: { userId: leaving.id } }), 0);
     assert.ok(await getYap(yap.id, TEAM), "the statement outlives the membership");
     assert.equal((await listMembers(TEAM)).length, 1);
+  });
+
+  test("leaving one archive does not sign you out of another", async () => {
+    await resetDatabase();
+    const owner = await makeUser("Owner");
+    await setMemberRole(TEAM, owner.id, "OWNER");
+    const other = await makeTeam("elsewhere", "Elsewhere");
+    const dual = await makeUser("Dual");
+    await joinTeam(dual.id, other.id);
+    await prisma.session.create({
+      data: {
+        token: "dual-token",
+        userId: dual.id,
+        expiresAt: new Date(Date.now() + 86_400_000),
+      },
+    });
+
+    assert.equal((await removeMember(TEAM, dual.id)).ok, true);
+    assert.equal(
+      await prisma.session.count({ where: { userId: dual.id } }),
+      1,
+      "one team's decision must not end a session the other team still honours",
+    );
+    // The door here is shut all the same: access follows the membership.
+    assert.equal(
+      await prisma.membership.count({ where: { teamId: TEAM, userId: dual.id } }),
+      0,
+    );
   });
 
   test("the member table separates saying from filing", async () => {

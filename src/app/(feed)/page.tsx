@@ -36,8 +36,6 @@ function chipLabel(chip: FilterChip, d: Dictionary): string {
       return fill(d.search.saidBy, { name: chip.name });
     case "filedBy":
       return fill(d.search.filedBy, { name: chip.name });
-    case "caseChip":
-      return fill(d.search.caseChip, { n: chip.n });
     case "auraChip":
       return fill(d.search.auraChip, { op: chip.op, value: chip.value });
     case "hasChip":

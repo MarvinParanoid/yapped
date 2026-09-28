@@ -24,8 +24,6 @@ export function assertTestDatabase(): void {
 export async function resetDatabase(): Promise<string> {
   assertTestDatabase();
   await prisma.$transaction([
-    prisma.caseYap.deleteMany(),
-    prisma.case.deleteMany(),
     prisma.battle.deleteMany(),
     prisma.reaction.deleteMany(),
     prisma.witness.deleteMany(),

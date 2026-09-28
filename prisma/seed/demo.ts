@@ -7,7 +7,7 @@ import { nextRatings } from "../../src/lib/ranking/elo";
 import { buildKey, createLocalDriver } from "../../src/lib/storage/local";
 import { hashPassword } from "../../src/lib/auth/password";
 import { slugifyTag } from "../../src/lib/format";
-import { AUDIENCE, CASES, UNCLAIMED_YAPPER, YAPPERS, YAPS, type SeedYap } from "./fixture";
+import { AUDIENCE, UNCLAIMED_YAPPER, YAPPERS, YAPS, type SeedYap } from "./fixture";
 
 /**
  * The demo archive: a deterministic fictional dataset that deliberately covers
@@ -88,8 +88,6 @@ export async function seedDemo(): Promise<void> {
 
   // Order matters: children first.
   await prisma.$transaction([
-    prisma.caseYap.deleteMany(),
-    prisma.case.deleteMany(),
     prisma.battle.deleteMany(),
     prisma.reaction.deleteMany(),
     prisma.witness.deleteMany(),
@@ -104,10 +102,9 @@ export async function seedDemo(): Promise<void> {
     prisma.user.deleteMany(),
     prisma.team.deleteMany(),
   ]);
-  // Stable ids so the demo archive is byte-for-byte reproducible: the flagship
-  // record is always #00420 and the founding case is always #0001.
+  // A stable id so the demo archive is byte-for-byte reproducible: the
+  // flagship record is always #00420.
   await prisma.$executeRawUnsafe(`ALTER SEQUENCE "Yap_id_seq" RESTART WITH 420`);
-  await prisma.$executeRawUnsafe(`ALTER SEQUENCE "Case_id_seq" RESTART WITH 1`);
 
   const demoPassword = await hashPassword("yapped123");
 
@@ -314,37 +311,6 @@ export async function seedDemo(): Promise<void> {
     });
   }
 
-  // Cases: several records grouped into one documented episode.
-  const yapIdByText = new Map<string, number>();
-  for (const row of await prisma.yap.findMany({ select: { id: true, text: true } })) {
-    yapIdByText.set(row.text, row.id);
-  }
-
-  const archivist = yapperIds.get("Dima")!;
-  let caseCount = 0;
-  for (const seedCase of CASES) {
-    const memberIds = seedCase.members
-      .map((text) => yapIdByText.get(text))
-      .filter((id): id is number => id !== undefined);
-    if (memberIds.length === 0) continue;
-
-    const opened = await prisma.case.create({
-      data: {
-        teamId,
-        title: seedCase.title,
-        summary: seedCase.summary,
-        status: seedCase.status,
-        createdById: archivist,
-        closedAt: seedCase.status === "CLOSED" ? new Date() : null,
-        records: {
-          create: memberIds.map((yapId, index) => ({ yapId, position: index + 1 })),
-        },
-      },
-    });
-    void opened;
-    caseCount += 1;
-  }
-
   // Battles: 180 head-to-heads, decided mostly by aura with room for upsets.
   const contenders = await prisma.yap.findMany({
     select: { id: true, aura: true, eloRating: true },
@@ -448,7 +414,6 @@ export async function seedDemo(): Promise<void> {
   console.log(`  ${witnessRows} witness statements`);
   console.log(`  ${YAPS.filter((y) => y.dispute).length} formally disputed`);
   console.log(`  ${await prisma.yap.count({ where: { acknowledgedAt: { not: null } } })} acknowledged by their author`);
-  console.log(`  ${caseCount} case files`);
   console.log(`  ${auraSum._sum.aura?.toLocaleString("en-US")} total aura`);
   console.log(`  ${certified} certified yaps`);
   console.log(`  ${battleRows.length} battles`);

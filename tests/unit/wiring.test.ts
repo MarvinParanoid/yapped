@@ -30,6 +30,7 @@ describe("module wiring", () => {
         "@/lib/titles",
         "@/lib/achievements",
         "@/lib/format",
+        "@/lib/return-to",
       ]) {
         await assert.doesNotReject(() => import(path), `${path} must stay pure`);
       }

@@ -17,8 +17,15 @@ export function isAcceptedImage(mimeType: string): boolean {
  */
 export async function attachEvidence(
   yapId: number,
+  teamId: string,
   file: { buffer: Buffer; mimeType: string; caption?: string | null },
 ): Promise<void> {
+  // Evidence is filed against a record id. Today that id comes straight from a
+  // createYap the same request just made, so it cannot point elsewhere — but
+  // the argument is required so that stays true of the next caller too.
+  const owned = await prisma.yap.findFirst({ where: { id: yapId, teamId }, select: { id: true } });
+  if (!owned) throw new Error("NOT_FOUND");
+
   if (!isAcceptedImage(file.mimeType)) throw new Error("UNSUPPORTED_IMAGE");
   if (file.buffer.byteLength > MAX_EVIDENCE_BYTES) throw new Error("IMAGE_TOO_LARGE");
 

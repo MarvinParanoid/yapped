@@ -17,6 +17,7 @@ import { slugifyTag } from "@/lib/format";
 import type { Failure } from "@/lib/errors";
 import { NAME_MAX, NAME_MIN } from "@/lib/names";
 import { fill } from "@/lib/i18n/locale";
+import { returnTo } from "@/lib/return-to";
 import { isLocale, LOCALE_COOKIE } from "@/lib/i18n/locale";
 import { getDictionary } from "@/lib/i18n/server";
 import type { ReactionKey } from "@/lib/ranking/aura";
@@ -30,6 +31,8 @@ import {
 } from "@/lib/services/accounts";
 import {
   consumeInvite,
+  MAX_DAYS_CAP,
+  MAX_USES_CAP,
   createInvite,
   inspectInvite,
   releaseInvite,
@@ -38,7 +41,6 @@ import {
 import { createTeam, removeMember, renameTeam, setMemberRole } from "@/lib/services/teams";
 import type { TeamRole } from "@/lib/auth/team";
 import { recordBattle } from "@/lib/services/battles";
-import { addYapToCase, createCase } from "@/lib/services/cases";
 import { attachEvidence, isAcceptedImage, MAX_EVIDENCE_BYTES } from "@/lib/services/evidence";
 import {
   acknowledgeYap,
@@ -132,32 +134,6 @@ export async function withdrawDisputeAction(yapId: number): Promise<{ ok: boolea
   return result;
 }
 
-/** Group records into a documented episode. */
-export async function fileUnderCaseAction(
-  yapId: number,
-  caseId: number,
-): Promise<{ ok: boolean }> {
-  const viewer = await getViewer();
-  if (!viewer) return { ok: false };
-  await addYapToCase(caseId, yapId, viewer.team.id);
-  revalidatePath(`/yap/${yapId}`);
-  revalidatePath(`/case/${caseId}`);
-  return { ok: true };
-}
-
-export async function openCaseAction(
-  yapId: number,
-  title: string,
-): Promise<{ ok: boolean; caseId?: number }> {
-  const viewer = await getViewer();
-  if (!viewer) return { ok: false };
-  if (title.trim().length < 3) return { ok: false };
-  const caseId = await createCase({ teamId: viewer.team.id, title, createdById: viewer.user.id, yapId });
-  revalidatePath(`/yap/${yapId}`);
-  revalidatePath("/cases");
-  return { ok: true, caseId };
-}
-
 export type SubmitState = { error?: string };
 
 /**
@@ -236,7 +212,7 @@ export async function submitYapAction(
       return { error: await say({ code: "EVIDENCE_SIZE" }) };
     }
     try {
-      await attachEvidence(yapId, {
+      await attachEvidence(yapId, teamId, {
         buffer: Buffer.from(await evidence.arrayBuffer()),
         mimeType: evidence.type,
       });
@@ -337,7 +313,7 @@ export async function loginAction(_previous: AuthState, formData: FormData): Pro
   const result = await authenticate(username, password);
   if (!result.ok) return { error: await say(result) };
   await createSession(result.userId);
-  redirect(String(formData.get("next") || "/"));
+  redirect(returnTo(formData.get("next")));
 }
 
 /** Registration is only reachable through an invite, so the token comes first. */
@@ -451,20 +427,40 @@ export type AdminState = { error?: string; ok?: string; token?: string };
  * someone in are not the people who run the archive, and making them ask an
  * owner first would just mean invites stop happening.
  */
+/** Blank → no limit. Otherwise a whole number in range, or nothing at all. */
+function limit(raw: FormDataEntryValue | null, cap: number): { ok: true; value: number | null } | { ok: false } {
+  const text = String(raw ?? "").trim();
+  if (!text) return { ok: true, value: null };
+  if (!/^\d+$/.test(text)) return { ok: false };
+  const value = Number(text);
+  if (value < 1 || value > cap) return { ok: false };
+  return { ok: true, value };
+}
+
 export async function createInviteAction(
   _previous: AdminState,
   formData: FormData,
 ): Promise<AdminState> {
   const viewer = await requireViewer("/invite");
-  const maxUsesRaw = String(formData.get("maxUses") ?? "").trim();
-  const expiresRaw = String(formData.get("expiresInDays") ?? "").trim();
+
+  // Blank is the only way to ask for "no limit". Everything else has to be a
+  // number the archive can honour, because the failure mode of a vague answer
+  // here is a permanent, unlimited door.
+  const maxUses = limit(formData.get("maxUses"), MAX_USES_CAP);
+  if (!maxUses.ok) {
+    return { error: await say({ code: "INVITE_USES_INVALID", vars: { n: MAX_USES_CAP } }) };
+  }
+  const expiresInDays = limit(formData.get("expiresInDays"), MAX_DAYS_CAP);
+  if (!expiresInDays.ok) {
+    return { error: await say({ code: "INVITE_DAYS_INVALID", vars: { n: MAX_DAYS_CAP } }) };
+  }
 
   const token = await createInvite({
     teamId: viewer.team.id,
     createdById: viewer.user.id,
     note: String(formData.get("note") ?? ""),
-    maxUses: maxUsesRaw ? Number(maxUsesRaw) : null,
-    expiresInDays: expiresRaw ? Number(expiresRaw) : null,
+    maxUses: maxUses.value,
+    expiresInDays: expiresInDays.value,
   });
   revalidatePath("/admin");
   revalidatePath("/invite");

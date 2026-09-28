@@ -6,7 +6,7 @@ project already has.
 | | |
 |---|---|
 | `tests/unit` | the pure modules: aura, elo, verification, momentum, search parsing, card emphasis and archival notes — plus two structural checks that read the source tree rather than call it. No database, runs anywhere in ~100ms. |
-| `tests/db` | the rules that live half in TypeScript and half in the schema: who may witness what, acknowledgement versus dispute, aura recomputation, pagination, search qualifiers reaching SQL, case ordering, and the wall between teams. |
+| `tests/db` | the rules that live half in TypeScript and half in the schema: who may witness what, acknowledgement versus dispute, aura recomputation, pagination, search qualifiers reaching SQL, and the wall between teams. |
 
 ```bash
 npm run test:unit          # always works
@@ -42,14 +42,22 @@ or is a rule that was argued about and settled:
 - the cookie name `src/proxy.ts` checks is the one `createSession` actually writes; the proxy
   duplicates it deliberately to stay free of database-touching modules;
 - pagination covers every record exactly once, with no overlap;
-- case members are ordered by when things were said, not when they were filed;
 - naming a new yapper creates a person with no credentials, and registering under exactly that
   name claims their statements — while a different spelling deliberately starts a separate
   person;
-- **no read or write crosses between teams**: the feed, a record fetched by id, reactions,
-  leaderboards, profiles, tags, cases and the arena are each checked against a second archive
+- **no read crosses between teams**: the feed, a record fetched by id, reactions,
+  leaderboards, profiles, tags and the arena are each checked against a second archive
   holding a namesake and a higher-aura record. `tests/db/teams.test.ts` is the file to extend
   whenever a service grows a new query;
+- **no write crosses between teams either**, which is a separate file because it was a
+  separate bug: `tests/db/tenant-isolation.test.ts` hands every write path a real record id
+  belonging to somebody else and asserts nothing lands. Filing, reacting, witnessing,
+  acknowledging, disputing, editing, redacting, restoring and the arena each get their own
+  case. The review that found the original hole found it in the one write path nobody had
+  tested, so the rule now is that a new write path arrives with its row here;
+- an invite limit is refused when it cannot be honoured, never widened: `0`, `-5`, `1.5` and
+  `NaN` used to all collapse into "unlimited", which made a typo the most permissive setting
+  in the admin panel;
 - an invite link admits exactly as many people as it says, and two people racing for the last
   seat produce one member, not two — the conditional update, tested concurrently;
 - a revoked, expired or exhausted link reports *which* of the three it is, because "invalid

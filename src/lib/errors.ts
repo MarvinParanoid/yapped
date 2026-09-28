@@ -33,6 +33,8 @@ export type ErrorCode =
   | "OWNER_ONLY_REMOVE"
   | "NOT_YOURSELF"
   | "PICK_ANOTHER_NAME"
+  | "INVITE_USES_INVALID"
+  | "INVITE_DAYS_INVALID"
   | "INVITE_CREATED"
   | "RENAMED";
 

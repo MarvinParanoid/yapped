@@ -15,7 +15,6 @@ export type SearchFilter = {
   author?: string;
   submitter?: string;
   tag?: string;
-  caseId?: number;
   aura?: { op: AuraOp; value: number };
   verification?: "UNVERIFIED" | "WITNESSED" | "CONFIRMED" | "CERTIFIED";
   has: Array<"evidence" | "lore" | "witnesses" | "dispute">;
@@ -32,7 +31,6 @@ export const SEARCH_QUALIFIERS = [
   { example: "status:certified", hint: "statuses" },
   { example: "has:evidence", hint: "haves" },
   { example: "before:2026-10-01", hint: "alsoAfter" },
-  { example: "case:1", hint: "inOneCase" },
 ] as const;
 
 const EMPTY: SearchFilter = { text: "", has: [], unknown: [] };
@@ -91,12 +89,6 @@ export function parseSearch(input: string): SearchFilter {
       case "tag":
         filter.tag = value.replace(/^#/, "").toLowerCase();
         break;
-      case "case": {
-        const id = Number(value);
-        if (Number.isInteger(id) && id > 0) filter.caseId = id;
-        else filter.unknown.push(token);
-        break;
-      }
       case "aura": {
         const aura = parseAura(value);
         if (aura) filter.aura = aura;
@@ -151,7 +143,6 @@ export function isEmptyFilter(filter: SearchFilter): boolean {
     !filter.author &&
     !filter.submitter &&
     !filter.tag &&
-    filter.caseId === undefined &&
     !filter.aura &&
     !filter.verification &&
     filter.has.length === 0 &&
@@ -172,7 +163,6 @@ export type FilterChip =
   | { kind: "tag"; value: string }
   | { kind: "verification"; value: "UNVERIFIED" | "WITNESSED" | "CONFIRMED" | "CERTIFIED" }
   | { kind: "saidBy" | "filedBy"; name: string }
-  | { kind: "caseChip"; n: string }
   | { kind: "auraChip"; op: string; value: number }
   | { kind: "hasChip"; what: string }
   | { kind: "disputedChip" }
@@ -184,9 +174,6 @@ export function describeFilter(filter: SearchFilter): FilterChip[] {
   if (filter.author) chips.push({ kind: "saidBy", name: filter.author });
   if (filter.submitter) chips.push({ kind: "filedBy", name: filter.submitter });
   if (filter.tag) chips.push({ kind: "tag", value: filter.tag });
-  if (filter.caseId !== undefined) {
-    chips.push({ kind: "caseChip", n: String(filter.caseId).padStart(4, "0") });
-  }
   if (filter.aura) chips.push({ kind: "auraChip", op: filter.aura.op, value: filter.aura.value });
   if (filter.verification) chips.push({ kind: "verification", value: filter.verification });
   for (const has of filter.has) {

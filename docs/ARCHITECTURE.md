@@ -115,6 +115,14 @@ and zero runtime surprises, which is the entire argument for doing it this way.
 resolves the signed-in user, the teams they belong to, and which one they are currently
 looking at (cookie `yapped_team`).
 
+**A required `teamId` proves the query, not the payload.** The compiler can make a service
+take a team; it cannot make the *ids* in that call belong to it. Anything a service receives
+that names a record or a person has to be checked against the team separately — `createYap`
+verifies that both the author and the submitter hold a membership, because the author arrives
+from a form field and a tampered submission would otherwise credit a quote to a stranger and
+print their name on it. `tests/db/tenant-isolation.test.ts` hands each write path a real id
+belonging to another archive and asserts nothing lands.
+
 **The one hole, and why it is visible.** A user with the global role `ADMIN` — the instance
 operator, set only by `npm run grant:admin`, never from inside the app — may point that cookie
 at *any* archive on the box, including one they are not a member of. Without it, a team that
@@ -147,6 +155,12 @@ Voting, reacting and submitting require a session. Credentials are username + pa
 with `scrypt` (node stdlib, no native dep). Sessions are opaque random tokens stored in a
 `Session` row and referenced by an httpOnly cookie, which means magic links can be added
 later by writing a `Session` row from an email link with no client changes.
+
+The gate sends people to `/login?next=…` and the form carries that path back, which means
+the destination of a successful sign-in arrives from whoever wrote the link. `lib/return-to.ts`
+is the allow-list that decides it: one leading slash, no authority, no scheme. Without it the
+archive's own login page is a redirector — the address bar says yapped while the password is
+typed, and the next screen is somebody else's.
 
 **Where the gate is called matters.** A `loading.tsx` wraps its page in a Suspense boundary,
 and Next flushes the shell before the page body runs — so a `redirect()` raised inside such a
@@ -238,13 +252,6 @@ which is what makes the last seat safe under a race.
 Indexes: `(deletedAt, createdAt)`, `(deletedAt, aura)`, `(deletedAt, saidAt)`,
 `(deletedAt, verification)`, `authorId`, `eloRating`.
 
-**Case** — several records that belong to one incident: `id (autoincrement)` so it prints as
-`#0007`, `title`, `summary?`, `status (OPEN|CLOSED|COLD)`, `openedAt`, `closedAt?`,
-`createdById?`. **CaseYap** joins them with a `position`, which is always recomputed from the
-records' own `saidAt` — a case reads in the order things were said, not the order they were
-filed. Every figure on a case (records, witnesses, evidence, aura, date span) is derived from
-its members; nothing is cached.
-
 **Witness** — one colleague going on the record about whether a statement happened.
 `id`, `yapId`, `userId`, `stance (PRESENT|DENIED)`, `createdAt`, `@@unique([yapId, userId])`.
 A person holds exactly one position per record and may switch it or withdraw it. `witnessCount`
@@ -318,8 +325,6 @@ makes it the visual regression fixture as much as the demo. `Плесень ха
 | `/on-this-day` | dynamic RSC | The same calendar date in earlier years; `?date=` walks the calendar |
 | `/wrapped` | dynamic RSC | Available periods |
 | `/wrapped/[year]` · `/wrapped/[year]/[month]` | dynamic RSC | The period report |
-| `/cases` | dynamic RSC | Case files index |
-| `/case/[id]` | dynamic RSC | One case: derived figures + CHRONOLOGY of its records |
 | `/yappers` | dynamic RSC | Leaderboard, `?range=` all time / month / week |
 | `/yapper/[id]` | dynamic RSC | Profile: stats, badges, tag breakdown, best yap, full history |
 | `/random` | dynamic RSC | One fullscreen quote, "GET YAPPED AGAIN" |
@@ -347,7 +352,7 @@ The same flush is why **every segment with a `loading.tsx` carries a `layout.tsx
 job is to call `requireViewer`** — a gate in the page would be delivered on a 200 with the page
 already rendered (§1.4). `tests/unit/route-gates.test.ts` enforces the pairing.
 
-Server Actions: `react`, `witness`, `dispute` / `withdrawDispute`, `fileUnderCase`, `openCase`,
+Server Actions: `react`, `witness`, `dispute` / `withdrawDispute`,
 `submitYap`, `deleteYap`, `restoreYap`, `voteBattle`, `login`, `register`, `logout`,
 `acceptInvite`, `switchTeam`, `createInvite`, `revokeInvite`, `setMemberRole`, `removeMember`,
 `renameTeam`, `createTeam`.
