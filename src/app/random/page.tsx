@@ -40,7 +40,7 @@ export default async function RandomPage({
           hint="the archive is empty"
           action={
             <Link href="/submit" className="btn btn-acid">
-              File the first yap →
+              {d.sections.fileFirstYap} →
             </Link>
           }
         />
@@ -54,7 +54,7 @@ export default async function RandomPage({
         <div className="flex items-center justify-between">
           <span className="label">Random yap · {yap.code}</span>
           <Link href={`/yap/${yap.id}`} className="label hover:text-acid">
-            Open record →
+            {d.feed.openRecord} →
           </Link>
         </div>
 
@@ -75,7 +75,7 @@ export default async function RandomPage({
             </Link>
             <span className="mono text-[13px] text-muted-dark">{formatDate(yap.saidAt, months)}</span>
             <span className="mono tabnums text-[19px] font-bold text-acid">
-              {formatAura(yap.aura)} <span className="label">aura</span>
+              {formatAura(yap.aura)} <span className="label">{d.record.auraUnit}</span>
             </span>
           </div>
 
@@ -97,9 +97,9 @@ export default async function RandomPage({
           <GetYappedAgain currentId={yap.id} />
           <div className="flex items-center gap-4">
             <span className="label">
-              1 / {formatCount(stats.yapCount)} · press space for another
+              1 / {formatCount(stats.yapCount)} · {d.feed.pressSpace}
             </span>
-            <span className="label">the internet forgets. we don&apos;t.</span>
+            <span className="label">{d.feed.motto}</span>
           </div>
         </div>
       </div>

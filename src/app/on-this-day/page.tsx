@@ -56,10 +56,10 @@ export default async function OnThisDayPage({
 
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <Link href={`/on-this-day?date=${shiftDays(today, -1)}`} className="btn">
-              ← Day before
+              ← {d.sections.dayBefore}
             </Link>
             <Link href={`/on-this-day?date=${shiftDays(today, 1)}`} className="btn">
-              Day after →
+              {d.sections.dayAfter} →
             </Link>
             {dateParam ? (
               <Link href="/on-this-day" className="btn">
@@ -74,7 +74,7 @@ export default async function OnThisDayPage({
         {report.anniversaries.length === 0 ? (
           <div className="border border-ink bg-paper-2 px-6 py-16 text-center">
             <p className="quote text-[clamp(1.4rem,3.6vw,2.4rem)]">
-              The archive is too young.
+              {d.sections.archiveTooYoung}
             </p>
             <p className="label mt-4 leading-[1.6]">
               {report.archiveStart
@@ -88,7 +88,7 @@ export default async function OnThisDayPage({
             ) : null}
             <div className="mt-8 flex justify-center">
               <Link href="/" className="btn">
-                Back to the archive
+                {d.sections.backToArchive}
               </Link>
             </div>
           </div>

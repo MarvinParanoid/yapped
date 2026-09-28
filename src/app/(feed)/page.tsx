@@ -272,7 +272,7 @@ export default async function FeedPage({
               </span>
               {page < pageCount ? (
                 <Link href={pageHref(page + 1)} className="btn">
-                  Further back →
+                  {d.feed.furtherBack} →
                 </Link>
               ) : (
                 <span />

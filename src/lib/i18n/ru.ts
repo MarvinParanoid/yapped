@@ -61,6 +61,11 @@ export const ru: Dictionary = {
   },
 
   feed: {
+    furtherBack: "Ещё раньше",
+    openRecord: "Открыть запись",
+    noYappers: "ораторы не установлены",
+    pressSpace: "пробел — следующая",
+    battleVotes: "голосов подано: {n}",
     archived: "цитат в архиве",
     totalAura: "всего ауры",
     certified: "заверенных ораторов",
@@ -188,6 +193,12 @@ export const ru: Dictionary = {
   },
 
   sections: {
+    marketDisclaimer: "аура восстановлена по времени реакций · запись может только расти, обвала не предвидится · выражайтесь ответственно",
+    dayBefore: "Днём раньше",
+    dayAfter: "Днём позже",
+    archiveTooYoung: "Архив слишком молод.",
+    fileFirstYap: "Внести первую цитату",
+    backToAllArchives: "Ко всем архивам",
     window: "Окно",
     feedWindow: "Окно ленты",
     episodes: "Эпизоды, а не отдельные фразы",
@@ -297,7 +308,7 @@ export const ru: Dictionary = {
     owner: "владелец: {names}",
     noOwner: "без владельца",
     youAreIn: "вы состоите",
-    current: "текущий",
+    current: "вы здесь",
     administer: "управлять →",
     enterTeam: "войти в «{name}» →",
     entering: "входим...",
@@ -312,6 +323,9 @@ export const ru: Dictionary = {
   },
 
   wrapped: {
+    contributors: "в записях отметились: {n}",
+    sparseBody: "либо ничего не происходило, либо никто не вёл протокол",
+    loreCarries: "записей с обстоятельствами: {n}",
     kicker: "yapped. итоги",
     heading: "Итоги",
     selfAssessment: "Периодическая самооценка",
@@ -449,6 +463,9 @@ export const ru: Dictionary = {
   },
 
   record: {
+    loreWithheld: "обстоятельства раскрываются по запросу",
+    screenshotThis: "1200 × 630 · снимите экран",
+    auraUnit: "ауры",
     back: "Назад",
     lore: "Предыстория",
     hide: "Скрыть",
@@ -534,6 +551,10 @@ export const ru: Dictionary = {
   },
 
   submit: {
+    uploadImage: "Приложить изображение",
+    orDragDrop: "или перетащите сюда",
+    verbatimHint: "дословно. обстоятельства — ниже.",
+    permanentHint: "вносится навсегда. подумайте.",
     heading: "Занести в архив",
     back: "Назад в архив",
     intro:
@@ -642,6 +663,8 @@ export const ru: Dictionary = {
   },
 
   error: {
+    code500: "ошибка 500",
+    code404: "ошибка 404",
     notFound: "ЭТОГО НИКТО НЕ ГОВОРИЛ.",
     notFoundHint: "записи с таким номером нет",
     notFoundTitle: "Этого никто не говорил.",

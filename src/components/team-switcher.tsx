@@ -70,7 +70,7 @@ export function TeamSwitcher({ active, teams }: { active: TeamRef; teams: TeamRe
               }
             >
               {team.name}
-              {team.slug === active.slug ? <span className="label ml-2">current</span> : null}
+              {team.slug === active.slug ? <span className="label ml-2">{d.admin.current}</span> : null}
             </button>
           ))}
         </div>

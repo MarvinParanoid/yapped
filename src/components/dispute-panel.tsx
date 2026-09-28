@@ -82,7 +82,7 @@ export function DisputePanel({
             }
             className="btn mt-4"
           >
-            Withdraw dispute
+            {d.verification.withdrawDispute}
           </button>
         ) : null}
       </div>

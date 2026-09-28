@@ -41,11 +41,11 @@ export default async function BattlePage({
     <div className="mx-auto max-w-[1200px] px-4 py-8 pb-20 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="label">Yap battle · {formatCount(battles)} votes cast</span>
+          <span className="label">{d.feed.battleKicker} · {fill(d.feed.battleVotes, { n: formatCount(battles) })}</span>
           <h1 className="quote mt-2 text-[clamp(2rem,5.5vw,3.6rem)]">{d.feed.battlePrompt}</h1>
         </div>
         <Link href="/battle/hall" className="btn">
-          Hall of Yap →
+          {d.profile.hallOfYap} →
         </Link>
       </div>
 

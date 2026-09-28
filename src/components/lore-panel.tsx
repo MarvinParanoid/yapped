@@ -33,7 +33,7 @@ export function LorePanel({ lore, defaultOpen = false }: { lore: string; default
           ))}
         </div>
       ) : (
-        <p className="label px-4 py-4">context withheld pending request</p>
+        <p className="label px-4 py-4">{d.record.loreWithheld}</p>
       )}
     </section>
   );

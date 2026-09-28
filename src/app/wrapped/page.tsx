@@ -51,7 +51,7 @@ export default async function WrappedIndexPage() {
                     <span className="quote block text-[clamp(1.8rem,4vw,2.8rem)] text-paper">
                       {period.year}
                     </span>
-                    <span className="label mt-2 block">the whole year →</span>
+                    <span className="label mt-2 block">{d.wrapped.wholeYear} →</span>
                   </Link>
                 ))}
               </div>

@@ -18,7 +18,7 @@ export async function SidebarLeaders({ entries }: { entries: LeaderboardEntry[] 
       }
     >
       {entries.length === 0 ? (
-        <p className="label px-3 py-4">no known yappers</p>
+        <p className="label px-3 py-4">{d.feed.noYappers}</p>
       ) : null}
       <ol>
         {entries.map((entry) => (

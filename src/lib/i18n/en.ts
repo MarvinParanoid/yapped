@@ -42,6 +42,11 @@ export const en = {
   },
 
   feed: {
+    furtherBack: "Further back",
+    openRecord: "Open record",
+    noYappers: "no known yappers",
+    pressSpace: "press space for another",
+    battleVotes: "{n} votes cast",
     archived: "yaps archived",
     totalAura: "total aura",
     certified: "certified yappers",
@@ -168,6 +173,12 @@ export const en = {
   },
 
   sections: {
+    marketDisclaimer: "aura is reconstructed from reaction timestamps · a record can only gain, so there is no crash to report · yap responsibly",
+    dayBefore: "Day before",
+    dayAfter: "Day after",
+    archiveTooYoung: "The archive is too young.",
+    fileFirstYap: "File the first yap",
+    backToAllArchives: "Back to every archive",
     window: "Window",
     feedWindow: "Feed window",
     episodes: "Episodes, not one-liners",
@@ -292,6 +303,9 @@ export const en = {
   },
 
   wrapped: {
+    contributors: "{n} people contributed to the record",
+    sparseBody: "either nothing happened or nobody was taking notes",
+    loreCarries: "{n} of the records carry context",
     kicker: "yapped. wrapped",
     heading: "Wrapped",
     selfAssessment: "Periodic self-assessment",
@@ -429,6 +443,9 @@ export const en = {
   },
 
   record: {
+    loreWithheld: "context withheld pending request",
+    screenshotThis: "1200 × 630 · screenshot this",
+    auraUnit: "aura",
     back: "Back",
     lore: "Lore",
     hide: "Hide",
@@ -514,6 +531,10 @@ export const en = {
   },
 
   submit: {
+    uploadImage: "Upload image",
+    orDragDrop: "or drag and drop",
+    verbatimHint: "verbatim, please. context goes below.",
+    permanentHint: "yap responsibly. this is permanent.",
     heading: "Put it on record",
     back: "Back to the archive",
     intro:
@@ -621,6 +642,8 @@ export const en = {
   },
 
   error: {
+    code500: "error 500",
+    code404: "error 404",
     notFound: "THIS YAP NEVER HAPPENED.",
     notFoundHint: "no record carries that number",
     notFoundTitle: "This yap never happened.",

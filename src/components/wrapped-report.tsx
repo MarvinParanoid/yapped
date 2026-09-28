@@ -117,7 +117,7 @@ export async function WrappedReportView({
           <div className="border border-ink bg-paper-2 px-6 py-16 text-center">
             <p className="quote text-[clamp(1.4rem,3.4vw,2.2rem)]">{d.wrapped.noStatements}</p>
             <p className="label mt-4 leading-[1.6]">
-              either nothing happened or nobody was taking notes
+              {d.wrapped.sparseBody}
             </p>
           </div>
         ) : report.sparse ? (
@@ -280,10 +280,9 @@ export async function WrappedReportView({
             </div>
 
             <p className="label mt-8 text-center">
-              {formatCount(report.activeYappers)} people contributed to the record ·{" "}
-              {formatCount(report.loreCount)}{" "}
-              {report.loreCount === 1 ? "record carries" : "records carry"} context · the
-              internet forgets. we don&apos;t.
+              {fill(d.wrapped.contributors, { n: formatCount(report.activeYappers) })} ·{" "}
+              {fill(d.wrapped.loreCarries, { n: formatCount(report.loreCount) })} ·{" "}
+              {d.feed.motto}
             </p>
           </>
         )}

@@ -52,7 +52,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
           )}
         />
         <div className="mt-1 flex justify-between">
-          <span className="label">verbatim, please. context goes below.</span>
+          <span className="label">{d.submit.verbatimHint}</span>
           <span className="label tabnums">{text.length}/400</span>
         </div>
 
@@ -128,7 +128,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
             placeholder={d.submit.lorePlaceholder}
             className="field mt-2 resize-y"
           />
-          <p className="label mt-1">so this still makes sense in six months.</p>
+          <p className="label mt-1">{d.submit.loreHint}</p>
         </div>
 
         <div className="mt-6">
@@ -190,9 +190,9 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
                 }}
               />
               <span className="label leading-[1.6]">
-                Upload image
+                {d.submit.uploadImage}
                 <br />
-                or drag and drop
+                {d.submit.orDragDrop}
               </span>
             </label>
 
@@ -225,7 +225,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
         <button type="submit" disabled={pending} className="btn btn-acid btn-lg mt-6 w-full">
           {pending ? d.submit.archiving : `${d.submit.yapIt} →`}
         </button>
-        <p className="label mt-3 text-center">yap responsibly. this is permanent.</p>
+        <p className="label mt-3 text-center">{d.submit.permanentHint}</p>
       </div>
     </form>
   );

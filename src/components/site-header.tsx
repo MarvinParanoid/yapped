@@ -106,7 +106,7 @@ export async function SiteHeader() {
             {fill("Operator view · you are not a member of {team}", { team: viewer.team.name })}
           </span>
           <Link href="/admin/instance" className="label ml-auto hover:opacity-70">
-            Back to every archive
+            {d.sections.backToAllArchives}
           </Link>
         </div>
       ) : null}

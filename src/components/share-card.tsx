@@ -5,9 +5,11 @@ import type { YapView } from "@/lib/types";
 
 /**
  * Fixed 1200×630 share card. Kept free of interactivity and layout context so
- * a server-side image generator can render exactly this component later.
+ * a server-side image generator can render exactly this component later —
+ * which is why the motto arrives as a prop instead of being read from the
+ * dictionary here: the card must render from its arguments alone.
  */
-export function ShareCard({ yap }: { yap: YapView }) {
+export function ShareCard({ yap, motto }: { yap: YapView; motto: string }) {
   return (
     <div
       className="on-ink relative flex flex-col justify-between overflow-hidden"
@@ -45,7 +47,7 @@ export function ShareCard({ yap }: { yap: YapView }) {
           </span>
         </span>
         <span className="mono text-[16px] tracking-[0.18em] text-muted-dark">
-          the internet forgets. we don&apos;t.
+          {motto}
         </span>
       </div>
     </div>

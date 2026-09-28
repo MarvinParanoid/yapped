@@ -180,8 +180,7 @@ export default async function MarketPage({
         )}
 
         <p className="label mt-8 text-center leading-[1.6]">
-          aura is reconstructed from reaction timestamps · a record can only gain, so there is
-          no crash to report · yap responsibly
+          {d.sections.marketDisclaimer}
         </p>
       </div>
     </article>

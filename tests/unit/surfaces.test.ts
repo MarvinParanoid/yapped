@@ -52,3 +52,57 @@ describe("light surfaces that float", () => {
     );
   });
 });
+
+/**
+ * Interface text belongs in the dictionary, not in the markup.
+ *
+ * Every string in `lib/i18n` is checked for completeness by the type system, so
+ * the failure mode is not a missing translation — it is a line that never asked
+ * for one. Those are invisible to every other check: the build is clean, the
+ * types are clean, and the page simply speaks English at a reader who does not.
+ *
+ * Twenty-six of them were still in place after the interface had been declared
+ * translated twice. Among them the archive's own motto, written out by hand on
+ * /random and on the share card while a Russian version sat in the dictionary
+ * the whole time. Reading the source for them does not work: the ones that hid
+ * longest were the ones broken across lines by `{" "}`.
+ *
+ * So: two or more English words sitting in JSX text are a mistake. A single
+ * word is left alone deliberately — units, brand marks and codes are usually
+ * literal, and a rule that cries wolf gets switched off.
+ */
+describe("interface text", () => {
+  test("lives in the dictionary, not in the markup", () => {
+    const offenders: string[] = [];
+    // Anything between two tags. Braces mean an expression, so those are out;
+    // the rest is sorted below, because `useState<T>(null)` and a /* comment */
+    // both read as text nodes to a regex.
+    const textNodes = />([^<>{}]+)</g;
+    // Punctuation that appears in code and not in a sentence.
+    const code = /[();=\\/"'`]/;
+    const prose = /[A-Za-z]{3,}[ ,.]+[A-Za-z]{3,}/;
+    const allowed = [
+      /^yapped\.?$/i,
+      // The demo archive's credentials: values to type, not words to read.
+      /^(anna|yapped123)$/i,
+    ];
+
+    for (const file of tsxFiles(SRC)) {
+      for (const match of readFileSync(file, "utf8").matchAll(textNodes)) {
+        // `&apos;` is text, but both its semicolon and the apostrophe it
+        // stands for would read as code, so it goes before the check.
+        const text = match[1]!.replace(/&[a-z]+;/g, "").trim();
+        if (!text || code.test(text)) continue;
+        if (allowed.some((pattern) => pattern.test(text))) continue;
+        if (!prose.test(text)) continue;
+        offenders.push(`${path.relative(SRC, file)}: ${JSON.stringify(text)}`);
+      }
+    }
+
+    assert.deepEqual(
+      offenders,
+      [],
+      `hardcoded interface text — give it a key in lib/i18n:\n  ${offenders.join("\n  ")}`,
+    );
+  });
+});
