@@ -12,7 +12,10 @@ import { cn } from "@/lib/cn";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Top yappers" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.topYappers };
+}
 
 const TABS: Array<{ key: RangeKey; dict: "allTime" | "thisMonth" | "thisWeek" }> = [
   { key: "all", dict: "allTime" },

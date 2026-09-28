@@ -134,7 +134,7 @@ export function HeaderSearch() {
       {/* The archive is read by people who live in GitHub search. */}
       <div
         hidden={!helping}
-        className="absolute right-0 top-[calc(100%+1px)] z-30 w-[290px] border border-ink bg-paper"
+        className="on-paper absolute right-0 top-[calc(100%+1px)] z-30 w-[290px] border border-ink bg-paper"
       >
         <p className="label border-b border-ink px-3 py-1.5">{d.sections.qualifiers}</p>
         <ul>
@@ -152,7 +152,7 @@ export function HeaderSearch() {
                 className="flex w-full items-baseline gap-2 px-3 py-1.5 text-left hover:bg-paper-3"
               >
                 <span className="mono text-[11px] font-bold">{qualifier.example}</span>
-                <span className="label truncate">{qualifier.blurb}</span>
+                <span className="label truncate">{d.search[qualifier.hint]}</span>
               </button>
             </li>
           ))}

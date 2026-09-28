@@ -328,8 +328,9 @@ export async function listYappers(teamId: string): Promise<YapperRef[]> {
 
 /** The person who said it may not have an account yet. Make them one anyway. */
 export async function findOrCreateYapper(displayName: string, teamId: string): Promise<string> {
-  const named = validateName(displayName, "A yapper's name");
-  if (!named.ok) throw new Error(named.error);
+  const named = validateName(displayName);
+  // The action turns this into a sentence; the service only names the problem.
+  if (!named.ok) throw new Error(named.problem.code);
   const name = named.name;
   // Scoped to the team: two archives may each have their own Diana, and they
   // are not the same person.

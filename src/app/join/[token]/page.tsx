@@ -10,7 +10,10 @@ import { inspectInvite } from "@/lib/services/invites";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Invitation" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.invitation };
+}
 
 export default async function JoinPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;

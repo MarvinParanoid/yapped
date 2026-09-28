@@ -20,7 +20,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Stamp } from "@/components/ui/stamp";
 import { VerificationBadge } from "@/components/ui/verification-badge";
 import { getViewer, requireViewer } from "@/lib/auth/team";
-import { formatCount, formatDateTime, formatStamp } from "@/lib/format";
+import { formatCount, formatDate, formatStamp } from "@/lib/format";
 import { getYapBattleRecord } from "@/lib/services/battles";
 import { CASE_STATUS_META, getCasesForYap, listFilableCases } from "@/lib/services/cases";
 import {
@@ -128,7 +128,7 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
                   — {yap.author.displayName}
                 </Link>
                 <span className="mono text-[12px] text-muted-dark">
-                  {formatDateTime(yap.saidAt)}
+                  {formatDate(yap.saidAt, d.profile.months.split(" "))}
                 </span>
                 {yap.disputedAt ? (
                   <span className="label-strong text-red">

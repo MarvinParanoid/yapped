@@ -11,7 +11,10 @@ import { getMarket, type MarketRow } from "@/lib/services/aura-history";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Aura market" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.market };
+}
 
 /**
  * Generous windows on purpose: a handful of statements a week means a 24-hour

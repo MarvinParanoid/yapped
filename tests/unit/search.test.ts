@@ -60,10 +60,18 @@ describe("search qualifiers", () => {
   });
 
   test("describes each active constraint for the banner", () => {
+    // Keys and values, not phrases: the banner words them in whichever
+    // language the reader chose.
     const chips = describeFilter(parseSearch("прод from:anna aura:>500 has:evidence"));
-    assert.ok(chips.some((c) => c.includes("прод")));
-    assert.ok(chips.includes("said by anna"));
-    assert.ok(chips.includes("aura > 500"));
-    assert.ok(chips.includes("has evidence"));
+    assert.deepEqual(chips, [
+      { kind: "text", value: "прод" },
+      { kind: "saidBy", name: "anna" },
+      { kind: "auraChip", op: ">", value: 500 },
+      { kind: "hasChip", what: "evidence" },
+    ]);
+  });
+
+  test("a dispute is its own chip rather than a `has` one", () => {
+    assert.deepEqual(describeFilter(parseSearch("has:dispute")), [{ kind: "disputedChip" }]);
   });
 });

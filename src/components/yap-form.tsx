@@ -206,7 +206,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
                     setPreview(null);
                     if (fileRef.current) fileRef.current.value = "";
                   }}
-                  className="absolute right-0 top-0 border-b border-l border-ink bg-paper px-2 py-1 font-mono text-[11px] hover:bg-red hover:text-paper"
+                  className="on-paper absolute right-0 top-0 border-b border-l border-ink bg-paper px-2 py-1 font-mono text-[11px] hover:bg-red hover:text-paper"
                   aria-label={d.submit.removeEvidence}
                 >
                   ✕

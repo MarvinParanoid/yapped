@@ -18,9 +18,30 @@ export type SessionUser = {
  * Opaque token in an httpOnly cookie, backed by a Session row. A magic-link
  * flow later only has to write one of these rows.
  */
+/**
+ * Delete every session whose time is up.
+ *
+ * Nothing did this before: an expired row was treated as invalid on the way in
+ * and then left behind forever, so the table only ever grew. The growth is slow
+ * — one row per sign-in, a thirty-day life — which is exactly why it would have
+ * gone unnoticed for a year.
+ *
+ * There is no cron for it on purpose. Housekeeping that lives in a scheduler is
+ * housekeeping that stops when the scheduler does; this runs on the one event
+ * that is both rare and always present when sessions accumulate — somebody
+ * signing in.
+ */
+export async function pruneExpiredSessions(): Promise<number> {
+  const { count } = await prisma.session.deleteMany({
+    where: { expiresAt: { lt: new Date() } },
+  });
+  return count;
+}
+
 export async function createSession(userId: string): Promise<void> {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000);
+  await pruneExpiredSessions();
   await prisma.session.create({ data: { token, userId, expiresAt } });
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, {
@@ -54,7 +75,13 @@ export const getSessionUser = cache(async function getSessionUser(): Promise<Ses
     where: { token },
     include: { user: true },
   });
-  if (!session || session.expiresAt < new Date()) return null;
+  if (!session) return null;
+  if (session.expiresAt < new Date()) {
+    // Met one on the way past: take it with us rather than leaving it for the
+    // next sign-in to sweep up.
+    await prisma.session.deleteMany({ where: { token } });
+    return null;
+  }
 
   return {
     id: session.user.id,

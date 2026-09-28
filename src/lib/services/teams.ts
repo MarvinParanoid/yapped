@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import type { Failure } from "@/lib/errors";
 import { validateName } from "@/lib/names";
 import type { TeamRole } from "@/lib/auth/team";
 
@@ -158,7 +159,7 @@ export async function listOwners(teamIds: string[]): Promise<Map<string, string[
   return byTeam;
 }
 
-export type RoleChange = { ok: true } | { ok: false; error: string };
+export type RoleChange = { ok: true } | ({ ok: false } & Failure);
 
 /**
  * Roles move, but a team always keeps one owner — losing the last one would
@@ -172,12 +173,12 @@ export async function setMemberRole(
   const membership = await prisma.membership.findUnique({
     where: { teamId_userId: { teamId, userId } },
   });
-  if (!membership) return { ok: false, error: "Not a member of this team." };
+  if (!membership) return { ok: false, code: "NOT_A_MEMBER" };
   if (membership.role === role) return { ok: true };
 
   if (membership.role === "OWNER") {
     const owners = await prisma.membership.count({ where: { teamId, role: "OWNER" } });
-    if (owners <= 1) return { ok: false, error: "A team needs an owner. Promote someone first." };
+    if (owners <= 1) return { ok: false, code: "NEEDS_AN_OWNER" };
   }
 
   await prisma.membership.update({
@@ -196,10 +197,10 @@ export async function removeMember(teamId: string, userId: string): Promise<Role
   const membership = await prisma.membership.findUnique({
     where: { teamId_userId: { teamId, userId } },
   });
-  if (!membership) return { ok: false, error: "Not a member of this team." };
+  if (!membership) return { ok: false, code: "NOT_A_MEMBER" };
   if (membership.role === "OWNER") {
     const owners = await prisma.membership.count({ where: { teamId, role: "OWNER" } });
-    if (owners <= 1) return { ok: false, error: "The last owner cannot be removed." };
+    if (owners <= 1) return { ok: false, code: "LAST_OWNER" };
   }
 
   await prisma.membership.delete({ where: { teamId_userId: { teamId, userId } } });
@@ -208,25 +209,25 @@ export async function removeMember(teamId: string, userId: string): Promise<Role
 }
 
 export async function renameTeam(teamId: string, name: string): Promise<RoleChange> {
-  const named = validateName(name, "A team name");
-  if (!named.ok) return { ok: false, error: named.error };
+  const named = validateName(name);
+  if (!named.ok) return { ok: false, code: named.problem.code, vars: { ...named.problem } };
   await prisma.team.update({ where: { id: teamId }, data: { name: named.name } });
   return { ok: true };
 }
 
-export type TeamCreation = { ok: true; teamId: string; slug: string } | { ok: false; error: string };
+export type TeamCreation = { ok: true; teamId: string; slug: string } | ({ ok: false } & Failure);
 
 /** Creating a team makes the creator its owner; there is no other way in. */
 export async function createTeam(name: string, ownerId: string): Promise<TeamCreation> {
-  const named = validateName(name, "A team name");
-  if (!named.ok) return { ok: false, error: named.error };
+  const named = validateName(name);
+  if (!named.ok) return { ok: false, code: named.problem.code, vars: { ...named.problem } };
   const trimmed = named.name;
 
   const base = slugifyTeam(trimmed) || "team";
   let slug = base;
   for (let attempt = 2; await prisma.team.findUnique({ where: { slug } }); attempt += 1) {
     slug = `${base}-${attempt}`;
-    if (attempt > 50) return { ok: false, error: "Pick a different name." };
+    if (attempt > 50) return { ok: false, code: "PICK_ANOTHER_NAME" };
   }
 
   const team = await prisma.team.create({

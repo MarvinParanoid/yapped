@@ -8,9 +8,10 @@ import { YapCard } from "@/components/yap-card";
 import { EmptyState, FirstRun } from "@/components/ui/empty-state";
 import { Panel } from "@/components/ui/panel";
 import { assignEmphasis, tagWeight } from "@/lib/archival";
-import { describeFilter, isEmptyFilter, parseSearch } from "@/lib/search";
+import { describeFilter, isEmptyFilter, parseSearch, type FilterChip } from "@/lib/search";
 import { cn } from "@/lib/cn";
 import { requireViewer } from "@/lib/auth/team";
+import type { Dictionary } from "@/lib/i18n/en";
 import { fill, plural } from "@/lib/i18n/locale";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { countYaps, getArchiveStats, listTags, listYaps } from "@/lib/services/yaps";
@@ -21,6 +22,34 @@ import { listPeriods, periodLabel, periodSlug } from "@/lib/services/wrapped";
 import type { RangeKey, SortKey } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
+/** A filter chip, worded. The parser hands back keys; this says them. */
+function chipLabel(chip: FilterChip, d: Dictionary): string {
+  switch (chip.kind) {
+    case "text":
+      return `“${chip.value}”`;
+    case "tag":
+      return `#${chip.value}`;
+    case "verification":
+      return d.verification[chip.value].toLowerCase();
+    case "saidBy":
+      return fill(d.search.saidBy, { name: chip.name });
+    case "filedBy":
+      return fill(d.search.filedBy, { name: chip.name });
+    case "caseChip":
+      return fill(d.search.caseChip, { n: chip.n });
+    case "auraChip":
+      return fill(d.search.auraChip, { op: chip.op, value: chip.value });
+    case "hasChip":
+      return fill(d.search.hasChip, { what: chip.what });
+    case "disputedChip":
+      return d.search.disputedChip;
+    case "afterChip":
+      return fill(d.search.afterChip, { date: chip.date });
+    case "beforeChip":
+      return fill(d.search.beforeChip, { date: chip.date });
+  }
+}
 
 const SORTS = new Set<SortKey>(["trending", "fresh", "top"]);
 
@@ -180,12 +209,12 @@ export default async function FeedPage({
                     #{tag}
                   </span>
                 ) : null}
-                {describeFilter(filter).map((chip) => (
+                {describeFilter(filter).map((chip, index) => (
                   <span
-                    key={chip}
+                    key={`${chip.kind}-${index}`}
                     className="mono border border-paper/30 px-2 py-0.5 text-[12px]"
                   >
-                    {chip}
+                    {chipLabel(chip, d)}
                   </span>
                 ))}
                 <span className="label">

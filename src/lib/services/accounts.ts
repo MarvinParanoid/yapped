@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
+import type { Failure } from "@/lib/errors";
 import { validateName } from "@/lib/names";
 
-export type AccountResult = { ok: true; userId: string } | { ok: false; error: string };
+export type AccountResult = { ok: true; userId: string } | ({ ok: false } & Failure);
 
 const USERNAME_RE = /^[a-zA-Z0-9_.-]{3,24}$/;
 
@@ -61,16 +62,16 @@ export async function previewClaim(
 export async function validateRegistration(
   username: string,
   password: string,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true } | ({ ok: false } & Failure)> {
   const login = username.trim().toLowerCase();
   if (!USERNAME_RE.test(login)) {
-    return { ok: false, error: "Username must be 3–24 characters: letters, numbers, . _ -" };
+    return { ok: false, code: "USERNAME_FORMAT" };
   }
   if (password.length < 8) {
-    return { ok: false, error: "Password must be at least 8 characters." };
+    return { ok: false, code: "PASSWORD_SHORT" };
   }
   const taken = await prisma.user.findUnique({ where: { username: login } });
-  if (taken) return { ok: false, error: "That username is already on the record." };
+  if (taken) return { ok: false, code: "USERNAME_TAKEN" };
   return { ok: true };
 }
 
@@ -84,8 +85,8 @@ export async function registerAccount(
   const valid = await validateRegistration(username, password);
   if (!valid.ok) return valid;
 
-  const named = validateName(displayName.trim() || login, "A display name");
-  if (!named.ok) return { ok: false, error: named.error };
+  const named = validateName(displayName.trim() || login);
+  if (!named.ok) return { ok: false, code: named.problem.code, vars: { ...named.problem } };
 
   const name = named.name;
   const passwordHash = await hashPassword(password);
@@ -131,8 +132,8 @@ export async function joinTeam(userId: string, teamId: string): Promise<void> {
 export async function authenticate(username: string, password: string): Promise<AccountResult> {
   const login = username.trim().toLowerCase();
   const user = await prisma.user.findUnique({ where: { username: login } });
-  if (!user?.passwordHash) return { ok: false, error: "Unknown yapper or wrong password." };
+  if (!user?.passwordHash) return { ok: false, code: "CREDENTIALS" };
   const valid = await verifyPassword(password, user.passwordHash);
-  if (!valid) return { ok: false, error: "Unknown yapper or wrong password." };
+  if (!valid) return { ok: false, code: "CREDENTIALS" };
   return { ok: true, userId: user.id };
 }

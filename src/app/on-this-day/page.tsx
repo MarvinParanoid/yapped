@@ -9,7 +9,10 @@ import { getOnThisDay } from "@/lib/services/on-this-day";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "On this day" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.onThisDay };
+}
 
 /** `?date=YYYY-MM-DD` walks the calendar; the default is today. */
 function parseDate(raw: string | undefined): Date {
@@ -31,6 +34,7 @@ export default async function OnThisDayPage({
   const { date: dateParam } = await searchParams;
   const { user, team } = await requireViewer("/on-this-day");
   const d = await getDictionary();
+  const months = d.profile.months.split(" ");
   const report = await getOnThisDay(team.id, parseDate(dateParam), user.id);
   const today = report.date;
 
@@ -74,12 +78,12 @@ export default async function OnThisDayPage({
             </p>
             <p className="label mt-4 leading-[1.6]">
               {report.archiveStart
-                ? `the record begins ${formatDate(report.archiveStart)}. nothing was said within a week of this date in any earlier year — this page fills itself in as the archive ages.`
+                ? `the record begins ${formatDate(report.archiveStart, months)}. nothing was said within a week of this date in any earlier year — this page fills itself in as the archive ages.`
                 : "nothing has been said yet."}
             </p>
             {report.firstAnniversary ? (
               <p className="label mt-2">
-                first anniversary: {formatDate(report.firstAnniversary)}
+                first anniversary: {formatDate(report.firstAnniversary, months)}
               </p>
             ) : null}
             <div className="mt-8 flex justify-center">

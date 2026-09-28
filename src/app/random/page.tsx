@@ -5,13 +5,17 @@ import { QuoteText } from "@/components/quote-text";
 import { ReactionBar } from "@/components/reaction-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireViewer } from "@/lib/auth/team";
+import { getDictionary } from "@/lib/i18n/server";
 import { formatCount, formatDate } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
 import { getArchiveStats, getRandomYap } from "@/lib/services/yaps";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Random yap" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.randomYap };
+}
 
 export default async function RandomPage({
   searchParams,
@@ -21,6 +25,8 @@ export default async function RandomPage({
   const { not } = await searchParams;
   const exclude = Number(not);
   const { user, team } = await requireViewer("/random");
+  const d = await getDictionary();
+  const months = d.profile.months.split(" ");
   const [yap, stats] = await Promise.all([
     getRandomYap(team.id, user.id, Number.isInteger(exclude) ? exclude : undefined),
     getArchiveStats(team.id),
@@ -67,7 +73,7 @@ export default async function RandomPage({
             >
               — {yap.author.displayName}
             </Link>
-            <span className="mono text-[13px] text-muted-dark">{formatDate(yap.saidAt)}</span>
+            <span className="mono text-[13px] text-muted-dark">{formatDate(yap.saidAt, months)}</span>
             <span className="mono tabnums text-[19px] font-bold text-acid">
               {formatAura(yap.aura)} <span className="label">aura</span>
             </span>

@@ -17,6 +17,7 @@ export function ContentTable({ rows }: { rows: Row[] }) {
   const [pending, startTransition] = useTransition();
   const [confirming, setConfirming] = useState<number | null>(null);
   const d = useD();
+  const months = d.profile.months.split(" ");
 
   if (rows.length === 0) return <p className="label px-3 py-4">{d.admin.nothingOnRecord}</p>;
 
@@ -32,7 +33,7 @@ export function ContentTable({ rows }: { rows: Row[] }) {
             {row.text}
           </Link>
           <span className="label">{row.author}</span>
-          <span className="label tabnums">{formatDate(row.saidAt)}</span>
+          <span className="label tabnums">{formatDate(row.saidAt, months)}</span>
           <span className="ml-auto">
             {confirming === row.id ? (
               <button
@@ -69,6 +70,7 @@ export function RedactedTable({ rows }: { rows: RedactedRow[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const d = useD();
+  const months = d.profile.months.split(" ");
 
   if (rows.length === 0) {
     return <p className="label px-3 py-4">{d.admin.nothingRedacted}</p>;
@@ -87,7 +89,7 @@ export function RedactedTable({ rows }: { rows: RedactedRow[] }) {
           </span>
           <span className="label">{row.author}</span>
           <span className="label tabnums">
-            {fill(d.admin.redactedAt, { date: formatDate(row.deletedAt) })}
+            {fill(d.admin.redactedAt, { date: formatDate(row.deletedAt, months) })}
           </span>
           <button
             type="button"

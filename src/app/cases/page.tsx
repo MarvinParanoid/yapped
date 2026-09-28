@@ -10,11 +10,15 @@ import { CASE_STATUS_META, listCases } from "@/lib/services/cases";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Case files" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.caseFiles };
+}
 
 export default async function CasesPage() {
   const { team } = await requireViewer("/cases");
   const d = await getDictionary();
+  const months = d.profile.months.split(" ");
   const cases = await listCases(team.id);
 
   return (
@@ -61,9 +65,9 @@ export default async function CasesPage() {
                     {CASE_STATUS_META[file.status].label}
                   </span>
                   <span className="label">
-                    {file.from ? formatDate(file.from) : "—"}
+                    {file.from ? formatDate(file.from, months) : "—"}
                     {file.to && file.from && file.to.getTime() !== file.from.getTime()
-                      ? ` — ${formatDate(file.to)}`
+                      ? ` — ${formatDate(file.to, months)}`
                       : ""}
                   </span>
                 </div>

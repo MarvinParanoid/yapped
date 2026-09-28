@@ -1,3 +1,5 @@
+import type { ErrorCode } from "@/lib/errors";
+
 /**
  * The interface, in English. The source of truth.
  *
@@ -334,6 +336,72 @@ export const en = {
     ANCIENT_LORE_blurb: "Has a documented yap older than six months.",
   },
 
+  errors: {
+    AUTH_REQUIRED: "You must be signed in to put someone on the record.",
+    SIGN_IN_FIRST: "Sign in first.",
+    TEXT_TOO_SHORT: "A yap needs words.",
+    TEXT_TOO_LONG: "That is a monologue, not a yap (400 characters max).",
+    AUTHOR_MISSING: "Someone had to say it.",
+    DATE_INVALID: "That date never happened.",
+    DATE_FUTURE: "It has not been said yet.",
+    REFUSED: "The archive refused this statement. Try again.",
+    EVIDENCE_TYPE: "Evidence must be an image (jpg, png, webp, gif or avif).",
+    EVIDENCE_SIZE: "Evidence is too large (8 MB max).",
+    USERNAME_FORMAT: "Username must be 3–24 characters: letters, numbers, . _ -",
+    USERNAME_TAKEN: "That username is already on the record.",
+    PASSWORD_SHORT: "Password must be at least 8 characters.",
+    CREDENTIALS: "Unknown yapper or wrong password.",
+    NAME_SHORT: "At least {n} characters.",
+    NAME_LONG: "At most {n} characters.",
+    NAME_UNREADABLE: "Needs at least one letter or digit.",
+    NOT_A_MEMBER: "Not a member of this team.",
+    NEEDS_AN_OWNER: "A team needs an owner. Promote someone first.",
+    LAST_OWNER: "The last owner cannot be removed.",
+    OWNER_ONLY_ROLES: "Only an owner can change roles.",
+    OWNER_ONLY_REMOVE: "Only an owner can remove members.",
+    NOT_YOURSELF: "You cannot remove yourself.",
+    PICK_ANOTHER_NAME: "Pick a different name.",
+    INVITE_CREATED: "Invite created.",
+    RENAMED: "Renamed.",
+  },
+
+  search: {
+    whoSaid: "who said it",
+    whoFiled: "who filed it",
+    tagged: "tagged",
+    comparison: "= < > <= >=",
+    statuses: "unverified · witnessed · confirmed · certified",
+    haves: "evidence · lore · witnesses · dispute",
+    alsoAfter: "also after:",
+    inOneCase: "records in one case",
+    saidBy: "said by {name}",
+    filedBy: "filed by {name}",
+    caseChip: "case #{n}",
+    auraChip: "aura {op} {value}",
+    hasChip: "has {what}",
+    disputedChip: "disputed",
+    afterChip: "after {date}",
+    beforeChip: "before {date}",
+  },
+
+  pageTitles: {
+    signIn: "Sign in",
+    register: "Register",
+    invitation: "Invitation",
+    inviteSomeone: "Invite someone",
+    addYap: "Add a yap",
+    topYappers: "Top yappers",
+    caseFiles: "Case files",
+    battle: "Yap battle",
+    hallOfYap: "Hall of Yap",
+    randomYap: "Random yap",
+    market: "Aura market",
+    onThisDay: "On this day",
+    wrapped: "Wrapped",
+    administration: "Administration",
+    instance: "Instance",
+  },
+
   record: {
     back: "Back",
     lore: "Lore",
@@ -358,6 +426,11 @@ export const en = {
     redact: "Redact",
     reallyRedact: "really redact?",
     share: "Share card",
+    linkCopied: "Link copied",
+    copyFailedShare: "Copy failed — use share card",
+    removeFromRecord: "Remove from the historical record?",
+    remove: "Remove",
+    keep: "Keep",
   },
 
   verification: {
@@ -381,6 +454,12 @@ export const en = {
     iWasThere: "I was there",
     cap: "Cap",
     iSaidThat: "I said that",
+    iDidNotSayThat: "I did not say that",
+    yapperStatement: "Yapper statement (optional)",
+    notRemoved: "The statement is not removed. The witnesses keep their testimony.",
+    fileDisputeBtn: "File dispute",
+    cancel: "Cancel",
+    owningUpNote: "Owning up is not corroboration — it does not count toward certification.",
     withdraw: "Withdraw",
     acknowledged: "{name} owns up to it",
     disputed: "{name} disputes it",
@@ -540,3 +619,10 @@ export const en = {
 type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
 
 export type Dictionary = Widen<typeof en>;
+
+/**
+ * Adding an ErrorCode without wording it is a build failure, not a blank
+ * message on someone's screen.
+ */
+const _everyCodeIsWorded: Record<ErrorCode, string> = en.errors;
+void _everyCodeIsWorded;

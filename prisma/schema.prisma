@@ -345,4 +345,6 @@ model Session {
   createdAt DateTime @default(now())
 
   @@index([userId])
+  /// Expired sessions are swept on every sign-in; this is the column that sweep looks at.
+  @@index([expiresAt])
 }

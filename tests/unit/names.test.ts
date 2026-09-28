@@ -33,10 +33,16 @@ describe("what counts as a name", () => {
     assert.equal(validateName("42").ok, true, "a number is at least something to print");
   });
 
-  test("says which limit was hit, not just that one was", () => {
-    const long = validateName("x".repeat(200), "A display name");
-    assert.equal(long.ok, false);
-    assert.match(long.ok === false ? long.error : "", /display name/i);
-    assert.match(long.ok === false ? long.error : "", new RegExp(String(NAME_MAX)));
+  test("names which limit was hit, and carries the number", () => {
+    // A code and its number, not a sentence: the module does not know which
+    // language will be reading it.
+    const long = validateName("x".repeat(200));
+    assert.deepEqual(long.ok === false && long.problem, { code: "NAME_LONG", n: NAME_MAX });
+
+    const short = validateName("д");
+    assert.deepEqual(short.ok === false && short.problem, { code: "NAME_SHORT", n: 2 });
+
+    const noise = validateName("...");
+    assert.deepEqual(noise.ok === false && noise.problem, { code: "NAME_UNREADABLE" });
   });
 });

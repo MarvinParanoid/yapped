@@ -23,6 +23,7 @@ export function BattleArena({
   rounds?: number;
 }) {
   const d = useD();
+  const months = d.profile.months.split(" ");
   const ROUNDS = rounds;
   const router = useRouter();
   const [round, setRound] = useState(1);
@@ -88,7 +89,7 @@ export function BattleArena({
             <Avatar name={yap.author.displayName} src={yap.author.avatarUrl} size={20} />—{" "}
             {yap.author.displayName}
           </span>
-          <span className="label">{formatDate(yap.saidAt)}</span>
+          <span className="label">{formatDate(yap.saidAt, months)}</span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <span className="mono text-[11px] text-muted">🔥 {yap.counts.BASED}</span>

@@ -14,7 +14,11 @@ import {
   TEAM_COOKIE,
 } from "@/lib/auth/team";
 import { slugifyTag } from "@/lib/format";
+import type { Failure } from "@/lib/errors";
+import { NAME_MAX, NAME_MIN } from "@/lib/names";
+import { fill } from "@/lib/i18n/locale";
 import { isLocale, LOCALE_COOKIE } from "@/lib/i18n/locale";
+import { getDictionary } from "@/lib/i18n/server";
 import type { ReactionKey } from "@/lib/ranking/aura";
 import {
   authenticate,
@@ -155,34 +159,49 @@ export async function openCaseAction(
 
 export type SubmitState = { error?: string };
 
+/**
+ * Turns a refusal into a sentence in whichever language the person is reading.
+ *
+ * Services return codes; this is the one place a code becomes words, so the
+ * same refusal cannot be worded two ways in two forms.
+ */
+async function say(failure: Failure): Promise<string> {
+  const d = await getDictionary();
+  return fill(d.errors[failure.code], failure.vars ?? {});
+}
+
 export async function submitYapAction(
   _previous: SubmitState,
   formData: FormData,
 ): Promise<SubmitState> {
   const viewer = await getViewer();
-  if (!viewer) return { error: "You must be signed in to put someone on the record." };
+  if (!viewer) return { error: await say({ code: "AUTH_REQUIRED" }) };
   const teamId = viewer.team.id;
 
   const text = String(formData.get("text") ?? "").trim();
-  if (text.length < 2) return { error: "A yap needs words." };
-  if (text.length > 400) return { error: "That is a monologue, not a yap (400 characters max)." };
+  if (text.length < 2) return { error: await say({ code: "TEXT_TOO_SHORT" }) };
+  if (text.length > 400) return { error: await say({ code: "TEXT_TOO_LONG" }) };
 
   const existingAuthorId = String(formData.get("authorId") ?? "").trim();
   const newAuthorName = String(formData.get("authorName") ?? "").trim();
-  if (!existingAuthorId && !newAuthorName) return { error: "Someone had to say it." };
+  if (!existingAuthorId && !newAuthorName) return { error: await say({ code: "AUTHOR_MISSING" }) };
 
   let authorId: string;
   try {
     authorId = existingAuthorId || (await findOrCreateYapper(newAuthorName, teamId));
   } catch (error) {
     // findOrCreateYapper rejects a name the archive will not print.
-    return { error: error instanceof Error ? error.message : "That name will not do." };
+    // findOrCreateYapper throws the code; the numbers are the module's own
+    // constants, so they can be filled in here.
+    const code = error instanceof Error ? error.message : "NAME_UNREADABLE";
+    const n = code === "NAME_SHORT" ? NAME_MIN : NAME_MAX;
+    return { error: await say({ code: code as Failure["code"], vars: { n } }) };
   }
 
   const saidAtRaw = String(formData.get("saidAt") ?? "").trim();
   const saidAt = saidAtRaw ? new Date(saidAtRaw) : new Date();
-  if (Number.isNaN(saidAt.getTime())) return { error: "That date never happened." };
-  if (saidAt.getTime() > Date.now() + 60_000) return { error: "It has not been said yet." };
+  if (Number.isNaN(saidAt.getTime())) return { error: await say({ code: "DATE_INVALID" }) };
+  if (saidAt.getTime() > Date.now() + 60_000) return { error: await say({ code: "DATE_FUTURE" }) };
 
   const tags = String(formData.get("tags") ?? "")
     .split(/[,\s]+/)
@@ -204,16 +223,16 @@ export async function submitYapAction(
       tags,
     });
   } catch {
-    return { error: "The archive refused this statement. Try again." };
+    return { error: await say({ code: "REFUSED" }) };
   }
 
   const evidence = formData.get("evidence");
   if (evidence instanceof File && evidence.size > 0) {
     if (!isAcceptedImage(evidence.type)) {
-      return { error: "Evidence must be an image (jpg, png, webp, gif or avif)." };
+      return { error: await say({ code: "EVIDENCE_TYPE" }) };
     }
     if (evidence.size > MAX_EVIDENCE_BYTES) {
-      return { error: "Evidence is too large (8 MB max)." };
+      return { error: await say({ code: "EVIDENCE_SIZE" }) };
     }
     try {
       await attachEvidence(yapId, {
@@ -291,7 +310,7 @@ export async function loginAction(_previous: AuthState, formData: FormData): Pro
   const username = String(formData.get("username") ?? "");
   const password = String(formData.get("password") ?? "");
   const result = await authenticate(username, password);
-  if (!result.ok) return { error: result.error };
+  if (!result.ok) return { error: await say(result) };
   await createSession(result.userId);
   redirect(String(formData.get("next") || "/"));
 }
@@ -311,7 +330,7 @@ export async function registerAction(_previous: AuthState, formData: FormData): 
   // cannot both get in; only then create the account. Creating it first meant
   // the loser of that race was already a member by the time they saw the error.
   const valid = await validateRegistration(username, password);
-  if (!valid.ok) return { error: valid.error };
+  if (!valid.ok) return { error: await say(valid) };
 
   const spent = await consumeInvite(token);
   if (!spent.ok) return { error: INVITE_ERRORS[spent.reason] };
@@ -320,7 +339,7 @@ export async function registerAction(_previous: AuthState, formData: FormData): 
   if (!result.ok) {
     // The seat was never used; give it back rather than silently eating it.
     await releaseInvite(token);
-    return { error: result.error };
+    return { error: await say(result) };
   }
 
   await createSession(result.userId);
@@ -348,7 +367,7 @@ async function setTeamCookie(slug: string): Promise<void> {
 /** An existing account redeeming a link for a team it is not in yet. */
 export async function acceptInviteAction(token: string): Promise<{ ok: boolean; error?: string }> {
   const user = await getSessionUser();
-  if (!user) return { ok: false, error: "Sign in first." };
+  if (!user) return { ok: false, error: await say({ code: "SIGN_IN_FIRST" }) };
 
   const invite = await inspectInvite(token);
   if (!invite.ok) return { ok: false, error: INVITE_ERRORS[invite.reason] };
@@ -424,7 +443,7 @@ export async function createInviteAction(
   });
   revalidatePath("/admin");
   revalidatePath("/invite");
-  return { ok: "Invite created.", token };
+  return { ok: await say({ code: "INVITE_CREATED" }), token };
 }
 
 /** Members pull back their own links; owners and admins pull back any. */
@@ -447,11 +466,11 @@ export async function setMemberRoleAction(
   const viewer = await requireTeamAdmin("/admin");
   // Owners are the only ones who can hand out or take back ownership.
   if (viewer.team.role !== "OWNER" && !viewer.user.isAdmin) {
-    return { ok: false, error: "Only an owner can change roles." };
+    return { ok: false, error: await say({ code: "OWNER_ONLY_ROLES" }) };
   }
   const result = await setMemberRole(viewer.team.id, userId, role);
   revalidatePath("/admin");
-  return result.ok ? { ok: true } : { ok: false, error: result.error };
+  return result.ok ? { ok: true } : { ok: false, error: await say(result) };
 }
 
 export async function removeMemberAction(
@@ -459,12 +478,12 @@ export async function removeMemberAction(
 ): Promise<{ ok: boolean; error?: string }> {
   const viewer = await requireTeamAdmin("/admin");
   if (viewer.team.role !== "OWNER" && !viewer.user.isAdmin) {
-    return { ok: false, error: "Only an owner can remove members." };
+    return { ok: false, error: await say({ code: "OWNER_ONLY_REMOVE" }) };
   }
-  if (userId === viewer.user.id) return { ok: false, error: "You cannot remove yourself." };
+  if (userId === viewer.user.id) return { ok: false, error: await say({ code: "NOT_YOURSELF" }) };
   const result = await removeMember(viewer.team.id, userId);
   revalidatePath("/admin");
-  return result.ok ? { ok: true } : { ok: false, error: result.error };
+  return result.ok ? { ok: true } : { ok: false, error: await say(result) };
 }
 
 export async function renameTeamAction(
@@ -474,7 +493,7 @@ export async function renameTeamAction(
   const viewer = await requireTeamAdmin("/admin");
   const result = await renameTeam(viewer.team.id, String(formData.get("name") ?? ""));
   revalidatePath("/", "layout");
-  return result.ok ? { ok: "Renamed." } : { error: result.error };
+  return result.ok ? { ok: await say({ code: "RENAMED" }) } : { error: await say(result) };
 }
 
 /**
@@ -487,7 +506,7 @@ export async function createTeamAction(
 ): Promise<AdminState> {
   const viewer = await requireOperator("/admin/instance");
   const result = await createTeam(String(formData.get("name") ?? ""), viewer.user.id);
-  if (!result.ok) return { error: result.error };
+  if (!result.ok) return { error: await say(result) };
   await setTeamCookie(result.slug);
   redirect("/admin/instance");
 }

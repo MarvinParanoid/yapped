@@ -46,8 +46,9 @@ describe("the two dictionaries", () => {
       // they are sample content from this team rather than interface copy
       "submit.textPlaceholder",
       "submit.lorePlaceholder",
-      // pure format, no words in it at all
+      // pure format, no words in them at all
       "submit.charCount",
+      "search.comparison",
     ]);
     const russian = new Map(leaves(ru));
     const untranslated = leaves(en)

@@ -24,16 +24,16 @@ export type SearchFilter = {
   unknown: string[];
 };
 
-export const SEARCH_QUALIFIERS: Array<{ example: string; blurb: string }> = [
-  { example: "from:anna", blurb: "who said it" },
-  { example: "by:dima", blurb: "who filed it" },
-  { example: "tag:прод", blurb: "tagged" },
-  { example: "aura:>500", blurb: "= < > <= >=" },
-  { example: "status:certified", blurb: "unverified · witnessed · confirmed · certified" },
-  { example: "has:evidence", blurb: "evidence · lore · witnesses · dispute" },
-  { example: "before:2026-10-01", blurb: "also after:" },
-  { example: "case:1", blurb: "records in one case" },
-];
+export const SEARCH_QUALIFIERS = [
+  { example: "from:anna", hint: "whoSaid" },
+  { example: "by:dima", hint: "whoFiled" },
+  { example: "tag:прод", hint: "tagged" },
+  { example: "aura:>500", hint: "comparison" },
+  { example: "status:certified", hint: "statuses" },
+  { example: "has:evidence", hint: "haves" },
+  { example: "before:2026-10-01", hint: "alsoAfter" },
+  { example: "case:1", hint: "inOneCase" },
+] as const;
 
 const EMPTY: SearchFilter = { text: "", has: [], unknown: [] };
 
@@ -163,17 +163,36 @@ export function isEmptyFilter(filter: SearchFilter): boolean {
 const ISO = (date: Date) => date.toISOString().slice(0, 10);
 
 /** One chip per active constraint, for the banner above the feed. */
-export function describeFilter(filter: SearchFilter): string[] {
-  const chips: string[] = [];
-  if (filter.text) chips.push(`“${filter.text}”`);
-  if (filter.author) chips.push(`said by ${filter.author}`);
-  if (filter.submitter) chips.push(`filed by ${filter.submitter}`);
-  if (filter.tag) chips.push(`#${filter.tag}`);
-  if (filter.caseId !== undefined) chips.push(`case #${String(filter.caseId).padStart(4, "0")}`);
-  if (filter.aura) chips.push(`aura ${filter.aura.op} ${filter.aura.value}`);
-  if (filter.verification) chips.push(filter.verification.toLowerCase());
-  for (const has of filter.has) chips.push(has === "dispute" ? "disputed" : `has ${has}`);
-  if (filter.after) chips.push(`after ${ISO(filter.after)}`);
-  if (filter.before) chips.push(`before ${ISO(filter.before)}`);
+/**
+ * The chips above the feed, as keys and their values — the module stays pure
+ * and the interface words them.
+ */
+export type FilterChip =
+  | { kind: "text"; value: string }
+  | { kind: "tag"; value: string }
+  | { kind: "verification"; value: "UNVERIFIED" | "WITNESSED" | "CONFIRMED" | "CERTIFIED" }
+  | { kind: "saidBy" | "filedBy"; name: string }
+  | { kind: "caseChip"; n: string }
+  | { kind: "auraChip"; op: string; value: number }
+  | { kind: "hasChip"; what: string }
+  | { kind: "disputedChip" }
+  | { kind: "afterChip" | "beforeChip"; date: string };
+
+export function describeFilter(filter: SearchFilter): FilterChip[] {
+  const chips: FilterChip[] = [];
+  if (filter.text) chips.push({ kind: "text", value: filter.text });
+  if (filter.author) chips.push({ kind: "saidBy", name: filter.author });
+  if (filter.submitter) chips.push({ kind: "filedBy", name: filter.submitter });
+  if (filter.tag) chips.push({ kind: "tag", value: filter.tag });
+  if (filter.caseId !== undefined) {
+    chips.push({ kind: "caseChip", n: String(filter.caseId).padStart(4, "0") });
+  }
+  if (filter.aura) chips.push({ kind: "auraChip", op: filter.aura.op, value: filter.aura.value });
+  if (filter.verification) chips.push({ kind: "verification", value: filter.verification });
+  for (const has of filter.has) {
+    chips.push(has === "dispute" ? { kind: "disputedChip" } : { kind: "hasChip", what: has });
+  }
+  if (filter.after) chips.push({ kind: "afterChip", date: ISO(filter.after) });
+  if (filter.before) chips.push({ kind: "beforeChip", date: ISO(filter.before) });
   return chips;
 }

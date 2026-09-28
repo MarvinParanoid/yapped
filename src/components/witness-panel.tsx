@@ -172,7 +172,7 @@ export function WitnessPanel({
                 onClick={() => setDenying((value) => !value)}
                 className="btn hover:border-red hover:bg-red hover:text-paper"
               >
-                I did not say that
+                {d.verification.iDidNotSayThat}
               </button>
             </div>
           ) : null}
@@ -181,7 +181,7 @@ export function WitnessPanel({
         {isAuthor && denying && !disputed ? (
           <div className="yap-in mt-3 border border-red px-3 py-3">
             <label htmlFor="yapper-statement" className="label">
-              Yapper statement (optional)
+              {d.verification.yapperStatement}
             </label>
             <textarea
               id="yapper-statement"
@@ -193,7 +193,7 @@ export function WitnessPanel({
               className="field mt-2 resize-none"
             />
             <p className="label mt-2 leading-[1.5] normal-case tracking-normal">
-              The statement is not removed. The witnesses keep their testimony.
+              {d.verification.notRemoved}
             </p>
             <div className="mt-3 flex gap-2">
               <button
@@ -210,17 +210,17 @@ export function WitnessPanel({
                 }
                 className="btn border-red bg-red text-paper hover:bg-ink"
               >
-                File dispute
+                {d.verification.fileDisputeBtn}
               </button>
               <button type="button" className="btn" onClick={() => setDenying(false)}>
-                Cancel
+                {d.verification.cancel}
               </button>
             </div>
           </div>
         ) : null}
         {acknowledged ? (
           <p className="label mt-2 leading-[1.5] normal-case tracking-normal">
-            Owning up is not corroboration — it does not count toward certification.
+            {d.verification.owningUpNote}
           </p>
         ) : null}
       </div>

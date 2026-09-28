@@ -29,6 +29,7 @@ export default async function CasePage({ params }: Params) {
 
   const { user, team } = await requireViewer(`/case/${id}`);
   const d = await getDictionary();
+  const months = d.profile.months.split(" ");
   const file = await getCase(caseId, team.id, user.id);
   if (!file) notFound();
 
@@ -67,9 +68,9 @@ export default async function CasePage({ params }: Params) {
           <h1 className="quote mt-5 text-[clamp(2rem,6vw,4.2rem)] text-paper">{file.title}</h1>
 
           <p className="label mt-3">
-            {file.from ? formatDate(file.from) : "—"}
+            {file.from ? formatDate(file.from, months) : "—"}
             {file.to && file.from && file.to.getTime() !== file.from.getTime()
-              ? ` — ${formatDate(file.to)}`
+              ? ` — ${formatDate(file.to, months)}`
               : ""}{" "}
             · {CASE_STATUS_META[file.status].blurb}
           </p>

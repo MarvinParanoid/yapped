@@ -35,6 +35,7 @@ export async function YapCard({
   const evidence = yap.evidence[0];
   const note = archivalNote(yap);
   const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
+  const months = d.profile.months.split(" ");
   const canDelete = yap.submittedBy?.id === viewerId;
   // Steady and dormant records say nothing — an indicator on every card is
   // noise, not information.
@@ -63,7 +64,7 @@ export async function YapCard({
           >
             — {yap.author.displayName}
           </Link>
-          <span className="label">{formatDate(yap.saidAt)}</span>
+          <span className="label">{formatDate(yap.saidAt, months)}</span>
           <TagList tags={yap.tags} max={2} />
           <div className="ml-auto">
             <ReactionBar
@@ -159,7 +160,7 @@ export async function YapCard({
               />
               — {yap.author.displayName}
             </Link>
-            <span className="label">{formatDate(yap.saidAt)}</span>
+            <span className="label">{formatDate(yap.saidAt, months)}</span>
             <TagList tags={yap.tags} max={3} />
           </div>
 

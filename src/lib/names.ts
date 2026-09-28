@@ -20,7 +20,16 @@ export const NAME_MIN = 2;
  */
 export const NAME_MAX = 40;
 
-export type NameCheck = { ok: true; name: string } | { ok: false; error: string };
+/**
+ * A code and its numbers, not a sentence: this module has no idea which
+ * language the interface is speaking, and it should not have to.
+ */
+export type NameProblem =
+  | { code: "NAME_SHORT"; n: number }
+  | { code: "NAME_LONG"; n: number }
+  | { code: "NAME_UNREADABLE" };
+
+export type NameCheck = { ok: true; name: string } | { ok: false; problem: NameProblem };
 
 /**
  * Collapses runs of whitespace as well as trimming: a name pasted out of a chat
@@ -31,18 +40,12 @@ export function normalizeName(raw: string): string {
   return raw.replace(/\s+/gu, " ").trim();
 }
 
-export function validateName(raw: string, subject = "A name"): NameCheck {
+export function validateName(raw: string): NameCheck {
   const name = normalizeName(raw);
 
-  if (name.length < NAME_MIN) {
-    return { ok: false, error: `${subject} needs at least ${NAME_MIN} characters.` };
-  }
-  if (name.length > NAME_MAX) {
-    return { ok: false, error: `${subject} is limited to ${NAME_MAX} characters.` };
-  }
+  if (name.length < NAME_MIN) return { ok: false, problem: { code: "NAME_SHORT", n: NAME_MIN } };
+  if (name.length > NAME_MAX) return { ok: false, problem: { code: "NAME_LONG", n: NAME_MAX } };
   // A name made only of punctuation sorts strangely and reads as a glitch.
-  if (!/\p{L}|\p{N}/u.test(name)) {
-    return { ok: false, error: `${subject} needs at least one letter or digit.` };
-  }
+  if (!/\p{L}|\p{N}/u.test(name)) return { ok: false, problem: { code: "NAME_UNREADABLE" } };
   return { ok: true, name };
 }

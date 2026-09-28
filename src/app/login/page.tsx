@@ -9,7 +9,10 @@ import { getDictionary } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Sign in" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.signIn };
+}
 
 /** The team prisma/seed/demo.ts creates; its presence is what makes this a demo box. */
 const DEMO_TEAM_SLUG = "demo";

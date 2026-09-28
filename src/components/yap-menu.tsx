@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { deleteYapAction } from "@/app/actions";
+import { useD } from "@/lib/i18n/client";
 
 export function YapMenu({
   yapId,
@@ -18,6 +19,7 @@ export function YapMenu({
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const d = useD();
 
   useEffect(() => {
     function onDocumentClick(event: MouseEvent) {
@@ -66,18 +68,21 @@ export function YapMenu({
       >
         ⋮
       </summary>
-      <div className="absolute right-0 top-7 z-20 w-[230px] border border-ink bg-paper">
+      {/* `on-paper` because this menu opens from a record's ink-black hero:
+          without it the enclosing `.on-ink` paints every .label-strong in here
+          paper-white, on a paper-white panel, and the items simply vanish. */}
+      <div className="on-paper absolute right-0 top-7 z-20 w-[230px] border border-ink bg-paper">
         <button type="button" onClick={copyLink} className="block w-full px-3 py-2 text-left label-strong hover:bg-paper-3">
-          {copied ? "Link copied" : copyFailed ? "Copy failed — use share card" : "Copy link"}
+          {copied ? d.record.linkCopied : copyFailed ? d.record.copyFailedShare : d.record.copyLink}
         </button>
         <a href={`/yap/${yapId}/share`} target="_blank" rel="noreferrer" className="block border-t border-ink px-3 py-2 label-strong hover:bg-paper-3">
-          Share card
+          {d.record.share}
         </a>
         {canDelete ? (
           confirming ? (
             <div className="border-t border-ink bg-paper-2 px-3 py-2">
               <p className="label-strong leading-[1.4] text-red">
-                Remove from the historical record?
+                {d.record.removeFromRecord}
               </p>
               <div className="mt-2 flex gap-2">
                 <button
@@ -88,10 +93,10 @@ export function YapMenu({
                     router.refresh();
                   }}
                 >
-                  Remove
+                  {d.record.remove}
                 </button>
                 <button type="button" className="btn" onClick={() => setConfirming(false)}>
-                  Keep
+                  {d.record.keep}
                 </button>
               </div>
             </div>
@@ -101,7 +106,7 @@ export function YapMenu({
               onClick={() => setConfirming(true)}
               className="block w-full border-t border-ink px-3 py-2 text-left label-strong text-red hover:bg-paper-3"
             >
-              Remove
+              {d.record.remove}
             </button>
           )
         ) : null}

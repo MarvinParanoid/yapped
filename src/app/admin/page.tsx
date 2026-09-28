@@ -16,7 +16,10 @@ import { listRedacted, listYaps } from "@/lib/services/yaps";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Administration" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.administration };
+}
 
 export default async function AdminPage() {
   const viewer = await requireTeamAdmin("/admin");
@@ -26,6 +29,7 @@ export default async function AdminPage() {
   // locked itself out.
   const canManage = viewer.team.role === "OWNER" || viewer.user.isAdmin;
   const d = await getDictionary();
+  const months = d.profile.months.split(" ");
 
   const [overview, members, invites, recent, redacted] = await Promise.all([
     getTeamOverview(teamId),
@@ -61,7 +65,7 @@ export default async function AdminPage() {
           </span>
           <h1 className="quote mt-3 text-[clamp(2rem,6vw,3.6rem)] text-paper">{overview.name}</h1>
           <p className="label mt-3">
-            {fill(d.admin.openedOn, { date: formatDate(overview.createdAt) })} · /{overview.slug}
+            {fill(d.admin.openedOn, { date: formatDate(overview.createdAt, months) })} · /{overview.slug}
           </p>
 
           <dl className="mt-8 grid grid-cols-2 border-l border-t border-paper/20 sm:grid-cols-4">

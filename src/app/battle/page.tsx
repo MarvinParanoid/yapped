@@ -13,7 +13,10 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Yap battle" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.battle };
+}
 
 export default async function BattlePage({
   searchParams,

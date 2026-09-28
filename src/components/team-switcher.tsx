@@ -53,7 +53,7 @@ export function TeamSwitcher({ active, teams }: { active: TeamRef; teams: TeamRe
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-full z-40 mt-1 min-w-[200px] border border-ink bg-paper">
+        <div className="on-paper absolute right-0 top-full z-40 mt-1 min-w-[200px] border border-ink bg-paper">
           {options.map((team) => (
             <button
               key={team.id}

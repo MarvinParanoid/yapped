@@ -9,7 +9,10 @@ import { getHallOfYap } from "@/lib/services/battles";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Hall of Yap" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.hallOfYap };
+}
 
 export default async function HallOfYapPage() {
   const { team } = await requireViewer("/battle/hall");

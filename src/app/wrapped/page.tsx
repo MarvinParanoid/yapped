@@ -8,7 +8,10 @@ import { listPeriods, periodLabel, periodSlug } from "@/lib/services/wrapped";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Wrapped" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.wrapped };
+}
 
 export default async function WrappedIndexPage() {
   const { team } = await requireViewer("/wrapped");

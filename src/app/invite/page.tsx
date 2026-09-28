@@ -9,7 +9,10 @@ import { listInvitesBy } from "@/lib/services/invites";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Invite someone" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.inviteSomeone };
+}
 
 /**
  * Anyone in the team can bring someone in. This page shows only the links the

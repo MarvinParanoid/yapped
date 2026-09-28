@@ -11,7 +11,10 @@ import { listOwners, listTeamOverviews } from "@/lib/services/teams";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Instance" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.instance };
+}
 
 /**
  * The operator's view: every archive on this box, who owns it, and a way in.
@@ -25,6 +28,7 @@ export default async function InstancePage() {
   const teams = await listTeamOverviews();
   const owners = await listOwners(teams.map((team) => team.id));
   const d = await getDictionary();
+  const months = d.profile.months.split(" ");
 
   const mine = new Set(viewer.teams.map((team) => team.id));
   const totals = teams.reduce(
@@ -87,7 +91,7 @@ export default async function InstancePage() {
                       : d.admin.noOwner}
                   </span>
                   <span className="label tabnums">
-                    {fill(d.admin.openedOn, { date: formatDate(team.createdAt) })}
+                    {fill(d.admin.openedOn, { date: formatDate(team.createdAt, months) })}
                   </span>
                   {mine.has(team.id) ? <span className="label text-acid-deep">{d.admin.youAreIn}</span> : null}
 

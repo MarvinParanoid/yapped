@@ -8,15 +8,15 @@ export function yapCode(id: number): string {
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /** 24 Sep 2026 */
-export function formatDate(date: Date): string {
-  return `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
-}
-
-/** 24 Sep 2026, 14:37 */
-export function formatDateTime(date: Date): string {
-  const hh = String(date.getUTCHours()).padStart(2, "0");
-  const mm = String(date.getUTCMinutes()).padStart(2, "0");
-  return `${formatDate(date)}, ${hh}:${mm}`;
+/**
+ * `24 Sep 2026` — or `24 СЕН 2026`, given month names from the dictionary.
+ *
+ * The names arrive as an argument rather than being read here: this module is
+ * pure, and a formatter that reaches for a request's locale stops being
+ * testable without one.
+ */
+export function formatDate(date: Date, months: readonly string[] = MONTHS): string {
+  return `${date.getUTCDate()} ${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
 /** 24.09.2026 — the archival stamp */

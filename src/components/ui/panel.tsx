@@ -16,7 +16,10 @@ export function Panel({
   bodyClassName?: string;
 }) {
   return (
-    <section className={cn("border border-ink bg-paper", className)}>
+    // `on-paper`: a Panel is a light surface, and several of them sit inside
+    // ink-black heroes. Without it the enclosing `.on-ink` paints this panel's
+    // own captions paper-white on paper-white.
+    <section className={cn("on-paper border border-ink bg-paper", className)}>
       {label ? (
         <header className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2">
           <span className="label-strong">{label}</span>

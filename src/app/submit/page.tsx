@@ -9,7 +9,10 @@ import { listYappers } from "@/lib/services/yappers";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Add a yap" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.addYap };
+}
 
 export default async function SubmitPage() {
   const { team } = await requireViewer("/submit");

@@ -6,7 +6,10 @@ import { getDictionary } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Register" };
+export async function generateMetadata(): Promise<Metadata> {
+  const d = await getDictionary();
+  return { title: d.pageTitles.register };
+}
 
 /**
  * There is no open registration any more. An archive belongs to one team, and
