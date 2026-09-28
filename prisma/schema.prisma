@@ -279,6 +279,12 @@ model Battle {
   ratingDelta        Int
   createdAt          DateTime @default(now())
 
+  /// The pair, order-independent: LEAST/GREATEST of the two record ids. Stored
+  /// rather than derived so one person can hold only one verdict per pair.
+  pairLowId          Int
+  pairHighId         Int
+
+  @@unique([teamId, voterId, pairLowId, pairHighId])
   @@index([teamId, createdAt])
   @@index([winnerId])
   @@index([loserId])

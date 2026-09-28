@@ -135,38 +135,117 @@ export async function recordBattle(
 ): Promise<BattleOutcome | null> {
   if (winnerId === loserId) return null;
 
-  const [winner, loser] = await Promise.all([
-    prisma.yap.findFirst({ where: { id: winnerId, teamId }, select: { eloRating: true } }),
-    prisma.yap.findFirst({ where: { id: loserId, teamId }, select: { eloRating: true } }),
-  ]);
-  if (!winner || !loser) return null;
+  const pairLowId = Math.min(winnerId, loserId);
+  const pairHighId = Math.max(winnerId, loserId);
 
-  const update = nextRatings(winner.eloRating, loser.eloRating);
-  const gap = loser.eloRating - winner.eloRating;
+  // Reading the ratings and then writing them has to be one decision: two
+  // votes landing together would otherwise both read the same "before" and the
+  // second would overwrite the first, silently losing a result.
+  //
+  // Changing your mind is allowed, so a second verdict on a pair REPLACES the
+  // first rather than stacking: the old result is taken back out of the ladder
+  // and the new one applied. Without that, "you may re-vote" is just a licence
+  // to pump a rating by clicking the same button repeatedly.
+  try {
+    return await prisma.$transaction(
+      async (tx) => {
+        const [winner, loser] = await Promise.all([
+          tx.yap.findFirst({ where: { id: winnerId, teamId }, select: { eloRating: true } }),
+          tx.yap.findFirst({ where: { id: loserId, teamId }, select: { eloRating: true } }),
+        ]);
+        if (!winner || !loser) return null;
 
-  await prisma.$transaction([
-    prisma.battle.create({
-      data: {
-        teamId,
-        winnerId,
-        loserId,
-        voterId: voterId ?? null,
-        winnerRatingBefore: winner.eloRating,
-        loserRatingBefore: loser.eloRating,
-        ratingDelta: update.delta,
+        let winnerRating = winner.eloRating;
+        let loserRating = loser.eloRating;
+
+        // An anonymous vote has no "same person" to compare against, so it is
+        // always a new result.
+        const previous = voterId
+          ? await tx.battle.findUnique({
+              where: {
+                teamId_voterId_pairLowId_pairHighId: {
+                  teamId,
+                  voterId,
+                  pairLowId,
+                  pairHighId,
+                },
+              },
+            })
+          : null;
+
+        if (previous) {
+          // Undo exactly what that verdict did. Elo is path-dependent, so this
+          // is a correction rather than a perfect rewind of history — but it
+          // is the same arithmetic in reverse, and it keeps the ladder from
+          // drifting every time somebody reconsiders.
+          const sameWinner = previous.winnerId === winnerId;
+          if (sameWinner) {
+            winnerRating -= previous.ratingDelta;
+            loserRating += previous.ratingDelta;
+          } else {
+            // The verdict is being flipped: the old winner is this loser.
+            loserRating -= previous.ratingDelta;
+            winnerRating += previous.ratingDelta;
+          }
+        }
+
+        const update = nextRatings(winnerRating, loserRating);
+        const gap = loserRating - winnerRating;
+
+        const journal = {
+          teamId,
+          winnerId,
+          loserId,
+          voterId: voterId ?? null,
+          pairLowId,
+          pairHighId,
+          winnerRatingBefore: winnerRating,
+          loserRatingBefore: loserRating,
+          ratingDelta: update.delta,
+        };
+
+        if (previous) {
+          await tx.battle.update({ where: { id: previous.id }, data: journal });
+        } else {
+          await tx.battle.create({ data: journal });
+        }
+
+        // A replaced verdict already counted a win and a loss. Only the side
+        // it fell on changes, and only when the vote was actually flipped.
+        const flipped = previous !== null && previous.winnerId !== winnerId;
+
+        await tx.yap.update({
+          where: { id: winnerId },
+          data: {
+            eloRating: update.winnerRating,
+            ...(previous === null
+              ? { battleWins: { increment: 1 } }
+              : flipped
+                ? { battleWins: { increment: 1 }, battleLosses: { decrement: 1 } }
+                : {}),
+          },
+        });
+        await tx.yap.update({
+          where: { id: loserId },
+          data: {
+            eloRating: update.loserRating,
+            ...(previous === null
+              ? { battleLosses: { increment: 1 } }
+              : flipped
+                ? { battleLosses: { increment: 1 }, battleWins: { decrement: 1 } }
+                : {}),
+          },
+        });
+
+        return { delta: update.delta, upset: gap >= UPSET_RATING_GAP, gap };
       },
-    }),
-    prisma.yap.update({
-      where: { id: winnerId },
-      data: { eloRating: update.winnerRating, battleWins: { increment: 1 } },
-    }),
-    prisma.yap.update({
-      where: { id: loserId },
-      data: { eloRating: update.loserRating, battleLosses: { increment: 1 } },
-    }),
-  ]);
-
-  return { delta: update.delta, upset: gap >= UPSET_RATING_GAP, gap };
+      { isolationLevel: "Serializable" },
+    );
+  } catch {
+    // Two votes raced and Postgres aborted the loser, or the unique index
+    // caught a duplicate. Either way nothing landed.
+    return null;
+  }
 }
 
 export type YapBattleRecord = {

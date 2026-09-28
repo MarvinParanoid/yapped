@@ -252,6 +252,13 @@ which is what makes the last seat safe under a race.
 Indexes: `(deletedAt, createdAt)`, `(deletedAt, aura)`, `(deletedAt, saidAt)`,
 `(deletedAt, verification)`, `authorId`, `eloRating`.
 
+**Battle** — one head-to-head verdict. Carries the ratings that went into it, so the ladder
+can be replayed from the journal (`replayLadder` in `lib/ranking/elo.ts`). `pairLowId` /
+`pairHighId` are the pair with its order removed, and `@@unique([teamId, voterId, pairLowId,
+pairHighId])` is what makes a verdict personal: re-voting is allowed and *replaces* the earlier
+result rather than stacking on it. `Yap.eloRating`, `battleWins` and `battleLosses` are caches
+of this table; `npm run recompute:elo` rebuilds them when the two disagree.
+
 **Witness** — one colleague going on the record about whether a statement happened.
 `id`, `yapId`, `userId`, `stance (PRESENT|DENIED)`, `createdAt`, `@@unique([yapId, userId])`.
 A person holds exactly one position per record and may switch it or withdraw it. `witnessCount`

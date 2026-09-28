@@ -324,6 +324,8 @@ export async function seedDemo(): Promise<void> {
     winnerId: number;
     loserId: number;
     voterId: string;
+    pairLowId: number;
+    pairHighId: number;
     winnerRatingBefore: number;
     loserRatingBefore: number;
     ratingDelta: number;
@@ -331,6 +333,9 @@ export async function seedDemo(): Promise<void> {
   }> = [];
 
   const archiveStart = Date.now() - 370 * 24 * 60 * 60 * 1000;
+  // One verdict per person per pair, same as the live arena. A demo that
+  // violated the constraint would simply fail to seed.
+  const cast = new Set<string>();
 
   for (let i = 0; i < 180; i += 1) {
     const [a, b] = pickMany(contenders, 2);
@@ -341,6 +346,13 @@ export async function seedDemo(): Promise<void> {
     const aWins = random() < probabilityA * 0.8 + 0.1;
     const winnerId = aWins ? a.id : b.id;
     const loserId = aWins ? b.id : a.id;
+
+    const voterId = everyone[Math.floor(random() * everyone.length)]!;
+    const pairLowId = Math.min(a.id, b.id);
+    const pairHighId = Math.max(a.id, b.id);
+    const verdict = `${voterId}:${pairLowId}:${pairHighId}`;
+    if (cast.has(verdict)) continue;
+    cast.add(verdict);
 
     const winnerBefore = ratings.get(winnerId)!;
     const loserBefore = ratings.get(loserId)!;
@@ -354,7 +366,9 @@ export async function seedDemo(): Promise<void> {
       teamId,
       winnerId,
       loserId,
-      voterId: everyone[Math.floor(random() * everyone.length)],
+      voterId,
+      pairLowId,
+      pairHighId,
       winnerRatingBefore: winnerBefore,
       loserRatingBefore: loserBefore,
       ratingDelta: update.delta,

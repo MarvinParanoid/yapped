@@ -55,6 +55,11 @@ or is a rule that was argued about and settled:
   acknowledging, disputing, editing, redacting, restoring and the arena each get their own
   case. The review that found the original hole found it in the one write path nobody had
   tested, so the rule now is that a new write path arrives with its row here;
+- **one verdict per person per pair**: changing your mind revises the result, it does not
+  append another. Forty clicks are worth one vote, a flip moves the win to the other side, and
+  eight people voting at once produce eight journal rows and a win column that matches — the
+  ratings are read and written inside one serializable transaction, so a concurrent vote cannot
+  overwrite another's "before";
 - an invite limit is refused when it cannot be honoured, never widened: `0`, `-5`, `1.5` and
   `NaN` used to all collapse into "unlimited", which made a typo the most permissive setting
   in the admin panel;

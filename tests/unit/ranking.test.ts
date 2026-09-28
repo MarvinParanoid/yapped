@@ -8,7 +8,7 @@ import {
   trendingScore,
   EMPTY_COUNTS,
 } from "@/lib/ranking/aura";
-import { DEFAULT_RATING, expectedScore, nextRatings, replay, winRate } from "@/lib/ranking/elo";
+import { DEFAULT_RATING, expectedScore, nextRatings, replay, replayLadder, winRate } from "@/lib/ranking/elo";
 
 describe("aura", () => {
   test("is the weighted sum of reactions", () => {
@@ -73,5 +73,42 @@ describe("elo", () => {
   test("win rate is null before any battle", () => {
     assert.equal(winRate(0, 0), null);
     assert.equal(winRate(3, 1), 0.75);
+  });
+});
+
+describe("replaying the ladder", () => {
+  const journal = [
+    { winnerId: 1, loserId: 2 },
+    { winnerId: 1, loserId: 3 },
+    { winnerId: 3, loserId: 2 },
+  ];
+
+  test("rebuilds ratings and the win columns together", () => {
+    const ladder = replayLadder(journal);
+    assert.equal(ladder.get(1)?.wins, 2);
+    assert.equal(ladder.get(1)?.losses, 0);
+    assert.equal(ladder.get(2)?.wins, 0);
+    assert.equal(ladder.get(2)?.losses, 2);
+    assert.equal(ladder.get(3)?.wins, 1);
+    assert.equal(ladder.get(3)?.losses, 1);
+    assert.ok(ladder.get(1)!.rating > DEFAULT_RATING);
+    assert.ok(ladder.get(2)!.rating < DEFAULT_RATING);
+  });
+
+  test("agrees with the ratings-only replay it replaced", () => {
+    const ladder = replayLadder(journal);
+    for (const [id, rating] of replay(journal)) {
+      assert.equal(ladder.get(id)?.rating, rating);
+    }
+  });
+
+  test("a removed verdict leaves no trace — which is what the repair relies on", () => {
+    // The whole point of keeping the journal: drop a result and the ladder is
+    // exactly what it would have been had that result never been cast.
+    const without = replayLadder([journal[0]!, journal[2]!]);
+    const fresh = replayLadder([{ winnerId: 1, loserId: 2 }, { winnerId: 3, loserId: 2 }]);
+    for (const [id, entry] of fresh) {
+      assert.deepEqual(without.get(id), entry);
+    }
   });
 });
