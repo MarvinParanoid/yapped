@@ -32,8 +32,8 @@ Bilingual by design — the archive handles Russian and English side by side, an
 interface itself speaks both. The Russian is **not a translation of the English**: it reads
 like a cross between an archive, a civil service and a police file, because the joke is that
 banter is handled with the gravity of a records department, and bureaucratic Russian carries
-that further than the original does. Filing a quote into a case is *приобщить к делу*, not
-*добавить в кейс*. The rule, and the vocabulary it settled, are written down in
+that further than the original does. A person who said something is an *оратор*, a screenshot
+proving it is an *улика*. The rule, and the vocabulary it settled, are written down in
 [`src/lib/i18n/ru.ts`](src/lib/i18n/ru.ts).
 
 ## The idea worth stealing
@@ -265,7 +265,7 @@ BACKUP_MIRROR=you@elsewhere:/backups/yapped ./scripts/backup.sh
 ## Teams, invites and access
 
 An instance holds one or more **teams**, and a team is an archive: its own records, tags,
-cases, leaderboard, battles and Wrapped. Nothing crosses between them.
+leaderboard, battles and Wrapped. Nothing crosses between them.
 
 Access is by invitation only — there is no open registration and no anonymous browsing.
 
@@ -396,7 +396,7 @@ aura reconstructed as it stood back then from reaction timestamps.
 existing timestamps — no snapshot tables, so any past period can be opened at any time.
 
 **Search qualifiers** — `src/lib/search.ts`. `from:` `by:` `tag:` `aura:>500` `status:certified`
-`has:evidence` `before:` `after:` `case:`, plus free text. Adding one is an entry in the parser
+`has:evidence` `before:` `after:`, plus free text. Adding one is an entry in the parser
 and a clause in `buildWhere`.
 
 **The verification ladder** — `src/lib/verification.ts`. How many colleagues have to press

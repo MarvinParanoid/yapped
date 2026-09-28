@@ -103,7 +103,7 @@ constants in the two ranking modules.
 
 ### 1.3c Tenancy: a required argument, not a filter
 
-An instance holds one or more **teams**, and a team *is* an archive — records, tags, cases,
+An instance holds one or more **teams**, and a team *is* an archive — records, tags,
 battles, leaderboard, Wrapped. Nothing crosses between them.
 
 The enforcement is a type, not a convention: `teamId` is a **required parameter** of every
@@ -223,7 +223,7 @@ Yap  ──< Battle (winnerId / loserId)
 
 ### Tables
 
-**Team** — an archive. `id (cuid)`, `name`, `slug @unique`, `createdAt`. `Yap`, `Case`, `Tag`
+**Team** — an archive. `id (cuid)`, `name`, `slug @unique`, `createdAt`. `Yap`, `Tag`
 and `Battle` each carry a non-null `teamId`; `Tag` is unique on `(teamId, slug)`, so two teams
 may both have a `#плесень` and they are different tags.
 
@@ -536,20 +536,21 @@ and back-filling a period that predates the feature costs nothing.
 A period is the month the yapping **happened in** (`saidAt`), not the month it was typed up.
 That is what "September" means to a person looking back.
 
-### 4.1 Lore has two scales
+### 4.1 Lore is the only scale
 
-`Yap.lore` explains one statement. A **case** explains an episode: several records, a summary,
-a status and a chronology. The two do not compete — a record keeps its own lore and can also
-belong to a case, and the case page reuses the ordinary `YapCard` on a numbered rail rather
-than inventing a second way to render a quote.
+`Yap.lore` explains one statement, and that turned out to be the whole of it. There was a
+second scale — a **case**, grouping several records into a documented episode with a summary,
+a status and a chronology. It was withdrawn once the archive held real records: lore already
+answers "why does this record exist", and a case number on top of that was ceremony for a
+situation that came up about never.
 
-Closed cases still accept new records. New evidence for an old episode is precisely what this
-archive is for; the filing control labels them so it stays a deliberate act.
+If six quotes from one call ever do need to be read together, that is a shared tag or a "more
+from this day" view, not a second domain entity.
 
 ### 5.3a Search qualifiers
 
 `lib/search.ts` parses a GitHub-style query — `плесень from:anna aura:>500 has:evidence
-status:certified before:2026-10-01 case:1` — into a structured filter, and hands anything it
+status:certified before:2026-10-01` — into a structured filter, and hands anything it
 does not recognise back in `unknown` so the UI can say `ignored: …` rather than silently
 returning the ordinary feed. Parsing is a pure module; `buildWhere` in `services/yaps.ts` is
 the single place that turns a filter into SQL, shared by the listing and the count so the two
@@ -574,7 +575,7 @@ depend on time are all tuned for scarcity:
 | Market | 7d / 30d / 90d windows, defaulting to 30d |
 | Verification | 1 / 2 / 3 witnesses — a five-witness bar would certify nothing |
 
-Everything else — Cases, Evidence, Battle, Random, Yappers, Hall of Yap — works fine on a
+Everything else — Evidence, Battle, Random, Yappers, Hall of Yap — works fine on a
 hundred statements gathered over two years, and gets better as the archive ages. That is the
 point: this is not a feed to be checked daily, it is a record that becomes funnier with time.
 
