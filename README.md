@@ -161,8 +161,21 @@ docker compose run --rm migrate npm run bootstrap   # the first team and owner
 Then point a reverse proxy (Caddy is one line, nginx a few) at `127.0.0.1:3000` and terminate
 TLS. The app trusts `APP_URL` for share links, so set it before the first start.
 
-If the GHCR package is private, either make it public in the repository's package settings, or
-`docker login ghcr.io` on the server with a read-only token. Nothing else needs credentials.
+**Package visibility.** Published from a public repository with the built-in `GITHUB_TOKEN`,
+the packages are created **public** and linked to that repository — so the server pulls
+anonymously and no credentials are involved anywhere in the deploy.
+
+If a package does come out private (a private repository, or one published outside this
+workflow), visibility is a UI-only setting with no API behind it:
+
+> `github.com/<owner>?tab=packages` → the package → **Package settings** → **Danger Zone** →
+> **Change visibility**
+
+To keep the images private on purpose, leave them private and run `docker login ghcr.io` on the
+server with a read-only token instead.
+
+The packages link themselves back to the repository — `docker/metadata-action` writes the
+`org.opencontainers.image.source` label and the publish step passes it through.
 
 **Every time after that:**
 
