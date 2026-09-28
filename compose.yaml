@@ -1,3 +1,8 @@
+# Pinned rather than derived from the directory name: the database and the
+# uploads live in volumes prefixed with this, so a renamed or relocated
+# checkout would otherwise come up pointing at empty ones.
+name: yapped
+
 services:
   db:
     image: postgres:17-alpine
@@ -21,12 +26,18 @@ services:
       retries: 10
 
   # One-shot: applies migrations (and optionally the demo archive) before the
-  # app starts. Built from the `builder` stage so the Prisma CLI has every
-  # dependency it needs, rather than a hand-picked subset.
+  # app starts, and the only place `npm run bootstrap` / `grant:admin` can run —
+  # the runtime image is a Next standalone build and carries neither tsx nor the
+  # Prisma CLI.
+  #
+  # `image` and `build` together on purpose: a deploy pulls the tag that CI
+  # published, while `docker compose build` still works on a laptop with no
+  # registry involved.
   migrate:
+    image: ${YAPPED_TOOLS_IMAGE:-ghcr.io/marvinparanoid/yapped-tools}:${YAPPED_TAG:-latest}
     build:
       context: .
-      target: builder
+      target: tools
     restart: "no"
     depends_on:
       db:
@@ -42,7 +53,10 @@ services:
              if [ \"$$SEED_MODE\" = demo ]; then npx prisma db seed; fi"
 
   app:
-    build: .
+    image: ${YAPPED_IMAGE:-ghcr.io/marvinparanoid/yapped}:${YAPPED_TAG:-latest}
+    build:
+      context: .
+      target: runner
     restart: unless-stopped
     deploy:
       resources:
@@ -66,6 +80,19 @@ services:
       - "127.0.0.1:${APP_PORT:-3000}:3000"
     volumes:
       - yapped-uploads:/app/var/uploads
+    # /login is the one page an outsider may fetch, and it reads the database
+    # to decide whether to show the demo hint — so a pass proves both halves.
+    # `node -e` rather than curl: the runtime image carries neither curl nor wget.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
 
 volumes:
   yapped-db:

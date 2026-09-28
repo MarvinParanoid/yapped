@@ -10,3 +10,6 @@ src/generated
 var/uploads
 .DS_Store
 npm-debug.log*
+
+# Written on the server by scripts/deploy.sh — the commit a rollback returns to.
+.deploy-state

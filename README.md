@@ -133,19 +133,65 @@ neither the scripts nor tsx. Uploads live on the `yapped-uploads` volume, the da
 
 To boot a populated instance for a demo instead: `SEED_MODE=demo docker compose up --build`.
 
-### Deploying to tw-vps (yapped.duckdns.org)
+### Deploying
+
+**CI builds the images; the server only pulls them.** That box has under a gigabyte of RAM and
+one core, and `next build` was by far the heaviest thing that ever ran on it — the build cache
+it left behind had the disk at 91% full. Two images are published to GHCR from a green `check`
+job, tagged `latest` and with the commit sha:
+
+| Image | Stage | What it is |
+|---|---|---|
+| `ghcr.io/marvinparanoid/yapped` | `runner` | the Next standalone server |
+| `ghcr.io/marvinparanoid/yapped-tools` | `tools` | Prisma CLI, migrations, `bootstrap`, `grant:admin` |
+
+The server keeps a git checkout, but only for `compose.yaml`, the migrations and these
+scripts. Code arrives as an image tagged with the commit that produced it, which is what makes
+`--tag` and `--rollback` exact.
+
+**First time on a box:**
 
 ```bash
-# on the VPS
-git clone <this repo> yapped && cd yapped
-printf 'POSTGRES_PASSWORD=%s\nAPP_URL=https://yapped.duckdns.org\nAPP_PORT=3000\n' "$(openssl rand -hex 16)" > .env
-docker compose up -d --build
-docker compose run --rm migrate npm run bootstrap
+git clone https://github.com/MarvinParanoid/yapped.git && cd yapped
+printf 'POSTGRES_PASSWORD=%s\nAPP_URL=https://your.host\nAPP_PORT=3000\n' "$(openssl rand -hex 16)" > .env
+./scripts/deploy.sh
+docker compose run --rm migrate npm run bootstrap   # the first team and owner
 ```
 
-Then point a reverse proxy (Caddy is one line, nginx is a few) at `127.0.0.1:3000` and
-terminate TLS for `yapped.duckdns.org`. The app trusts `APP_URL` for share links, so set it
-before the first start. Total footprint fits comfortably on a 1 GB VPS.
+Then point a reverse proxy (Caddy is one line, nginx a few) at `127.0.0.1:3000` and terminate
+TLS. The app trusts `APP_URL` for share links, so set it before the first start.
+
+If the GHCR package is private, either make it public in the repository's package settings, or
+`docker login ghcr.io` on the server with a read-only token. Nothing else needs credentials.
+
+**Every time after that:**
+
+```bash
+ssh your-box 'cd yapped && ./scripts/deploy.sh'
+```
+
+| | |
+|---|---|
+| `./scripts/deploy.sh` | pull the newest published commit and roll it out |
+| `./scripts/deploy.sh --tag <sha>` | roll out one specific commit |
+| `./scripts/deploy.sh --rollback` | return to the commit the last deploy replaced |
+| `./scripts/deploy.sh --build` | build here instead of pulling — for a box with no registry access |
+
+The script refuses to run if the checkout has been edited by hand, waits for CI to publish the
+commit it is deploying rather than racing it, and runs migrations in a one-shot container
+**before** the app is touched — so a migration that fails leaves the old version serving the
+old schema. It then waits for the container to report healthy instead of sleeping and hoping;
+the health probe fetches `/login`, which reads the database, so a pass proves both halves.
+
+The rollback target is recorded only *after* a deploy reports healthy, so it always points at
+something that worked. A schema migration is **not** undone by it — roll the code back, then
+decide about the data.
+
+**Back up first, always.** There is no automated backup yet:
+
+```bash
+docker exec yapped-db-1 pg_dump -U yapped -d yapped > ~/yapped-$(date +%F-%H%M).sql
+```
 
 ## Teams, invites and access
 
@@ -366,8 +412,9 @@ tests at a throwaway database. CI runs typecheck, both layers and a build on eve
 The same checks run on both forges, in the same order — typecheck, unit tests, service tests
 against a real Postgres, then a production build:
 
-* GitHub Actions — [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
-* GitLab CI — [`.gitlab-ci.yml`](.gitlab-ci.yml)
+* GitHub Actions — [`.github/workflows/ci.yml`](.github/workflows/ci.yml). On the default
+  branch a green run also publishes the two container images (see *Deploying*).
+* GitLab CI — [`.gitlab-ci.yml`](.gitlab-ci.yml). Checks only; the images come from GitHub.
 
 ## Contributing
 

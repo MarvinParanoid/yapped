@@ -171,8 +171,19 @@ bursts queue instead of being refused. `npx prisma dev` is backed by PGlite and 
 than a handful of concurrent clients, so local development sets it to 3.
 
 `docker compose up` → `db` (postgres:17-alpine) + a one-shot `migrate` job + `app` (multi-stage
-Dockerfile, Next standalone output). Migrations run in their own container built from the
-`builder` stage, because the runtime image deliberately carries only what the server needs.
+Dockerfile, Next standalone output). Migrations run in their own container, from a `tools`
+stage that carries the Prisma CLI, the migrations and the operator scripts — the runtime image
+deliberately carries only what the server needs, and hand-picking pieces of `node_modules` into
+it silently misses transitive dependencies.
+
+**CI builds both images; the server pulls them.** The target box has under a gigabyte of RAM
+and one core, so building there was the heaviest thing it ever did, and the build cache it
+accumulated had the disk at 91%. Each image is tagged with the commit that produced it, so a
+deploy, a pin and a rollback all name the same thing. `scripts/deploy.sh` waits for the tag to
+appear rather than racing CI, migrates in a one-shot container before touching the app, and
+waits on a real healthcheck — a `/login` fetch, which reads the database, so a pass proves both
+halves. Compose pins `name: yapped` explicitly: the volumes are prefixed with it, and deriving
+it from the directory name means a moved checkout comes up against empty ones.
 
 The Prisma client is created **lazily**: `next build` walks the module graph — including
 `/_not-found`, which pulls in the layout and therefore the session — on a machine with no
