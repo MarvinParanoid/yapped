@@ -7,6 +7,8 @@ import { MemberTable } from "@/components/admin/member-table";
 import { RenameTeam } from "@/components/admin/team-settings";
 import { Panel } from "@/components/ui/panel";
 import { requireTeamAdmin } from "@/lib/auth/team";
+import { fill } from "@/lib/i18n/locale";
+import { getDictionary } from "@/lib/i18n/server";
 import { formatCount, formatDate } from "@/lib/format";
 import { listInvites } from "@/lib/services/invites";
 import { getTeamOverview, listMembers } from "@/lib/services/teams";
@@ -23,6 +25,7 @@ export default async function AdminPage() {
   // operator crosses it too, because someone has to be able to fix a team that
   // locked itself out.
   const canManage = viewer.team.role === "OWNER" || viewer.user.isAdmin;
+  const d = await getDictionary();
 
   const [overview, members, invites, recent, redacted] = await Promise.all([
     getTeamOverview(teamId),
@@ -35,10 +38,10 @@ export default async function AdminPage() {
 
   const live = invites.filter((invite) => invite.deadReason === null).length;
   const figures = [
-    { value: formatCount(overview.memberCount), label: "Members" },
-    { value: formatCount(overview.accountCount), label: "With accounts" },
-    { value: formatCount(overview.yapCount), label: "Records" },
-    { value: formatCount(live), label: "Live invites" },
+    { value: formatCount(overview.memberCount), label: d.admin.members },
+    { value: formatCount(overview.accountCount), label: d.admin.withAccounts },
+    { value: formatCount(overview.yapCount), label: d.admin.records },
+    { value: formatCount(live), label: d.admin.liveInvites },
   ];
 
   return (
@@ -46,19 +49,19 @@ export default async function AdminPage() {
       <div className="on-ink grid-ghost border-b border-ink">
         <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
           <span className="label">
-            Administration · {viewer.team.role.toLowerCase()}
+            {d.admin.administration} · {viewer.team.role.toLowerCase()}
             {viewer.user.isAdmin ? (
               <>
                 {" · "}
                 <Link href="/admin/instance" className="hover:text-acid">
-                  every archive →
+                  {d.admin.everyArchive}
                 </Link>
               </>
             ) : null}
           </span>
           <h1 className="quote mt-3 text-[clamp(2rem,6vw,3.6rem)] text-paper">{overview.name}</h1>
           <p className="label mt-3">
-            opened {formatDate(overview.createdAt)} · /{overview.slug}
+            {fill(d.admin.openedOn, { date: formatDate(overview.createdAt) })} · /{overview.slug}
           </p>
 
           <dl className="mt-8 grid grid-cols-2 border-l border-t border-paper/20 sm:grid-cols-4">
@@ -75,7 +78,7 @@ export default async function AdminPage() {
       </div>
 
       <div className="mx-auto max-w-[1200px] space-y-6 px-4 py-8 pb-20 sm:px-6 lg:px-8">
-        <Panel label="Invite links" bodyClassName="p-0">
+        <Panel label={d.admin.inviteLinks} bodyClassName="p-0">
           <InviteManager invites={invites} showAuthor />
         </Panel>
 
@@ -83,7 +86,7 @@ export default async function AdminPage() {
           <MemberTable members={members} canManage={canManage} viewerId={viewer.user.id} />
         </Panel>
 
-        <Panel label="Recent records" bodyClassName="p-0">
+        <Panel label={d.admin.recentRecords} bodyClassName="p-0">
           <ContentTable
             rows={recent.map((yap) => ({
               id: yap.id,
@@ -95,11 +98,11 @@ export default async function AdminPage() {
           />
         </Panel>
 
-        <Panel label="Redacted" bodyClassName="p-0">
+        <Panel label={d.admin.redacted} bodyClassName="p-0">
           <RedactedTable rows={redacted} />
         </Panel>
 
-        <Panel label="This team">
+        <Panel label={d.admin.thisTeam}>
           <RenameTeam name={overview.name} />
         </Panel>
       </div>

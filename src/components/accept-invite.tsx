@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { acceptInviteAction } from "@/app/actions";
+import { useD } from "@/lib/i18n/client";
+import { fill } from "@/lib/i18n/locale";
 
 /** Signed in already — joining is one button, not another account. */
 export function AcceptInvite({
@@ -17,16 +19,16 @@ export function AcceptInvite({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const d = useD();
 
   return (
     <div className="border border-ink bg-paper">
       <div className="border-b border-ink px-4 py-3">
-        <span className="label-strong">Accept invitation</span>
+        <span className="label-strong">{d.join.accept}</span>
       </div>
       <div className="px-4 py-5 sm:px-6">
         <p className="text-[14px] leading-[1.6]">
-          You are signed in as <span className="font-semibold">{userName}</span>. Accepting adds you
-          to {teamName} under the same account.
+          {fill(d.join.acceptBody, { name: userName, team: teamName })}
         </p>
 
         {error ? (
@@ -50,7 +52,7 @@ export function AcceptInvite({
             })
           }
         >
-          {pending ? "Joining..." : `Join ${teamName}`}
+          {pending ? d.join.joining : fill(d.join.joinTeam, { team: teamName })}
         </button>
       </div>
     </div>

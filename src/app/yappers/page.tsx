@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { formatCount } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
 import { requireViewer } from "@/lib/auth/team";
+import { getDictionary } from "@/lib/i18n/server";
 import { getLeaderboard } from "@/lib/services/yappers";
 import type { RangeKey } from "@/lib/types";
 import { cn } from "@/lib/cn";
@@ -13,10 +14,10 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Top yappers" };
 
-const TABS: Array<{ key: RangeKey; label: string }> = [
-  { key: "all", label: "All time" },
-  { key: "month", label: "This month" },
-  { key: "week", label: "This week" },
+const TABS: Array<{ key: RangeKey; dict: "allTime" | "thisMonth" | "thisWeek" }> = [
+  { key: "all", dict: "allTime" },
+  { key: "month", dict: "thisMonth" },
+  { key: "week", dict: "thisWeek" },
 ];
 
 export default async function YappersPage({
@@ -29,14 +30,15 @@ export default async function YappersPage({
     ? (rangeParam as RangeKey)
     : "all";
   const { team } = await requireViewer("/yappers");
+  const d = await getDictionary();
   const entries = await getLeaderboard(team.id, range, 50);
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-8 pb-20 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="quote text-[clamp(2.2rem,6vw,4.2rem)]">Top yappers</h1>
+        <h1 className="quote text-[clamp(2.2rem,6vw,4.2rem)]">{d.feed.topYappers}</h1>
         <p className="label max-w-[28ch] leading-[1.6]">
-          ranked by aura accumulated. the most dangerous yapper sits at the top.
+          {d.feed.rankedByAura}
         </p>
       </div>
 
@@ -51,7 +53,7 @@ export default async function YappersPage({
               range === tab.key ? "bg-acid font-bold" : "text-muted hover:bg-paper-3 hover:text-ink",
             )}
           >
-            {tab.label}
+            {d.feed[tab.dict]}
           </Link>
         ))}
       </div>
@@ -59,7 +61,7 @@ export default async function YappersPage({
       {entries.length === 0 ? (
         <div className="mt-8">
           <EmptyState
-            title="NO KNOWN YAPPERS."
+            title={d.sections.noKnownYappers}
             hint={
               range === "all"
                 ? "nobody is on the record yet"
@@ -71,11 +73,11 @@ export default async function YappersPage({
         <div className="mt-8 border border-ink">
           <div className="hidden grid-cols-[48px_minmax(0,1fr)_minmax(0,1fr)_70px_80px_110px] items-center gap-4 border-b border-ink bg-paper-2 px-4 py-2 md:grid">
             <span className="label">#</span>
-            <span className="label">Yapper</span>
-            <span className="label">Best yap</span>
-            <span className="label text-right">Yaps</span>
-            <span className="label text-right">Certified</span>
-            <span className="label text-right">Aura</span>
+            <span className="label">{d.sections.yapper}</span>
+            <span className="label">{d.sections.bestYap}</span>
+            <span className="label text-right">{d.sections.yaps}</span>
+            <span className="label text-right">{d.profile.certified}</span>
+            <span className="label text-right">{d.profile.aura}</span>
           </div>
 
           <ol>

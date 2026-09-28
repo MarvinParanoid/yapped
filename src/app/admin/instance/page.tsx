@@ -4,6 +4,8 @@ import { EnterTeam } from "@/components/admin/enter-team";
 import { CreateTeam } from "@/components/admin/team-settings";
 import { Panel } from "@/components/ui/panel";
 import { requireOperator } from "@/lib/auth/team";
+import { fill } from "@/lib/i18n/locale";
+import { getDictionary } from "@/lib/i18n/server";
 import { formatCount, formatDate } from "@/lib/format";
 import { listOwners, listTeamOverviews } from "@/lib/services/teams";
 
@@ -22,6 +24,7 @@ export default async function InstancePage() {
   const viewer = await requireOperator("/admin/instance");
   const teams = await listTeamOverviews();
   const owners = await listOwners(teams.map((team) => team.id));
+  const d = await getDictionary();
 
   const mine = new Set(viewer.teams.map((team) => team.id));
   const totals = teams.reduce(
@@ -33,20 +36,19 @@ export default async function InstancePage() {
   );
 
   const figures = [
-    { value: formatCount(teams.length), label: "Archives" },
-    { value: formatCount(totals.members), label: "Memberships" },
-    { value: formatCount(totals.yaps), label: "Records" },
+    { value: formatCount(teams.length), label: d.admin.archives },
+    { value: formatCount(totals.members), label: d.admin.memberships },
+    { value: formatCount(totals.yaps), label: d.admin.records },
   ];
 
   return (
     <div>
       <div className="on-ink grid-ghost border-b border-ink">
         <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-          <span className="label">Instance operator</span>
-          <h1 className="quote mt-3 text-[clamp(2rem,6vw,3.6rem)] text-paper">Every archive</h1>
+          <span className="label">{d.admin.instanceOperator}</span>
+          <h1 className="quote mt-3 text-[clamp(2rem,6vw,3.6rem)] text-paper">{d.admin.everyArchiveHeading}</h1>
           <p className="label mt-3 max-w-[54ch] leading-[1.6]">
-            you are seeing this because your account carries the instance role. it is the only
-            view that crosses between teams — everything else is walled.
+            {d.admin.instanceLead}
           </p>
 
           <dl className="mt-8 grid grid-cols-3 border-l border-t border-paper/20">
@@ -80,17 +82,21 @@ export default async function InstancePage() {
                     accounts
                   </span>
                   <span className="label">
-                    {heads.length > 0 ? `owner: ${heads.join(", ")}` : "no owner"}
+                    {heads.length > 0
+                      ? fill(d.admin.owner, { names: heads.join(", ") })
+                      : d.admin.noOwner}
                   </span>
-                  <span className="label tabnums">opened {formatDate(team.createdAt)}</span>
-                  {mine.has(team.id) ? <span className="label text-acid-deep">you are in</span> : null}
+                  <span className="label tabnums">
+                    {fill(d.admin.openedOn, { date: formatDate(team.createdAt) })}
+                  </span>
+                  {mine.has(team.id) ? <span className="label text-acid-deep">{d.admin.youAreIn}</span> : null}
 
                   <span className="ml-auto flex h-7 items-center gap-4">
                     {active ? (
                       <>
-                        <span className="label">current</span>
+                        <span className="label">{d.admin.current}</span>
                         <Link href="/admin" className="label hover:text-ink">
-                          administer →
+                          {d.admin.administer}
                         </Link>
                       </>
                     ) : (
@@ -104,20 +110,16 @@ export default async function InstancePage() {
         </Panel>
 
         <div className="mt-6">
-          <Panel label="Open another archive">
+          <Panel label={d.admin.openAnother}>
             <CreateTeam />
             <p className="label mt-3 max-w-[70ch] leading-[1.5]">
-              a separate team on this instance, with its own records, tags, leaderboard and
-              battles. nothing crosses between them. you become its owner.
+              {d.admin.anotherArchiveNote}
             </p>
           </Panel>
         </div>
 
         <p className="label mt-4 max-w-[70ch] leading-[1.6]">
-          entering an archive you are not a member of is logged nowhere and hidden nowhere: the
-          header reads OPERATOR instead of a role for as long as you are in it. deleting an
-          archive is not offered here — it would take every record in it with it, and that is a
-          psql decision, not a button.
+          {d.admin.operatorNote}
         </p>
       </div>
     </div>

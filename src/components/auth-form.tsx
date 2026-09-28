@@ -9,6 +9,8 @@ import {
   type AuthState,
 } from "@/app/actions";
 import { NAME_MAX } from "@/lib/names";
+import { useD } from "@/lib/i18n/client";
+import { fill } from "@/lib/i18n/locale";
 import { formatAura } from "@/lib/ranking/aura";
 import type { ClaimPreview } from "@/lib/services/accounts";
 
@@ -28,6 +30,7 @@ export function AuthForm({
   const [state, formAction, pending] = useActionState<AuthState, FormData>(action, {});
   const [displayName, setDisplayName] = useState("");
   const [claim, setClaim] = useState<ClaimPreview | null>(null);
+  const d = useD();
 
   // Someone may already be quoted under this name without an account. Say what
   // registering would take over, before the spelling is committed to.
@@ -53,7 +56,7 @@ export function AuthForm({
     <form action={formAction} className="border border-ink bg-paper">
       <div className="border-b border-ink px-4 py-3">
         <span className="label-strong">
-          {mode === "login" ? "Sign in" : `Join ${teamName ?? "the record"}`}
+          {mode === "login" ? d.auth.signIn : fill(d.join.joinTeam, { team: teamName ?? "" })}
         </span>
       </div>
 
@@ -64,7 +67,7 @@ export function AuthForm({
         {mode === "register" ? (
           <div className="mb-4">
             <label htmlFor="displayName" className="label">
-              Display name
+              {d.auth.displayName}
             </label>
             <input
               id="displayName"
@@ -82,7 +85,7 @@ export function AuthForm({
                 }`}
               >
                 <p className="label-strong">
-                  {claim.yapCount > 0 ? "Claiming an existing record" : "Claiming an entry"}
+                  {claim.yapCount > 0 ? d.auth.claimingRecord : d.auth.claimingEntry}
                 </p>
                 <p className="label mt-1.5 leading-[1.5] normal-case tracking-normal">
                   {claim.yapCount > 0 ? (
@@ -102,17 +105,14 @@ export function AuthForm({
                 </p>
               </div>
             ) : (
-              <p className="label mt-1">
-                already quoted here without an account? use exactly the same name to claim those
-                records — a different spelling starts a separate person.
-              </p>
+              <p className="label mt-1">{d.auth.claimPrefix}</p>
             )}
           </div>
         ) : null}
 
         <div className="mb-4">
           <label htmlFor="username" className="label">
-            Username
+            {d.auth.username}
           </label>
           <input
             id="username"
@@ -125,7 +125,7 @@ export function AuthForm({
 
         <div>
           <label htmlFor="password" className="label">
-            Password
+            {d.auth.password}
           </label>
           <input
             id="password"
@@ -144,20 +144,20 @@ export function AuthForm({
         ) : null}
 
         <button type="submit" disabled={pending} className="btn btn-solid btn-lg mt-6 w-full">
-          {pending ? "Checking..." : mode === "login" ? "Sign in" : "Create account"}
+          {pending ? d.auth.checking : mode === "login" ? d.auth.signIn : d.auth.createAccount}
         </button>
 
         <p className="label mt-4 text-center">
           {mode === "login" ? (
-            <>accounts are created from an invite link</>
+            <>{d.auth.noAccountHint}</>
           ) : (
             <>
-              already on record?{" "}
+              {d.join.alreadyOnRecord}{" "}
               <Link
                 href={`/login?next=${encodeURIComponent(`/join/${token}`)}`}
                 className="underline underline-offset-2 hover:text-ink"
               >
-                sign in and join
+                {d.join.signInAndJoin}
               </Link>
             </>
           )}

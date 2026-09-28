@@ -1,12 +1,14 @@
 import { formatCount } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
+import { getDictionary } from "@/lib/i18n/server";
 import type { ArchiveStats } from "@/lib/types";
 
-export function StatTicker({ stats }: { stats: ArchiveStats }) {
+export async function StatTicker({ stats }: { stats: ArchiveStats }) {
+  const d = await getDictionary();
   const cells = [
-    { value: formatCount(stats.yapCount), label: "yaps archived" },
-    { value: formatAura(stats.totalAura), label: "total aura" },
-    { value: formatCount(stats.certifiedYappers), label: "certified yappers" },
+    { value: formatCount(stats.yapCount), label: d.feed.archived },
+    { value: formatAura(stats.totalAura), label: d.feed.totalAura },
+    { value: formatCount(stats.certifiedYappers), label: d.feed.certified },
   ];
 
   return (
@@ -18,11 +20,7 @@ export function StatTicker({ stats }: { stats: ArchiveStats }) {
         </div>
       ))}
       <div className="flex items-center border-r border-ink px-4 py-3 last:border-r-0">
-        <p className="label leading-[1.5]">
-          the internet forgets.
-          <br />
-          we don&apos;t.
-        </p>
+        <p className="label leading-[1.5]">{d.feed.motto}</p>
       </div>
     </div>
   );

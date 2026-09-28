@@ -11,6 +11,8 @@ import {
 } from "@/app/actions";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
+import { useD } from "@/lib/i18n/client";
+import { fill } from "@/lib/i18n/locale";
 import type { WitnessStance, YapperRef } from "@/lib/types";
 import {
   VERIFICATION_LADDER,
@@ -59,6 +61,7 @@ export function WitnessPanel({
   const router = useRouter();
   const [verification, setVerification] = useState(initialVerification);
   const [count, setCount] = useState(initialWitnesses);
+  const d = useD();
   const [denials, setDenials] = useState(initialDenials);
   const [stance, setStance] = useState(initialStance);
   // The author's position is read straight from props: these are infrequent
@@ -78,8 +81,8 @@ export function WitnessPanel({
       if (!result.ok) {
         setError(
           result.error === "AUTHOR_CANNOT_WITNESS"
-            ? "You cannot corroborate your own statement."
-            : "Could not record that.",
+            ? d.verification.cannotCorroborateOwn
+            : d.verification.couldNotRecord,
         );
         return;
       }
@@ -100,8 +103,8 @@ export function WitnessPanel({
   return (
     <section className="border border-ink bg-paper">
       <header className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2">
-        <span className="label-strong">Verification</span>
-        <span className="label">chain of testimony</span>
+        <span className="label-strong">{d.verification.heading}</span>
+        <span className="label">{d.verification.chain}</span>
       </header>
 
       <ol className="flex items-stretch border-b border-ink">
@@ -121,7 +124,7 @@ export function WitnessPanel({
               )}
             >
               <span className="block font-mono text-[9px] uppercase leading-none tracking-[0.1em]">
-                {VERIFICATION_META[rung].label}
+                {d.verification[rung]}
               </span>
               <span className="mono mt-1 block text-[10px] opacity-70">
                 {index === 0 ? "0" : `${index}+`}
@@ -133,17 +136,17 @@ export function WitnessPanel({
 
       {/* Dimension one: the person it is about. */}
       <div className="border-b border-ink px-4 py-3">
-        <span className="label">Author</span>
+        <span className="label">{d.verification.author}</span>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           {disputed ? (
-            <span className="label-strong text-red">✕ Denied by {authorName}</span>
+            <span className="label-strong text-red">✕ {fill(d.verification.deniedBy, { name: authorName })}</span>
           ) : acknowledged ? (
-            <span className="label-strong">✓ Acknowledged by {authorName}</span>
+            <span className="label-strong">✓ {fill(d.verification.acknowledgedBy, { name: authorName })}</span>
           ) : authorHasAccount ? (
-            <span className="label">{authorName} has not weighed in</span>
+            <span className="label">{fill(d.verification.authorSilent, { name: authorName })}</span>
           ) : (
             // Not a refusal: there is nobody to press the button.
-            <span className="label">{authorName} has no account here yet</span>
+            <span className="label">{fill(d.verification.noAccountYet, { name: authorName })}</span>
           )}
 
           {isAuthor && !disputed ? (
@@ -161,7 +164,7 @@ export function WitnessPanel({
                 }
                 className={cn("btn", acknowledged && "btn-solid")}
               >
-                {acknowledged ? "Take it back" : "I said that"}
+                {acknowledged ? d.verification.takeItBack : d.verification.iSaidThat}
               </button>
               <button
                 type="button"
@@ -186,7 +189,7 @@ export function WitnessPanel({
               maxLength={400}
               value={statement}
               onChange={(event) => setStatement(event.target.value)}
-              placeholder="I said хайпует, but I never said плесень."
+              placeholder={d.verification.disputeExample}
               className="field mt-2 resize-none"
             />
             <p className="label mt-2 leading-[1.5] normal-case tracking-normal">
@@ -202,7 +205,7 @@ export function WitnessPanel({
                     if (result.ok) {
                       setDenying(false);
                       router.refresh();
-                    } else setError("Could not file that dispute.");
+                    } else setError(d.verification.couldNotDispute);
                   })
                 }
                 className="btn border-red bg-red text-paper hover:bg-ink"
@@ -225,10 +228,12 @@ export function WitnessPanel({
       {/* Dimension two: everyone else. */}
       <div className="px-4 py-3">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="label">Witnesses</span>
+          <span className="label">{d.verification.witnesses}</span>
           <span className="mono tabnums text-[12px] font-bold">
             {count}
-            {denials > 0 ? <span className="text-red"> / {denials} denied</span> : null}
+            {denials > 0 ? (
+              <span className="text-red"> / {fill(d.verification.denied, { n: denials })}</span>
+            ) : null}
           </span>
         </div>
 
@@ -248,26 +253,29 @@ export function WitnessPanel({
               <span
                 key={entry.user.id}
                 className="flex items-center gap-1.5 text-[13px] text-red line-through"
-                title="says this never happened"
+                title={d.verification.saysNeverHappened}
               >
                 {entry.user.displayName}
               </span>
             ))}
           </div>
         ) : (
-          <p className="label mt-2">nobody has corroborated this yet</p>
+          <p className="label mt-2">{d.verification.nobodyYet}</p>
         )}
 
         <p className="label mt-3 leading-[1.6] normal-case tracking-normal">
-          {VERIFICATION_META[verification].blurb}
+          {d.verification[`blurb${verification}`]}
           {next
-            ? ` ${next.needed} more ${next.needed === 1 ? "witness" : "witnesses"} would make it ${VERIFICATION_META[next.rung].label.toLowerCase()}.`
+            ? fill(next.needed === 1 ? d.verification.moreNeededOne : d.verification.moreNeededMany, {
+                n: next.needed,
+                rung: d.verification[next.rung].toLowerCase(),
+              })
             : ""}
         </p>
 
         {isAuthor ? (
           <p className="label mt-3">
-            you said it — you cannot be your own witness
+            {d.verification.authorCannotWitness}
           </p>
         ) : (
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -278,7 +286,7 @@ export function WitnessPanel({
               aria-pressed={stance === "PRESENT"}
               className={cn("btn", stance === "PRESENT" && "btn-solid")}
             >
-              I was there
+              {d.verification.iWasThere}
             </button>
             <button
               type="button"
@@ -292,9 +300,9 @@ export function WitnessPanel({
                   : "hover:border-red hover:bg-red hover:text-paper",
               )}
             >
-              Cap
+              {d.verification.cap}
             </button>
-            {!signedIn ? <span className="label">sign in to go on the record</span> : null}
+            {!signedIn ? <span className="label">{d.verification.signInToGoOnRecord}</span> : null}
           </div>
         )}
 

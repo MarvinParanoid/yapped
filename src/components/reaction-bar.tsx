@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { reactAction } from "@/app/actions";
 import { AuraInfo } from "@/components/aura-info";
+import { useD } from "@/lib/i18n/client";
 import { cn } from "@/lib/cn";
 import {
   REACTION_KEYS,
@@ -72,6 +73,7 @@ export function ReactionBar({
   const [aura, setAura] = useState(initialAura);
   const [pulse, setPulse] = useState<{ key: ReactionKey; delta: number; id: number } | null>(null);
   const [denied, setDenied] = useState(false);
+  const d = useD();
   const [, startTransition] = useTransition();
 
   function react(key: ReactionKey) {
@@ -123,7 +125,7 @@ export function ReactionBar({
           outright rather than leaving it to a hover state. */}
       {size === "lg" || size === "feature" ? (
         <span className="label mr-3 self-center">
-          {!signedIn ? "Sign in to react" : isAuthor ? "Your own words" : "React"}
+          {!signedIn ? d.reactions.signInToReact : isAuthor ? d.reactions.ownWords : d.reactions.react}
         </span>
       ) : null}
       <div className="flex flex-wrap items-center gap-1.5">
@@ -136,13 +138,13 @@ export function ReactionBar({
               key={key}
               type="button"
               onClick={() => react(key)}
-              title={meta.label}
+              title={d.reactions[key]}
               aria-pressed={active}
               aria-disabled={isAuthor}
               aria-label={
                 isAuthor
-                  ? `${meta.label}: ${counts[key]} — you cannot react to your own statement`
-                  : `${meta.label}: ${counts[key]}`
+                  ? `${d.reactions[key]}: ${counts[key]} — ${d.reactions.ownWords}`
+                  : `${d.reactions[key]}: ${counts[key]}`
               }
               className={cn(
                 "relative inline-flex items-center border border-ink font-mono tabnums leading-none transition-[background,color,border-color] duration-100",
@@ -196,7 +198,7 @@ export function ReactionBar({
           )}
         >
           <span className="label hidden items-center gap-1.5 sm:flex">
-            Aura
+            {d.reactions.aura}
             {size === "lg" || size === "feature" ? <AuraInfo /> : null}
           </span>
           <span
@@ -210,13 +212,13 @@ export function ReactionBar({
           >
             {formatAura(aura)}
           </span>
-          <span className="label sm:hidden">Aura</span>
+          <span className="label sm:hidden">{d.reactions.aura}</span>
         </div>
       ) : null}
 
       {denied ? (
         <span className="label ml-3 self-center text-red">
-          {isAuthor ? "your own statement — use I SAID THAT instead" : "sign in to react"}
+          {isAuthor ? d.reactions.ownWordsDenied : d.reactions.signInDenied}
         </span>
       ) : null}
     </div>

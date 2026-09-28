@@ -3,6 +3,8 @@ import { after } from "next/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AuraInfo } from "@/components/aura-info";
+import { fill, plural } from "@/lib/i18n/locale";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { EvidencePanel } from "@/components/evidence-panel";
 import { CaseFiler } from "@/components/case-filer";
 import { DisputePanel } from "@/components/dispute-panel";
@@ -58,6 +60,7 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
   if (!Number.isInteger(yapId)) notFound();
 
   const { user, team } = await requireViewer(`/yap/${id}`);
+  const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
   const yap = await getYap(yapId, team.id, user.id);
   if (!yap) notFound();
 
@@ -83,12 +86,21 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
         <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
           <div className="flex items-center gap-3">
             <Link href="/" className="label hover:text-acid">
-              ← Back
+              ← {d.record.back}
             </Link>
             <span className="mono text-[11px] tracking-[0.1em] text-muted-dark">{yap.code}</span>
             {/* The record's own page is where certification gets the stamp. */}
             {yap.verification === "CERTIFIED" ? (
-              <Stamp className="ml-1">{`Certified · ${yap.witnessCount} witnesses`}</Stamp>
+              <Stamp className="ml-1">
+                {`${d.record.certifiedStamp} · ${fill(
+                  plural(locale, yap.witnessCount, [
+                    d.note.witnessOne,
+                    d.note.witnessFew,
+                    d.note.witnessMany,
+                  ]),
+                  { n: yap.witnessCount },
+                )}`}
+              </Stamp>
             ) : (
               <VerificationBadge
                 verification={yap.verification}
@@ -136,7 +148,7 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
                 {formatCount(yap.aura)}
               </div>
               <div className="label mt-1.5 flex items-center gap-1.5">
-                aura
+                {d.reactions.aura}
                 <AuraInfo />
               </div>
             </div>
@@ -200,7 +212,7 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
 
         {yap.tags.length > 0 ? (
           <div className="mt-6 flex flex-wrap items-center gap-3 border border-ink px-3 py-3">
-            <span className="label">Tags</span>
+            <span className="label">{d.record.tags}</span>
             {yap.tags.map((tag) => (
               <Link
                 key={tag.slug}
@@ -216,7 +228,7 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
         {/* Pseudo-archival metadata. Understated on purpose. */}
         <dl className="mt-6 grid grid-cols-2 border-l border-t border-ink sm:grid-cols-3 lg:grid-cols-5">
           <div className="border-b border-r border-ink px-3 py-3">
-            <dt className="label">Submitted by</dt>
+            <dt className="label">{d.record.submittedBy}</dt>
             <dd className="mt-1.5 text-[13px] font-semibold">
               {yap.submittedBy ? (
                 <Link href={`/yapper/${yap.submittedBy.id}`} className="underline underline-offset-2">
@@ -228,21 +240,21 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
             </dd>
           </div>
           <div className="border-b border-r border-ink px-3 py-3">
-            <dt className="label">Archived</dt>
+            <dt className="label">{d.record.archivedAt}</dt>
             <dd className="mono mt-1.5 text-[13px]">{formatStamp(yap.createdAt)}</dd>
           </div>
           <div className="border-b border-r border-ink px-3 py-3">
-            <dt className="label">Classification</dt>
+            <dt className="label">{d.record.classification}</dt>
             <dd className="mono mt-1.5 text-[13px] underline decoration-dotted underline-offset-4">
               {yap.classification}
             </dd>
           </div>
           <div className="border-b border-r border-ink px-3 py-3">
-            <dt className="label">Verification</dt>
+            <dt className="label">{d.record.verification}</dt>
             <dd className="mono mt-1.5 text-[13px]">{yap.verification}</dd>
           </div>
           <div className="border-b border-r border-ink px-3 py-3">
-            <dt className="label">Views</dt>
+            <dt className="label">{d.record.views}</dt>
             <dd className="mono tabnums mt-1.5 text-[13px]">{formatCount(yap.viewCount)}</dd>
           </div>
         </dl>
@@ -251,7 +263,7 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
         {cases.length > 0 || user ? (
           <section className="mt-6 border border-ink">
             <header className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2">
-              <span className="label-strong">Case file</span>
+              <span className="label-strong">{d.sections.caseFile}</span>
               <Link href="/cases" className="label hover:text-ink">
                 All cases →
               </Link>
@@ -282,14 +294,14 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
         {/* Battle history, so the arena and the Hall stop being an island. */}
         <section className="mt-6 border border-ink">
           <header className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2">
-            <span className="label-strong">Battle record</span>
+            <span className="label-strong">{d.sections.battleRecord}</span>
             <Link href="/battle/hall" className="label hover:text-ink">
               Hall of Yap →
             </Link>
           </header>
           <div className="grid gap-px bg-ink sm:grid-cols-4">
             <div className="bg-paper px-3 py-3">
-              <span className="label">Record</span>
+              <span className="label">{d.sections.recordLabel}</span>
               <p className="mono tabnums mt-1.5 text-[19px] font-bold leading-none">
                 {battleRecord.wins}
                 <span className="text-muted">W</span> / {battleRecord.losses}
@@ -297,19 +309,19 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
               </p>
             </div>
             <div className="bg-paper px-3 py-3">
-              <span className="label">Elo</span>
+              <span className="label">{d.sections.elo}</span>
               <p className="mono tabnums mt-1.5 text-[19px] font-bold leading-none">
                 {battleRecord.rating}
               </p>
             </div>
             <div className="bg-paper px-3 py-3">
-              <span className="label">Peak</span>
+              <span className="label">{d.sections.peak}</span>
               <p className="mono tabnums mt-1.5 text-[19px] font-bold leading-none">
                 {battleRecord.peak}
               </p>
             </div>
             <div className="bg-paper px-3 py-3">
-              <span className="label">Last battle</span>
+              <span className="label">{d.sections.lastBattle}</span>
               {battleRecord.last ? (
                 <p className="mt-1.5 text-[12px] leading-[1.4]">
                   <span className={battleRecord.last.won ? "font-bold" : "font-bold text-red"}>

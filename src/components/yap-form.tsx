@@ -4,6 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import { submitYapAction, type SubmitState } from "@/app/actions";
 import { cn } from "@/lib/cn";
 import { slugifyTag } from "@/lib/format";
+import { useD } from "@/lib/i18n/client";
 import { NAME_MAX } from "@/lib/names";
 import type { YapperRef } from "@/lib/types";
 
@@ -13,6 +14,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
   const [state, action, pending] = useActionState<SubmitState, FormData>(submitYapAction, {});
   const [text, setText] = useState("");
   const [authorId, setAuthorId] = useState("");
+  const d = useD();
   const [tags, setTags] = useState<string[]>([]);
   const [tagDraft, setTagDraft] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
@@ -27,12 +29,12 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
   return (
     <form action={action} className="border border-ink bg-paper">
       <div className="border-b border-ink px-4 py-3">
-        <span className="label-strong">Add a yap</span>
+        <span className="label-strong">{d.submit.panel}</span>
       </div>
 
       <div className="px-4 py-5 sm:px-6 sm:py-6">
         <label htmlFor="text" className="label">
-          What was said <span className="text-red">*</span>
+          {d.submit.text} <span className="text-red">*</span>
         </label>
         <textarea
           id="text"
@@ -42,7 +44,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
           rows={2}
           value={text}
           onChange={(event) => setText(event.target.value)}
-          placeholder="Рот ставлю."
+          placeholder={d.submit.textPlaceholder}
           className={cn(
             "quote mt-2 w-full resize-none border border-ink bg-paper px-3 py-3 outline-none",
             "text-[clamp(1.3rem,3.2vw,2.1rem)] focus:bg-white",
@@ -57,7 +59,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
           <div>
             <label htmlFor="authorId" className="label">
-              Who said it <span className="text-red">*</span>
+              {d.submit.author} <span className="text-red">*</span>
             </label>
             <div className="relative mt-2">
               <select
@@ -67,14 +69,14 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
                 className="field appearance-none rounded-none pr-9"
               >
                 <option value="" disabled>
-                  — choose a yapper —
+                  {d.submit.choose}
                 </option>
                 {yappers.map((yapper) => (
                   <option key={yapper.id} value={yapper.id}>
                     {yapper.displayName}
                   </option>
                 ))}
-                <option value={NEW_YAPPER}>+ add new yapper</option>
+                <option value={NEW_YAPPER}>{d.submit.addNew}</option>
               </select>
               <span
                 aria-hidden
@@ -91,7 +93,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
             {authorId === NEW_YAPPER ? (
               <input
                 name="authorName"
-                placeholder="Their name"
+                placeholder={d.submit.theirName}
                 className="field mt-2"
                 autoComplete="off"
                 autoFocus
@@ -102,7 +104,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
 
           <div>
             <label htmlFor="saidAt" className="label">
-              When
+              {d.submit.when}
             </label>
             <input
               id="saidAt"
@@ -116,21 +118,21 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
 
         <div className="mt-6">
           <label htmlFor="lore" className="label">
-            Context / lore
+            {d.submit.lore}
           </label>
           <textarea
             id="lore"
             name="lore"
             rows={3}
             maxLength={2000}
-            placeholder="Сказано во время обсуждения, деплоить ли в пятницу. Задеплоили."
+            placeholder={d.submit.lorePlaceholder}
             className="field mt-2 resize-y"
           />
           <p className="label mt-1">so this still makes sense in six months.</p>
         </div>
 
         <div className="mt-6">
-          <span className="label">Tags</span>
+          <span className="label">{d.submit.tags}</span>
           <div className="mt-2 flex flex-wrap items-center gap-2 border border-ink px-2 py-2">
             {tags.map((tag) => (
               <span
@@ -168,7 +170,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
         </div>
 
         <div className="mt-6">
-          <span className="label">Evidence (optional)</span>
+          <span className="label">{d.submit.evidence}</span>
           <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-stretch">
             <label
               className={cn(
@@ -205,7 +207,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
                     if (fileRef.current) fileRef.current.value = "";
                   }}
                   className="absolute right-0 top-0 border-b border-l border-ink bg-paper px-2 py-1 font-mono text-[11px] hover:bg-red hover:text-paper"
-                  aria-label="Remove evidence"
+                  aria-label={d.submit.removeEvidence}
                 >
                   ✕
                 </button>
@@ -221,7 +223,7 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
         ) : null}
 
         <button type="submit" disabled={pending} className="btn btn-acid btn-lg mt-6 w-full">
-          {pending ? "Archiving..." : "Yap it →"}
+          {pending ? d.submit.archiving : `${d.submit.yapIt} →`}
         </button>
         <p className="label mt-3 text-center">yap responsibly. this is permanent.</p>
       </div>

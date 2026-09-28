@@ -4,6 +4,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/cn";
 import { requireViewer } from "@/lib/auth/team";
+import { getDictionary } from "@/lib/i18n/server";
 import { getHallOfYap } from "@/lib/services/battles";
 
 export const dynamic = "force-dynamic";
@@ -12,23 +13,24 @@ export const metadata: Metadata = { title: "Hall of Yap" };
 
 export default async function HallOfYapPage() {
   const { team } = await requireViewer("/battle/hall");
+  const d = await getDictionary();
   const entries = await getHallOfYap(team.id, 25);
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-8 pb-20 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="label">Ranked by head-to-head rating</span>
-          <h1 className="quote mt-2 text-[clamp(2rem,6vw,4rem)]">Hall of Yap</h1>
+          <span className="label">{d.sections.rankedByElo}</span>
+          <h1 className="quote mt-2 text-[clamp(2rem,6vw,4rem)]">{d.profile.hallOfYap}</h1>
         </div>
         <Link href="/battle" className="btn btn-acid">
-          Enter the arena →
+          {d.feed.enterArena} →
         </Link>
       </div>
 
       {entries.length === 0 ? (
         <div className="mt-8">
-          <EmptyState title="NO BATTLES FOUGHT. SUSPICIOUS." hint="start a battle" />
+          <EmptyState title={d.empty.noBattles} hint={d.sections.startBattle} />
         </div>
       ) : (
         <ol className="mt-8 border border-ink">

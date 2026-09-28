@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { cn } from "@/lib/cn";
+import { useD } from "@/lib/i18n/client";
 import type { RangeKey, SortKey } from "@/lib/types";
 
 /**
@@ -29,6 +30,7 @@ export function FeedControls({ sort, range }: { sort: SortKey; range: RangeKey }
   const pathname = usePathname();
   const params = useSearchParams();
   const [pending, startTransition] = useTransition();
+  const d = useD();
 
   const windows = WINDOWS[sort];
   if (windows.length === 0) return null;
@@ -41,10 +43,10 @@ export function FeedControls({ sort, range }: { sort: SortKey; range: RangeKey }
 
   return (
     <div className="flex items-center gap-3 border-b border-ink py-2">
-      <span className="label shrink-0">Window</span>
+      <span className="label shrink-0">{d.sections.window}</span>
       <div
         role="group"
-        aria-label="Feed window"
+        aria-label={d.sections.feedWindow}
         className={cn("flex", pending && "opacity-60")}
       >
         {windows.map((item) => (

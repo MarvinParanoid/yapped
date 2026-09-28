@@ -14,6 +14,7 @@ import {
   TEAM_COOKIE,
 } from "@/lib/auth/team";
 import { slugifyTag } from "@/lib/format";
+import { isLocale, LOCALE_COOKIE } from "@/lib/i18n/locale";
 import type { ReactionKey } from "@/lib/ranking/aura";
 import {
   authenticate,
@@ -381,6 +382,20 @@ export async function switchTeamAction(slug: string): Promise<{ ok: boolean }> {
   if (!mine && !viewer.user.isAdmin) return { ok: false };
 
   await setTeamCookie(slug);
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/** The language the interface speaks. Remembered per browser, not per account. */
+export async function setLocaleAction(locale: string): Promise<{ ok: boolean }> {
+  if (!isLocale(locale)) return { ok: false };
+  const jar = await cookies();
+  jar.set(LOCALE_COOKIE, locale, {
+    httpOnly: false,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
   revalidatePath("/", "layout");
   return { ok: true };
 }

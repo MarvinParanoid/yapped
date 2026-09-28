@@ -6,6 +6,7 @@ import { formatCount } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
 import { MOMENTUM_META } from "@/lib/ranking/momentum";
 import { requireViewer } from "@/lib/auth/team";
+import { getDictionary } from "@/lib/i18n/server";
 import { getMarket, type MarketRow } from "@/lib/services/aura-history";
 
 export const dynamic = "force-dynamic";
@@ -85,6 +86,7 @@ export default async function MarketPage({
   const selected =
     WINDOWS.find((entry) => String(entry.hours) === windowParam) ?? WINDOWS[1];
   const { team } = await requireViewer("/market");
+  const d = await getDictionary();
   const market = await getMarket(team.id, selected.hours);
 
   const up = market.indexPercent !== null && market.indexPercent > 0;
@@ -93,8 +95,8 @@ export default async function MarketPage({
     <article>
       <div className="on-ink grid-ghost border-b border-ink">
         <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-          <span className="label">Aura market · entirely meaningless</span>
-          <h1 className="quote mt-4 text-[clamp(2.2rem,7vw,4.6rem)] text-paper">Yap index</h1>
+          <span className="label">{d.sections.marketKicker}</span>
+          <h1 className="quote mt-4 text-[clamp(2.2rem,7vw,4.6rem)] text-paper">{d.sections.yapIndex}</h1>
 
           <div className="mt-6 flex flex-wrap items-end gap-x-8 gap-y-4">
             <div>
@@ -151,7 +153,7 @@ export default async function MarketPage({
 
       <div className="mx-auto max-w-[1200px] px-4 py-8 pb-20 sm:px-6 lg:px-8">
         {market.tracked === 0 ? (
-          <EmptyState title="NO LISTINGS." hint="the archive has nothing to trade" />
+          <EmptyState title={d.sections.noListings} hint="the archive has nothing to trade" />
         ) : (
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="lg:col-span-2">
@@ -162,12 +164,12 @@ export default async function MarketPage({
               />
             </div>
             <Table
-              title="New listings"
+              title={d.sections.newListings}
               rows={market.newcomers}
               empty="no records filed in this window"
             />
             <Table
-              title="Dormant"
+              title={d.sections.dormant}
               rows={market.dormant}
               empty="everything got at least one reaction"
             />

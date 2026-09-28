@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useD } from "@/lib/i18n/client";
 import { useEffect, useTransition } from "react";
 
 /**
@@ -14,6 +15,7 @@ import { useEffect, useTransition } from "react";
 export function GetYappedAgain({ currentId }: { currentId: number }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const d = useD();
 
   const again = () => {
     startTransition(() => {
@@ -45,7 +47,7 @@ export function GetYappedAgain({ currentId }: { currentId: number }) {
       disabled={pending}
       className="btn btn-acid btn-lg w-full sm:w-auto"
     >
-      {pending ? "Retrieving..." : "Get yapped again →"}
+      {pending ? d.feed.retrieving : `${d.feed.getYappedAgain} →`}
     </button>
   );
 }

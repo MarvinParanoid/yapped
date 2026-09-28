@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { formatCount, formatDate } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
 import { requireViewer } from "@/lib/auth/team";
+import { getDictionary } from "@/lib/i18n/server";
 import { CASE_STATUS_META, listCases } from "@/lib/services/cases";
 
 export const dynamic = "force-dynamic";
@@ -13,25 +14,26 @@ export const metadata: Metadata = { title: "Case files" };
 
 export default async function CasesPage() {
   const { team } = await requireViewer("/cases");
+  const d = await getDictionary();
   const cases = await listCases(team.id);
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-8 pb-20 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="label">Episodes, not one-liners</span>
-          <h1 className="quote mt-2 text-[clamp(2rem,6vw,4rem)]">Case files</h1>
+          <span className="label">{d.sections.episodes}</span>
+          <h1 className="quote mt-2 text-[clamp(2rem,6vw,4rem)]">{d.sections.caseFiles}</h1>
         </div>
         <p className="label max-w-[34ch] leading-[1.6]">
-          when one statement turns into four, the archive opens a case.
+          {d.sections.caseIntro}
         </p>
       </div>
 
       {cases.length === 0 ? (
         <div className="mt-8">
           <EmptyState
-            title="NO CASES OPENED."
-            hint="nothing has escalated into an incident yet"
+            title={d.empty.noCases}
+            hint={d.empty.noCasesHint}
           />
         </div>
       ) : (

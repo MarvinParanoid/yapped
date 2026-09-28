@@ -11,6 +11,8 @@ import { assignEmphasis, tagWeight } from "@/lib/archival";
 import { describeFilter, isEmptyFilter, parseSearch } from "@/lib/search";
 import { cn } from "@/lib/cn";
 import { requireViewer } from "@/lib/auth/team";
+import { fill, plural } from "@/lib/i18n/locale";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { countYaps, getArchiveStats, listTags, listYaps } from "@/lib/services/yaps";
 import { getLeaderboard } from "@/lib/services/yappers";
 import { getMomentum } from "@/lib/services/aura-history";
@@ -74,6 +76,7 @@ export default async function FeedPage({
   const effectiveRange: RangeKey = filtering ? "all" : range;
 
   const viewer = await requireViewer("/");
+  const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
   const teamId = viewer.team.id;
   const user = viewer.user;
   const PER_PAGE = 25;
@@ -105,18 +108,18 @@ export default async function FeedPage({
   const MIN_TAGS_SHOWN = 5;
   const showTags = tags.length >= MIN_TAGS_SHOWN;
   const elsewhere = [
-    { href: "/random", label: "Random", note: "one at a time" },
-    { href: "/battle/hall", label: "Hall of Yap", note: "by rating" },
-    { href: "/market", label: "Aura market", note: "entirely meaningless" },
+    { href: "/random", label: d.nav.random, note: d.feed.randomNote },
+    { href: "/battle/hall", label: d.feed.hallOfYap, note: d.feed.hallNote },
+    { href: "/market", label: d.feed.auraMarket, note: d.feed.marketNote },
     ...(latestPeriod
-      ? [{ href: periodSlug(latestPeriod), label: "Wrapped", note: periodLabel(latestPeriod) }]
+      ? [{ href: periodSlug(latestPeriod), label: d.feed.wrapped, note: periodLabel(latestPeriod) }]
       : []),
     ...(anniversaries > 0
       ? [
           {
             href: "/on-this-day",
-            label: "On this day",
-            note: `${anniversaries} from earlier years`,
+            label: d.feed.onThisDay,
+            note: fill(d.feed.fromEarlierYears, { n: anniversaries }),
           },
         ]
       : []),
@@ -170,7 +173,7 @@ export default async function FeedPage({
             <div className="mt-4 border border-ink bg-ink px-3 py-2 text-paper">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="label text-paper">
-                  {narrowed ? "Filtering by" : "No filter applied"}
+                  {narrowed ? d.feed.filteringBy : d.feed.noFilter}
                 </span>
                 {tag ? (
                   <span className="mono border border-paper/30 px-2 py-0.5 text-[12px]">
@@ -186,15 +189,20 @@ export default async function FeedPage({
                   </span>
                 ))}
                 <span className="label">
-                  {yaps.length} {yaps.length === 1 ? "record" : "records"}
+                  {yaps.length}{" "}
+                  {plural(locale, yaps.length, [
+                    d.feed.recordOne,
+                    d.feed.recordFew,
+                    d.feed.recordMany,
+                  ])}
                 </span>
                 <Link href="/" className="label ml-auto text-paper hover:text-acid">
-                  clear ✕
+                  {d.feed.clear} ✕
                 </Link>
               </div>
               {filter.unknown.length > 0 ? (
                 <p className="label mt-1.5 text-red">
-                  ignored: {filter.unknown.join(" ")}
+                  {fill(d.feed.ignored, { what: filter.unknown.join(" ") })}
                 </p>
               ) : null}
             </div>
@@ -253,7 +261,7 @@ export default async function FeedPage({
             {/* Size is frequency: the team's vocabulary, ranked by damage.
                 Hidden until there is enough of one to rank. */}
             {showTags ? (
-            <Panel label="Tags" bodyClassName="px-3 py-3">
+            <Panel label={d.feed.tags} bodyClassName="px-3 py-3">
               <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                 {tags.map((item) => (
                   <Link
@@ -273,11 +281,11 @@ export default async function FeedPage({
             ) : null}
 
             <Link href="/battle" className="group block border border-ink bg-ink p-4 text-paper">
-              <span className="label text-muted-dark">Yap battle</span>
+              <span className="label text-muted-dark">{d.feed.battleKicker}</span>
               <span className="quote mt-2 block text-[22px] leading-[0.95]">
-                Who yapped harder?
+                {d.feed.battlePrompt}
               </span>
-              <span className="label mt-3 block text-acid">Enter the arena →</span>
+              <span className="label mt-3 block text-acid">{d.feed.enterArena} →</span>
             </Link>
 
             <SidebarElsewhere entries={elsewhere} />

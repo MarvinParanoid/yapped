@@ -5,12 +5,8 @@ import { useActionState, useEffect, useState, useTransition } from "react";
 import { createInviteAction, revokeInviteAction, type AdminState } from "@/app/actions";
 import type { InviteRow } from "@/lib/services/invites";
 import { cn } from "@/lib/cn";
-
-const DEAD_LABEL: Record<"REVOKED" | "EXPIRED" | "EXHAUSTED", string> = {
-  REVOKED: "revoked",
-  EXPIRED: "expired",
-  EXHAUSTED: "used up",
-};
+import { useD } from "@/lib/i18n/client";
+import { fill } from "@/lib/i18n/locale";
 
 function useCopy(token: string) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
@@ -45,9 +41,10 @@ function useCopy(token: string) {
 
 function CopyLink({ token }: { token: string }) {
   const { state, copy } = useCopy(token);
+  const d = useD();
   return (
     <button type="button" className="label hover:text-ink" onClick={copy}>
-      {state === "copied" ? "copied" : state === "failed" ? "copy failed" : "copy link"}
+      {state === "copied" ? d.invite.copied : state === "failed" ? d.invite.copyFailed : d.invite.copyLink}
     </button>
   );
 }
@@ -60,6 +57,7 @@ function CopyLink({ token }: { token: string }) {
  */
 function FreshLink({ token }: { token: string }) {
   const { state, copy } = useCopy(token);
+  const d = useD();
   const [origin, setOrigin] = useState("");
 
   // The full URL only exists in the browser; rendering it on the server would
@@ -68,7 +66,7 @@ function FreshLink({ token }: { token: string }) {
 
   return (
     <div className="yap-in mt-3 border border-ink bg-acid px-3 py-2">
-      <span className="label-strong">Your new link — copy it now</span>
+      <span className="label-strong">{d.invite.freshHeading}</span>
       <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
         <code className="mono break-all text-[13px] font-bold">
           {origin}/join/{token}
@@ -78,7 +76,7 @@ function FreshLink({ token }: { token: string }) {
           className="label-strong ml-auto shrink-0 underline underline-offset-2 hover:opacity-70"
           onClick={copy}
         >
-          {state === "copied" ? "copied ✓" : state === "failed" ? "copy failed" : "copy"}
+          {state === "copied" ? `${d.invite.copied} ✓` : state === "failed" ? d.invite.copyFailed : d.invite.copy}
         </button>
       </div>
     </div>
@@ -99,6 +97,7 @@ export function InviteManager({
     {},
   );
   const [revoking, startRevoke] = useTransition();
+  const d = useD();
 
   return (
     <div>
@@ -106,13 +105,13 @@ export function InviteManager({
         <div className="grid gap-3 sm:grid-cols-[1fr_7rem_7rem_auto] sm:items-end">
           <div>
             <label htmlFor="note" className="label">
-              Note
+              {d.invite.note}
             </label>
-            <input id="note" name="note" className="field mt-1.5" placeholder="for Katya" />
+            <input id="note" name="note" className="field mt-1.5" placeholder={d.invite.notePlaceholder} />
           </div>
           <div>
             <label htmlFor="maxUses" className="label">
-              Max uses
+              {d.invite.maxUses}
             </label>
             <input
               id="maxUses"
@@ -125,7 +124,7 @@ export function InviteManager({
           </div>
           <div>
             <label htmlFor="expiresInDays" className="label">
-              Days valid
+              {d.invite.daysValid}
             </label>
             <input
               id="expiresInDays"
@@ -137,11 +136,11 @@ export function InviteManager({
             />
           </div>
           <button type="submit" disabled={pending} className="btn btn-acid">
-            {pending ? "Minting..." : "Mint invite"}
+            {pending ? d.invite.minting : d.invite.mint}
           </button>
         </div>
         <p className="label mt-2 leading-[1.5]">
-          blank means no limit. anyone holding the link gets in, so hand it out like a key.
+          {d.invite.blankMeans}
         </p>
         {state.error ? (
           <p className="mt-2 border border-red px-3 py-2 font-mono text-[12px] text-red">
@@ -152,7 +151,7 @@ export function InviteManager({
       </form>
 
       {invites.length === 0 ? (
-        <p className="label px-3 py-4">no invites issued</p>
+        <p className="label px-3 py-4">{d.invite.none}</p>
       ) : (
         <ul>
           {invites.map((invite) => (
@@ -166,19 +165,20 @@ export function InviteManager({
               <code className="mono text-[12px] font-bold">/join/{invite.token}</code>
               {invite.note ? <span className="label">{invite.note}</span> : null}
               {showAuthor && invite.createdBy ? (
-                <span className="label">by {invite.createdBy}</span>
+                <span className="label">{fill(d.invite.by, { name: invite.createdBy })}</span>
               ) : null}
               <span className="label tabnums">
-                {invite.uses}
-                {invite.maxUses === null ? " uses" : ` / ${invite.maxUses}`}
+                {invite.maxUses === null
+                  ? fill(d.invite.uses, { n: invite.uses })
+                  : fill(d.invite.usesOf, { n: invite.uses, max: invite.maxUses })}
               </span>
               {invite.expiresAt ? (
                 <span className="label tabnums">
-                  until {invite.expiresAt.toISOString().slice(0, 10)}
+                  {fill(d.invite.until, { date: invite.expiresAt.toISOString().slice(0, 10) })}
                 </span>
               ) : null}
               {invite.deadReason ? (
-                <span className="label text-red">{DEAD_LABEL[invite.deadReason]}</span>
+                <span className="label text-red">{d.invite[invite.deadReason]}</span>
               ) : null}
 
               <span className="ml-auto flex items-center gap-4">
@@ -195,7 +195,7 @@ export function InviteManager({
                       })
                     }
                   >
-                    revoke
+                    {d.invite.revoke}
                   </button>
                 )}
               </span>

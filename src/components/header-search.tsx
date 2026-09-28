@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useD } from "@/lib/i18n/client";
 import { SEARCH_QUALIFIERS } from "@/lib/search";
 
 function MagnifierIcon() {
@@ -29,6 +30,7 @@ function MagnifierIcon() {
  * is a labelled control, not a bare symbol.
  */
 export function HeaderSearch() {
+  const d = useD();
   const router = useRouter();
   // Stay open, holding the term, while looking at results — otherwise the
   // search appears to have vanished and it is unclear what is being filtered.
@@ -78,12 +80,12 @@ export function HeaderSearch() {
           openedByUser.current = true;
           setOpen(true);
         }}
-        aria-label="Search the archive"
-        title="Search the archive  ( / )"
+        aria-label={d.nav.searchAria}
+        title={`${d.nav.searchAria}  ( / )`}
         className="btn gap-2"
       >
         <MagnifierIcon />
-        <span className="hidden sm:inline">Search</span>
+        <span className="hidden sm:inline">{d.nav.search}</span>
       </button>
     );
   }
@@ -107,8 +109,8 @@ export function HeaderSearch() {
         onChange={(event) => setValue(event.target.value)}
         onFocus={() => setHelping(true)}
         onBlur={() => setTimeout(() => setHelping(false), 120)}
-        placeholder="Search the record…"
-        aria-label="Search the archive"
+        placeholder={d.nav.searchPlaceholder}
+        aria-label={d.nav.searchAria}
         className="w-[160px] bg-transparent px-2.5 font-mono text-[12px] outline-none placeholder:text-muted sm:w-[230px]"
       />
       <button
@@ -123,7 +125,7 @@ export function HeaderSearch() {
           setValue("");
           setOpen(false);
         }}
-        aria-label="Close search"
+        aria-label={d.sections.closeSearch}
         className="border-l border-ink px-2 label-strong hover:bg-ink hover:text-paper"
       >
         ✕
@@ -134,7 +136,7 @@ export function HeaderSearch() {
         hidden={!helping}
         className="absolute right-0 top-[calc(100%+1px)] z-30 w-[290px] border border-ink bg-paper"
       >
-        <p className="label border-b border-ink px-3 py-1.5">Qualifiers — optional</p>
+        <p className="label border-b border-ink px-3 py-1.5">{d.sections.qualifiers}</p>
         <ul>
           {SEARCH_QUALIFIERS.map((qualifier) => (
             <li key={qualifier.example}>

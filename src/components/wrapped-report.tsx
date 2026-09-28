@@ -1,16 +1,19 @@
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
+import type { Dictionary } from "@/lib/i18n/en";
+import { fill } from "@/lib/i18n/locale";
+import { getDictionary } from "@/lib/i18n/server";
 import { formatCount } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
 import { periodSlug, type WrappedPeriod, type WrappedReport } from "@/lib/services/wrapped";
 
 /** A dry remark sized to how little happened. */
-function quietRemark(count: number): string {
-  if (count === 1) return "One statement. A monastic period.";
-  if (count <= 3) return "An uncharacteristically professional stretch.";
-  if (count <= 6) return "An uncharacteristically professional month.";
-  return "Restraint was shown. It will not last.";
+function quietRemark(count: number, d: Dictionary): string {
+  if (count === 1) return d.wrapped.oneStatement;
+  if (count <= 3) return d.wrapped.professionalStretch;
+  if (count <= 6) return d.wrapped.professionalMonth;
+  return d.wrapped.restraint;
 }
 
 function Slab({
@@ -63,7 +66,7 @@ function Slab({
   );
 }
 
-export function WrappedReportView({
+export async function WrappedReportView({
   report,
   previous,
   next,
@@ -72,6 +75,7 @@ export function WrappedReportView({
   previous: WrappedPeriod | null;
   next: WrappedPeriod | null;
 }) {
+  const d = await getDictionary();
   const empty = report.yapCount === 0;
   const peakLoad = Math.max(...report.hours, 1);
 
@@ -80,9 +84,9 @@ export function WrappedReportView({
       <div className="on-ink grid-ghost border-b border-ink">
         <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
           <div className="flex items-center justify-between gap-3">
-            <span className="label">yapped. wrapped</span>
+            <span className="label">{d.wrapped.kicker}</span>
             <Link href="/wrapped" className="label hover:text-acid">
-              All periods →
+              {d.wrapped.allPeriods} →
             </Link>
           </div>
 
@@ -91,7 +95,7 @@ export function WrappedReportView({
           <div className="mt-6 flex flex-wrap items-center gap-3">
             {previous ? (
               <Link href={periodSlug(previous)} className="btn">
-                ← Earlier
+                ← {d.wrapped.earlier}
               </Link>
             ) : null}
             {next ? (
@@ -111,7 +115,7 @@ export function WrappedReportView({
       <div className="mx-auto max-w-[1200px] px-4 py-8 pb-20 sm:px-6 lg:px-8">
         {empty ? (
           <div className="border border-ink bg-paper-2 px-6 py-16 text-center">
-            <p className="quote text-[clamp(1.4rem,3.4vw,2.2rem)]">No statements on record.</p>
+            <p className="quote text-[clamp(1.4rem,3.4vw,2.2rem)]">{d.wrapped.noStatements}</p>
             <p className="label mt-4 leading-[1.6]">
               either nothing happened or nobody was taking notes
             </p>
@@ -121,13 +125,13 @@ export function WrappedReportView({
              single digits. */
           <div className="border border-ink">
             <div className="grid gap-px bg-ink sm:grid-cols-2">
-              <Slab value={formatCount(report.yapCount)} label="Yaps recorded" />
-              <Slab value={formatAura(report.totalAura)} label="Aura generated" tone="acid" />
+              <Slab value={formatCount(report.yapCount)} label={d.wrapped.yapsRecorded} />
+              <Slab value={formatAura(report.totalAura)} label={d.wrapped.auraGenerated} tone="acid" />
             </div>
             <div className="border-t border-ink px-5 py-8 text-center">
-              <p className="label">Insufficient data for serious analysis</p>
+              <p className="label">{d.wrapped.insufficient}</p>
               <p className="quote mt-3 text-[clamp(1.2rem,2.8vw,1.9rem)]">
-                {quietRemark(report.yapCount)}
+                {quietRemark(report.yapCount, d)}
               </p>
             </div>
             {report.yapOfThePeriod ? (
@@ -135,7 +139,7 @@ export function WrappedReportView({
                 href={`/yap/${report.yapOfThePeriod.id}`}
                 className="block border-t border-ink px-5 py-6 hover:bg-paper-2"
               >
-                <span className="label">The only one worth quoting</span>
+                <span className="label">{d.wrapped.onlyOne}</span>
                 <p className="quote mt-3 text-[clamp(1.2rem,3vw,2rem)]">
                   “{report.yapOfThePeriod.text}”
                 </p>
@@ -154,8 +158,8 @@ export function WrappedReportView({
         ) : (
           <>
             <div className="grid gap-px bg-ink sm:grid-cols-2">
-              <Slab value={formatCount(report.yapCount)} label="Yaps recorded" />
-              <Slab value={formatAura(report.totalAura)} label="Aura generated" tone="acid" />
+              <Slab value={formatCount(report.yapCount)} label={d.wrapped.yapsRecorded} />
+              <Slab value={formatAura(report.totalAura)} label={d.wrapped.auraGenerated} tone="acid" />
             </div>
 
             {report.yapOfThePeriod ? (
@@ -163,7 +167,7 @@ export function WrappedReportView({
                 href={`/yap/${report.yapOfThePeriod.id}`}
                 className="on-ink grid-ghost mt-6 block border border-ink px-5 py-8 sm:px-8 sm:py-12"
               >
-                <span className="label">Yap of the period</span>
+                <span className="label">{d.wrapped.yapOfPeriod}</span>
                 <p className="quote mt-4 text-[clamp(1.6rem,5vw,3.4rem)] text-paper">
                   “{report.yapOfThePeriod.text}”
                 </p>
@@ -191,7 +195,7 @@ export function WrappedReportView({
                     size={64}
                   />
                   <div className="min-w-0">
-                    <span className="label">Top yapper</span>
+                    <span className="label">{d.wrapped.topYapper}</span>
                     <p className="quote mt-1.5 text-[clamp(1.5rem,3.4vw,2.4rem)]">
                       {report.topYapper.yapper.displayName}
                     </p>
@@ -209,7 +213,7 @@ export function WrappedReportView({
                   href={`/?tag=${encodeURIComponent(report.topTag.slug)}`}
                   className="border border-ink px-5 py-6 transition-colors duration-100 hover:bg-paper-2"
                 >
-                  <span className="label">Most discussed subject</span>
+                  <span className="label">{d.wrapped.mostDiscussed}</span>
                   <p className="mono mt-1.5 text-[clamp(1.5rem,3.4vw,2.4rem)] font-bold">
                     #{report.topTag.label}
                   </p>
@@ -224,7 +228,7 @@ export function WrappedReportView({
             {/* When the yapping actually happens. */}
             <section className="mt-6 border border-ink">
               <header className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2">
-                <span className="label-strong">Peak yapping hour</span>
+                <span className="label-strong">{d.wrapped.peakHour}</span>
                 <span className="mono text-[13px] font-bold">
                   {report.peakHour === null
                     ? "—"
@@ -262,17 +266,17 @@ export function WrappedReportView({
             </section>
 
             <div className="mt-6 grid grid-cols-2 gap-px bg-ink sm:grid-cols-3 lg:grid-cols-6">
-              <Slab size="sm" value={formatCount(report.certifiedCount)} label="Certified" />
+              <Slab size="sm" value={formatCount(report.certifiedCount)} label={d.wrapped.certified} />
               <Slab
                 size="sm"
                 value={formatCount(report.disputedCount)}
-                label="Disputed"
+                label={d.wrapped.disputed}
                 className={cn(report.disputedCount > 0 && "text-red")}
               />
-              <Slab size="sm" value={formatCount(report.witnessCount)} label="Witnesses" />
-              <Slab size="sm" value={formatCount(report.battleCount)} label="Battles" />
-              <Slab size="sm" value={formatCount(report.evidenceCount)} label="Evidence" />
-              <Slab size="sm" value={formatCount(report.newYappers)} label="New yappers" />
+              <Slab size="sm" value={formatCount(report.witnessCount)} label={d.wrapped.witnesses} />
+              <Slab size="sm" value={formatCount(report.battleCount)} label={d.wrapped.battles} />
+              <Slab size="sm" value={formatCount(report.evidenceCount)} label={d.wrapped.evidence} />
+              <Slab size="sm" value={formatCount(report.newYappers)} label={d.wrapped.newYappers} />
             </div>
 
             <p className="label mt-8 text-center">

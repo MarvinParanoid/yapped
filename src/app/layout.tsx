@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Golos_Text, JetBrains_Mono } from "next/font/google";
 import { MobileTabBar } from "@/components/mobile-tab-bar";
 import { getViewer } from "@/lib/auth/team";
+import { LocaleProvider } from "@/lib/i18n/client";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
@@ -42,17 +44,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // The tab bar is navigation into the archive; an outsider gets neither it nor
   // the padding it reserves.
   const viewer = await getViewer();
+  const [locale, dictionary] = await Promise.all([getLocale(), getDictionary()]);
 
   return (
-    <html lang="en" className={`${golos.variable} ${jetbrains.variable}`}>
+    <html lang={locale} className={`${golos.variable} ${jetbrains.variable}`}>
       <body className={`flex min-h-dvh flex-col ${viewer ? "pb-[52px] md:pb-0" : ""}`}>
-        <SiteHeader />
-        {/* A block, not a flex container: `mx-auto max-w-…` on a flex item shrinks
-            to its content instead of centring a full-width box — which only shows
-            up on pages with little content, like an empty archive. */}
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
-        {viewer ? <MobileTabBar /> : null}
+        <LocaleProvider locale={locale} dictionary={dictionary}>
+          <SiteHeader />
+          {/* A block, not a flex container: `mx-auto max-w-…` on a flex item
+              shrinks to its content instead of centring a full-width box —
+              which only shows up on pages with little content, like an empty
+              archive. */}
+          <main className="flex-1">{children}</main>
+          <SiteFooter />
+          {viewer ? <MobileTabBar /> : null}
+        </LocaleProvider>
       </body>
     </html>
   );

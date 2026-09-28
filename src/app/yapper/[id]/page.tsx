@@ -7,6 +7,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Panel } from "@/components/ui/panel";
 import { assignEmphasis } from "@/lib/archival";
 import { getViewer, requireViewer } from "@/lib/auth/team";
+import { fill, plural } from "@/lib/i18n/locale";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { cn } from "@/lib/cn";
 import { formatCount, formatDate } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
@@ -26,11 +28,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return { title: name };
 }
 
-const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-
 export default async function YapperPage({ params }: Params) {
   const { id } = await params;
   const { user, team } = await requireViewer(`/yapper/${id}`);
+  const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
   const profile = await getYapperProfile(id, team.id);
   if (!profile) notFound();
 
@@ -47,26 +48,26 @@ export default async function YapperPage({ params }: Params) {
   // Six figures, because "said it" and "filed it" are different jobs and the
   // archive should be able to tell you who is really the team's archivist.
   const headline = [
-    { value: formatCount(profile.stats.yapCount), label: "Yaps said", zero: profile.stats.yapCount === 0 },
+    { value: formatCount(profile.stats.yapCount), label: d.profile.yapsSaid, zero: profile.stats.yapCount === 0 },
     {
       value: formatCount(profile.stats.filedCount),
-      label: "Records filed",
+      label: d.profile.recordsFiled,
       zero: profile.stats.filedCount === 0,
     },
-    { value: formatAura(profile.stats.totalAura), label: "Aura", zero: profile.stats.totalAura === 0 },
+    { value: formatAura(profile.stats.totalAura), label: d.profile.aura, zero: profile.stats.totalAura === 0 },
     {
       value: formatCount(profile.stats.certifiedCount),
-      label: "Certified",
+      label: d.profile.certified,
       zero: profile.stats.certifiedCount === 0,
     },
     {
       value: formatCount(profile.stats.acknowledgedCount),
-      label: "Acknowledged",
+      label: d.profile.acknowledged,
       zero: profile.stats.acknowledgedCount === 0,
     },
     {
       value: formatCount(profile.stats.disputedCount),
-      label: "Disputed",
+      label: d.profile.disputed,
       alert: profile.stats.disputedCount > 0,
       zero: profile.stats.disputedCount === 0,
     },
@@ -87,7 +88,7 @@ export default async function YapperPage({ params }: Params) {
               />
               <div className="min-w-0">
                 <span className="label-strong text-acid">
-                  {profile.title.label}
+                  {d.titles[profile.title.key as keyof typeof d.titles]}
                   {profile.rank ? ` · #${profile.rank}` : ""}
                 </span>
                 <h1 className="quote mt-2 text-[clamp(2rem,5.5vw,3.6rem)] text-paper">
@@ -96,14 +97,14 @@ export default async function YapperPage({ params }: Params) {
                 <p className="label mt-2">
                   {profile.yapper.handle ? `@${profile.yapper.handle} · ` : ""}
                   {since
-                    ? `yapping since ${MONTHS[since.getUTCMonth()]} ${since.getUTCFullYear()}`
-                    : "no statements on record"}
+                    ? fill(d.profile.yappingSince, { when: `${d.profile.months.split(" ")[since.getUTCMonth()]} ${since.getUTCFullYear()}` })
+                    : d.profile.noStatements}
                 </p>
               </div>
             </div>
 
             <p className="label max-w-[34ch] leading-[1.6] lg:text-right">
-              {profile.title.blurb}
+              {d.titles[`${profile.title.key}_blurb` as keyof typeof d.titles]}
             </p>
           </div>
 
@@ -128,22 +129,22 @@ export default async function YapperPage({ params }: Params) {
 
       <div className="mx-auto max-w-[1400px] px-4 py-8 pb-20 sm:px-6 lg:px-8">
         <div className="grid items-start gap-6 lg:grid-cols-3">
-          <Panel label="Peak yap">
+          <Panel label={d.profile.peakYap}>
             {profile.bestYap ? (
               <Link href={`/yap/${profile.bestYap.id}`} className="block hover:opacity-80">
                 <p className="quote text-[clamp(1.1rem,2.2vw,1.5rem)]">
                   “{profile.bestYap.text}”
                 </p>
                 <p className="mono mt-3 text-[12px] font-bold">
-                  {formatAura(profile.bestYap.aura)} aura · {profile.bestYap.code}
+                  {formatAura(profile.bestYap.aura)} {d.profile.aura.toLowerCase()} · {profile.bestYap.code}
                 </p>
               </Link>
             ) : (
-              <p className="label">nothing on record yet</p>
+              <p className="label">{d.profile.nothingYet}</p>
             )}
           </Panel>
 
-          <Panel label="Battle record">
+          <Panel label={d.profile.battleRecord}>
             <div className="flex items-baseline gap-4">
               <span className="mono tabnums text-[30px] font-bold leading-none">
                 {profile.stats.battleWins}
@@ -153,11 +154,11 @@ export default async function YapperPage({ params }: Params) {
             </div>
             <dl className="mt-4 space-y-1.5">
               <div className="flex justify-between">
-                <dt className="label">Peak elo</dt>
+                <dt className="label">{d.profile.peakElo}</dt>
                 <dd className="mono tabnums text-[13px] font-bold">{profile.stats.peakElo || "—"}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="label">Hall of Yap</dt>
+                <dt className="label">{d.profile.hallOfYap}</dt>
                 <dd className="mono tabnums text-[13px] font-bold">
                   {profile.stats.hallRank ? (
                     <Link href="/battle/hall" className="hover:underline">
@@ -169,23 +170,23 @@ export default async function YapperPage({ params }: Params) {
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="label">Witnesses gathered</dt>
+                <dt className="label">{d.profile.witnessesGathered}</dt>
                 <dd className="mono tabnums text-[13px]">{profile.stats.witnessedCount}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="label">Testimony given</dt>
+                <dt className="label">{d.profile.testimonyGiven}</dt>
                 <dd className="mono tabnums text-[13px]">{profile.stats.testimonyGiven}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="label">Average aura / yap</dt>
+                <dt className="label">{d.profile.averageAura}</dt>
                 <dd className="mono tabnums text-[13px]">{formatAura(profile.stats.averageAura)}</dd>
               </div>
             </dl>
           </Panel>
 
-          <Panel label="Known associates" bodyClassName="p-0">
+          <Panel label={d.profile.knownAssociates} bodyClassName="p-0">
             {profile.associates.length === 0 ? (
-              <p className="label px-3 py-4">no corroborating witnesses on file</p>
+              <p className="label px-3 py-4">{d.profile.noAssociates}</p>
             ) : (
               <ul>
                 {profile.associates.map((entry) => (
@@ -199,7 +200,12 @@ export default async function YapperPage({ params }: Params) {
                         {entry.user.displayName}
                       </span>
                       <span className="label">
-                        {entry.count} {entry.count === 1 ? "room" : "rooms"}
+                        {entry.count}{" "}
+                      {plural(locale, entry.count, [
+                        d.profile.roomOne,
+                        d.profile.roomFew,
+                        d.profile.roomMany,
+                      ])}
                       </span>
                     </Link>
                   </li>
@@ -214,7 +220,7 @@ export default async function YapperPage({ params }: Params) {
           <div className="mt-6 grid items-start gap-6 lg:grid-cols-3">
             {profile.topTags.length > 0 ? (
               <Panel
-                label="Frequent vocabulary"
+                label={d.profile.frequentVocabulary}
                 className="lg:col-span-2"
                 bodyClassName="px-3 py-3"
               >
@@ -241,14 +247,16 @@ export default async function YapperPage({ params }: Params) {
             ) : null}
 
             {profile.badges.length > 0 ? (
-              <Panel label="Achievements" bodyClassName="p-0">
+              <Panel label={d.profile.achievements} bodyClassName="p-0">
                 <ul>
                   {profile.badges.map((badge) => (
                     <li
                       key={badge.key}
                       className="border-b border-ink px-3 py-2 last:border-b-0"
                     >
-                      <span className="label-strong">{badge.label}</span>
+                      <span className="label-strong">
+                        {d.badges[badge.key as keyof typeof d.badges]}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -259,18 +267,18 @@ export default async function YapperPage({ params }: Params) {
 
         <section className="mt-12">
           <h2 className="label-strong border-b border-ink pb-2">
-            From the same mouth — {formatCount(yaps.length)} statements
+            {fill(d.profile.fromTheSameMouth, { n: formatCount(yaps.length) })}
             {profile.stats.filedCount > profile.stats.yapCount ? (
               <span className="label ml-3 normal-case tracking-normal">
-                (files more than they say — the team&apos;s archivist)
+                {d.profile.archivistNote}
               </span>
             ) : null}
           </h2>
           <div className="mt-6">
             {yaps.length === 0 ? (
               <EmptyState
-                title="NOTHING ON RECORD."
-                hint="this one has said nothing quotable. yet."
+                title={d.empty.nothingOnRecord}
+                hint={d.empty.nothingOnRecordHint}
               />
             ) : (
               yaps.map((yap) => (

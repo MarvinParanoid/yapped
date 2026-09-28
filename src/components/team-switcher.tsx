@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { switchTeamAction } from "@/app/actions";
+import { useD } from "@/lib/i18n/client";
 
 type TeamRef = { id: string; name: string; slug: string };
 
@@ -18,6 +19,7 @@ export function TeamSwitcher({ active, teams }: { active: TeamRef; teams: TeamRe
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const box = useRef<HTMLDivElement>(null);
+  const d = useD();
 
   useEffect(() => {
     if (!open) return;
@@ -32,7 +34,11 @@ export function TeamSwitcher({ active, teams }: { active: TeamRef; teams: TeamRe
   // it alongside their own is how they get back out. One entry is not a menu.
   const options = teams.some((team) => team.id === active.id) ? teams : [active, ...teams];
   if (options.length < 2) {
-    return <span className="label shrink-0 truncate">Archive · {active.name}</span>;
+    return (
+      <span className="label shrink-0 truncate">
+        {d.nav.archive} · {active.name}
+      </span>
+    );
   }
 
   return (
@@ -43,7 +49,7 @@ export function TeamSwitcher({ active, teams }: { active: TeamRef; teams: TeamRe
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        Archive · {active.name} {open ? "▴" : "▾"}
+        {d.nav.archive} · {active.name} {open ? "▴" : "▾"}
       </button>
 
       {open ? (

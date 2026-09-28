@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { fileUnderCaseAction, openCaseAction } from "@/app/actions";
 import { cn } from "@/lib/cn";
+import { useD } from "@/lib/i18n/client";
 import type { FilableCase } from "@/lib/services/cases";
 
 /** Filing a record under a case, in the archive's own vocabulary. */
@@ -14,6 +15,7 @@ export function CaseFiler({
   yapId: number;
   cases: FilableCase[];
 }) {
+  const d = useD();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -30,7 +32,7 @@ export function CaseFiler({
 
   return (
     <div className="w-full border border-ink bg-paper-2 px-3 py-3">
-      <span className="label">File this record under</span>
+      <span className="label">{d.sections.fileUnder}</span>
 
       {cases.length > 0 ? (
         <div className="mt-2 flex flex-wrap gap-2">
@@ -45,26 +47,26 @@ export function CaseFiler({
                   if (result.ok) {
                     setOpen(false);
                     router.refresh();
-                  } else setError("Could not file this record.");
+                  } else setError(d.sections.couldNotFile);
                 })
               }
               className={cn("btn", file.status === "CLOSED" && "border-line-soft text-muted")}
               title={file.status === "CLOSED" ? "This case is closed — filing reopens the question" : undefined}
             >
               {file.code} {file.title}
-              {file.status === "CLOSED" ? <span className="label ml-1">closed</span> : null}
+              {file.status === "CLOSED" ? <span className="label ml-1">{d.sections.closed}</span> : null}
             </button>
           ))}
         </div>
       ) : (
-        <p className="label mt-2">no cases opened yet</p>
+        <p className="label mt-2">{d.sections.noCasesYet}</p>
       )}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="Or open a new case…"
+          placeholder={d.sections.openNewCase}
           className="field max-w-[280px] flex-1"
         />
         <button

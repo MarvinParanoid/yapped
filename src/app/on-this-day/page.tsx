@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { YapCard } from "@/components/yap-card";
 import { requireViewer } from "@/lib/auth/team";
+import { getDictionary } from "@/lib/i18n/server";
 import { formatDate } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
 import { getOnThisDay } from "@/lib/services/on-this-day";
@@ -9,8 +10,6 @@ import { getOnThisDay } from "@/lib/services/on-this-day";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "On this day" };
-
-const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
 /** `?date=YYYY-MM-DD` walks the calendar; the default is today. */
 function parseDate(raw: string | undefined): Date {
@@ -31,6 +30,7 @@ export default async function OnThisDayPage({
 }) {
   const { date: dateParam } = await searchParams;
   const { user, team } = await requireViewer("/on-this-day");
+  const d = await getDictionary();
   const report = await getOnThisDay(team.id, parseDate(dateParam), user.id);
   const today = report.date;
 
@@ -38,9 +38,9 @@ export default async function OnThisDayPage({
     <article>
       <div className="on-ink grid-ghost border-b border-ink">
         <div className="mx-auto max-w-[1200px] px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-          <span className="label">On this day</span>
+          <span className="label">{d.feed.onThisDay}</span>
           <h1 className="quote mt-4 text-[clamp(2.4rem,8vw,5rem)] text-paper">
-            {today.getUTCDate()} {MONTHS[today.getUTCMonth()]}
+            {today.getUTCDate()} {d.profile.months.split(" ")[today.getUTCMonth()]}
           </h1>
           <p className="label mt-3">
             {report.anniversaries.length > 0
@@ -95,7 +95,7 @@ export default async function OnThisDayPage({
                 <h2 className="quote text-[clamp(1.4rem,3vw,2rem)]">
                   {entry.exact
                     ? `${entry.yearsAgo} ${entry.yearsAgo === 1 ? "year" : "years"} ago`
-                    : "Around this time"}
+                    : d.sections.aroundThisTime}
                 </h2>
                 <span className="label">
                   {entry.year} · {entry.records.length}{" "}

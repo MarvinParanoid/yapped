@@ -5,45 +5,27 @@ import { AuthForm } from "@/components/auth-form";
 import { AcceptInvite } from "@/components/accept-invite";
 import { getSessionUser } from "@/lib/auth/session";
 import { listMemberships } from "@/lib/auth/team";
+import { getDictionary } from "@/lib/i18n/server";
 import { inspectInvite } from "@/lib/services/invites";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Invitation" };
 
-const REFUSAL: Record<"UNKNOWN" | "REVOKED" | "EXPIRED" | "EXHAUSTED", { title: string; note: string }> =
-  {
-    UNKNOWN: {
-      title: "NO SUCH INVITATION.",
-      note: "this link was never issued, or the archive no longer recognises it.",
-    },
-    REVOKED: {
-      title: "INVITATION WITHDRAWN.",
-      note: "someone pulled this link back. ask them for a new one.",
-    },
-    EXPIRED: {
-      title: "INVITATION EXPIRED.",
-      note: "it had a shelf life and the shelf life is over.",
-    },
-    EXHAUSTED: {
-      title: "INVITATION USED UP.",
-      note: "every seat on this link has been taken.",
-    },
-  };
-
 export default async function JoinPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const invite = await inspectInvite(token);
+  const d = await getDictionary();
 
   if (!invite.ok) {
-    const refusal = REFUSAL[invite.reason];
+    const refusal = { title: d.join[invite.reason], note: d.join[`${invite.reason}Hint`] };
     return (
       <div className="mx-auto max-w-[520px] px-4 py-16 pb-24 sm:px-6">
-        <span className="label">Invitation</span>
+        <span className="label">{d.join.invitedTo}</span>
         <h1 className="quote mt-3 text-[clamp(1.8rem,5vw,2.8rem)]">{refusal.title}</h1>
         <p className="label mt-4 leading-[1.6]">{refusal.note}</p>
         <Link href="/login" className="btn btn-solid mt-8">
-          Sign in instead →
+          {d.join.signInInstead} →
         </Link>
       </div>
     );
@@ -59,12 +41,9 @@ export default async function JoinPage({ params }: { params: Promise<{ token: st
 
   return (
     <div className="mx-auto max-w-[520px] px-4 py-12 pb-24 sm:px-6">
-      <span className="label">You have been invited to</span>
+      <span className="label">{d.join.invitedTo}</span>
       <h1 className="quote mt-3 text-[clamp(2rem,6vw,3.2rem)]">{invite.teamName}</h1>
-      <p className="label mt-4 max-w-[42ch] leading-[1.6]">
-        a permanent record of questionable statements. everything filed here stays filed, and
-        everyone inside can see it.
-      </p>
+      <p className="label mt-4 max-w-[42ch] leading-[1.6]">{d.join.what}</p>
 
       <div className="mt-8">
         {user ? (

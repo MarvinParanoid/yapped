@@ -7,6 +7,7 @@ import { battleVoteAction } from "@/app/actions";
 import { QuoteText } from "@/components/quote-text";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/cn";
+import { useD } from "@/lib/i18n/client";
 import { formatDate } from "@/lib/format";
 import type { YapView } from "@/lib/types";
 
@@ -21,6 +22,7 @@ export function BattleArena({
   signedIn: boolean;
   rounds?: number;
 }) {
+  const d = useD();
   const ROUNDS = rounds;
   const router = useRouter();
   const [round, setRound] = useState(1);
@@ -121,7 +123,7 @@ export function BattleArena({
 
       {upset ? (
         <div className="yap-in mt-4 flex flex-wrap items-center justify-center gap-3 border border-ink bg-acid px-4 py-2">
-          <span className="label-strong">Upset</span>
+          <span className="label-strong">{d.sections.upset}</span>
           <span className="mono text-[12px]">
             the underdog was {upset.gap} elo behind and won +{upset.delta}
           </span>

@@ -44,17 +44,23 @@ export function assignEmphasis(yaps: YapView[]): Map<number, Emphasis> {
  * Deliberately rare — roughly one card in eight. Popularity is *not* a marker;
  * the verification badge carries witness counts instead.
  */
-export function archivalNote(yap: YapView): string | null {
+/**
+ * A key, not a phrase: this module stays pure and the interface decides what
+ * the marker is called in whichever language it is speaking.
+ */
+export type ArchivalNote = "disputedByAuthor" | "disputed" | "evidence";
+
+export function archivalNote(yap: YapView): ArchivalNote | null {
   // A formal dispute from the person it is about outranks everything.
-  if (yap.disputedAt) return "Disputed by yapper";
+  if (yap.disputedAt) return "disputedByAuthor";
   // Otherwise: colleagues who deny it ever happened.
-  if (isContested(yap.witnessCount, yap.denialCount)) return "Disputed";
-  if (yap.evidence.length > 0) return "Evidence attached";
+  if (isContested(yap.witnessCount, yap.denialCount)) return "disputed";
+  if (yap.evidence.length > 0) return "evidence";
   return null;
 }
 
-export function isDisputed(note: string | null): boolean {
-  return note?.startsWith("Disputed") ?? false;
+export function isDisputed(note: ArchivalNote | null): boolean {
+  return note === "disputed" || note === "disputedByAuthor";
 }
 
 /** Tag frequency drives type size: the team's vocabulary, ranked by damage. */

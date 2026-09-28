@@ -7,6 +7,8 @@ import { ReactionBar } from "@/components/reaction-bar";
 import { TagList } from "@/components/tag-list";
 import { YapMenu } from "@/components/yap-menu";
 import { archivalNote, isDisputed, type Emphasis } from "@/lib/archival";
+import { fill, plural } from "@/lib/i18n/locale";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { MOMENTUM_META } from "@/lib/ranking/momentum";
 import type { Momentum } from "@/lib/services/aura-history";
 import { cn } from "@/lib/cn";
@@ -18,7 +20,7 @@ import type { YapView } from "@/lib/types";
  * the loudest entries get room and a stamp, the quiet ones collapse into a
  * ledger row, so the feed reads as an archive rather than a table.
  */
-export function YapCard({
+export async function YapCard({
   yap,
   viewerId,
   emphasis = "standard",
@@ -32,6 +34,7 @@ export function YapCard({
 }) {
   const evidence = yap.evidence[0];
   const note = archivalNote(yap);
+  const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
   const canDelete = yap.submittedBy?.id === viewerId;
   // Steady and dormant records say nothing — an indicator on every card is
   // noise, not information.
@@ -106,13 +109,15 @@ export function YapCard({
               />
             )}
             {note ? (
-              <span className={cn("label", isDisputed(note) && "text-red")}>{note}</span>
+              <span className={cn("label", isDisputed(note) && "text-red")}>
+                {d.note[note]}
+              </span>
             ) : null}
             {moving ? (
-              <span className="label" title={`aura over the window: +${moving.delta}`}>
+              <span className="label" title={fill(d.feed.auraOverWindow, { n: moving.delta })}>
                 {MOMENTUM_META[moving.state].mark}{" "}
                 {moving.state === "NEW"
-                  ? "new"
+                  ? d.feed.momentumNew
                   : moving.percent === null
                     ? `+${moving.delta}`
                     : `${Math.round(moving.percent)}%`}
@@ -120,7 +125,16 @@ export function YapCard({
             ) : null}
             <div className="ml-auto flex items-center gap-3">
               {feature && yap.verification === "CERTIFIED" ? (
-                <Stamp>{`Certified · ${yap.witnessCount} witnesses`}</Stamp>
+                <Stamp>
+                  {`${d.record.certifiedStamp} · ${fill(
+                    plural(locale, yap.witnessCount, [
+                      d.note.witnessOne,
+                      d.note.witnessFew,
+                      d.note.witnessMany,
+                    ]),
+                    { n: yap.witnessCount },
+                  )}`}
+                </Stamp>
               ) : null}
               <YapMenu yapId={yap.id} code={yap.code} canDelete={canDelete} />
             </div>
@@ -158,7 +172,7 @@ export function YapCard({
               <span className="line-clamp-1 max-w-[58ch] text-[13px] italic leading-[1.5] text-muted">
                 {yap.lore}
               </span>
-              <span className="label shrink-0">view the lore ↓</span>
+              <span className="label shrink-0">{d.record.viewLore} ↓</span>
             </Link>
           ) : null}
 
@@ -182,7 +196,7 @@ export function YapCard({
               "relative hidden shrink-0 overflow-hidden border-l border-ink sm:block",
               feature ? "w-[180px] lg:w-[230px]" : "w-[150px] lg:w-[190px]",
             )}
-            aria-label="Evidence"
+            aria-label={d.record.evidence}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

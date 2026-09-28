@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { canModerate, getViewer, isForeignTeam } from "@/lib/auth/team";
+import { fill } from "@/lib/i18n/locale";
+import { getDictionary } from "@/lib/i18n/server";
+import { LanguageSwitcher } from "./language-switcher";
 import { logoutAction } from "@/app/actions";
 import { Avatar } from "@/components/ui/avatar";
 import { HeaderSearch } from "./header-search";
@@ -9,6 +12,7 @@ import { TeamSwitcher } from "./team-switcher";
 export async function SiteHeader() {
   const viewer = await getViewer();
   const user = viewer?.user ?? null;
+  const d = await getDictionary();
 
   // The door pages are all an outsider can reach, so the header does not
   // advertise an interior every link of which would bounce them back to login.
@@ -19,13 +23,16 @@ export async function SiteHeader() {
           <Link href="/" className="flex items-baseline gap-3">
             <span className="wordmark text-[26px] sm:text-[30px]">yapped.</span>
             <span className="hidden leading-[1.35] sm:block">
-              <span className="label block">things that should&apos;ve stayed in the meeting</span>
+              <span className="label block">{d.brand.tagline}</span>
               <span className="label block text-[9px] tracking-[0.16em] opacity-55">
-                permanent record of questionable statements
+                {d.brand.subtitle}
               </span>
             </span>
           </Link>
-          <span className="label ml-auto hidden sm:block">closed archive · members only</span>
+          <span className="label ml-auto hidden items-center gap-3 sm:flex">
+            {d.brand.closed}
+            <LanguageSwitcher />
+          </span>
         </div>
       </header>
     );
@@ -37,9 +44,9 @@ export async function SiteHeader() {
         <Link href="/" className="flex items-baseline gap-3">
           <span className="wordmark text-[26px] sm:text-[30px]">yapped.</span>
           <span className="hidden leading-[1.35] sm:block">
-            <span className="label block">things that should&apos;ve stayed in the meeting</span>
+            <span className="label block">{d.brand.tagline}</span>
             <span className="label block text-[9px] tracking-[0.16em] opacity-55">
-              permanent record of questionable statements
+              {d.brand.subtitle}
             </span>
           </span>
         </Link>
@@ -47,7 +54,7 @@ export async function SiteHeader() {
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
           <HeaderSearch />
           <Link href="/submit" className="btn btn-acid">
-            + Yap
+            {d.nav.submit}
           </Link>
           {user ? (
             <div className="flex items-center gap-2">
@@ -56,13 +63,13 @@ export async function SiteHeader() {
               </Link>
               <form action={logoutAction} className="hidden sm:block">
                 <button type="submit" className="label hover:text-ink">
-                  Exit
+                  {d.nav.exit}
                 </button>
               </form>
             </div>
           ) : (
             <Link href="/login" className="btn">
-              Sign in
+              {d.nav.signIn}
             </Link>
           )}
         </div>
@@ -74,19 +81,20 @@ export async function SiteHeader() {
         <div className="ml-auto hidden items-center gap-3 lg:flex">
           {/* Anyone can bring someone in, so this is not an admin control. */}
           <Link href="/invite" className="label hover:text-ink">
-            Invite
+            {d.nav.invite}
           </Link>
           {canModerate(viewer) ? (
             <Link href="/admin" className="label hover:text-ink">
-              Admin
+              {d.nav.admin}
             </Link>
           ) : null}
           {viewer.user.isAdmin ? (
             <Link href="/admin/instance" className="label hover:text-ink">
-              Instance
+              {d.nav.instance}
             </Link>
           ) : null}
           <TeamSwitcher active={viewer.team} teams={viewer.teams} />
+          <LanguageSwitcher />
         </div>
       </div>
 
@@ -95,7 +103,7 @@ export async function SiteHeader() {
       {isForeignTeam(viewer) ? (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink bg-acid px-4 py-1.5 sm:px-6 lg:px-8">
           <span className="label-strong">
-            Operator view · you are not a member of {viewer.team.name}
+            {fill("Operator view · you are not a member of {team}", { team: viewer.team.name })}
           </span>
           <Link href="/admin/instance" className="label ml-auto hover:opacity-70">
             Back to every archive

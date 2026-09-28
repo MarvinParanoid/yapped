@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deleteYapAction, restoreYapAction } from "@/app/actions";
 import { formatDate } from "@/lib/format";
+import { useD } from "@/lib/i18n/client";
+import { fill } from "@/lib/i18n/locale";
 import type { RedactedRow } from "@/lib/services/yaps";
 
 type Row = { id: number; code: string; text: string; author: string; saidAt: Date };
@@ -14,8 +16,9 @@ export function ContentTable({ rows }: { rows: Row[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [confirming, setConfirming] = useState<number | null>(null);
+  const d = useD();
 
-  if (rows.length === 0) return <p className="label px-3 py-4">nothing on record yet</p>;
+  if (rows.length === 0) return <p className="label px-3 py-4">{d.admin.nothingOnRecord}</p>;
 
   return (
     <ul>
@@ -44,7 +47,7 @@ export function ContentTable({ rows }: { rows: Row[] }) {
                   })
                 }
               >
-                really redact?
+                {d.admin.reallyRedact}
               </button>
             ) : (
               <button
@@ -52,7 +55,7 @@ export function ContentTable({ rows }: { rows: Row[] }) {
                 className="label hover:text-red"
                 onClick={() => setConfirming(row.id)}
               >
-                redact
+                {d.admin.redact}
               </button>
             )}
           </span>
@@ -65,9 +68,10 @@ export function ContentTable({ rows }: { rows: Row[] }) {
 export function RedactedTable({ rows }: { rows: RedactedRow[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const d = useD();
 
   if (rows.length === 0) {
-    return <p className="label px-3 py-4">nothing has been redacted</p>;
+    return <p className="label px-3 py-4">{d.admin.nothingRedacted}</p>;
   }
 
   return (
@@ -82,7 +86,9 @@ export function RedactedTable({ rows }: { rows: RedactedRow[] }) {
             {row.text}
           </span>
           <span className="label">{row.author}</span>
-          <span className="label tabnums">redacted {formatDate(row.deletedAt)}</span>
+          <span className="label tabnums">
+            {fill(d.admin.redactedAt, { date: formatDate(row.deletedAt) })}
+          </span>
           <button
             type="button"
             disabled={pending}
@@ -94,7 +100,7 @@ export function RedactedTable({ rows }: { rows: RedactedRow[] }) {
               })
             }
           >
-            restore
+            {d.admin.restore}
           </button>
         </li>
       ))}

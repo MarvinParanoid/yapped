@@ -1,22 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import { useD } from "@/lib/i18n/client";
 
 /** Long context hides behind VIEW THE LORE ↓ so the quote keeps the stage. */
 export function LorePanel({ lore, defaultOpen = false }: { lore: string; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
+  const d = useD();
 
   return (
     <section className="border border-ink bg-paper">
       <header className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2">
-        <span className="label-strong">Lore</span>
+        <span className="label-strong">{d.record.lore}</span>
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
           className="label-strong border border-ink px-2 py-1 transition-colors duration-100 hover:bg-ink hover:text-paper"
           aria-expanded={open}
         >
-          {open ? "Hide" : "View the lore ↓"}
+          {open ? d.record.hide : `${d.record.viewLore} ↓`}
         </button>
       </header>
       {open ? (

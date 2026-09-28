@@ -1,17 +1,19 @@
 import Link from "next/link";
 import { Panel } from "@/components/ui/panel";
+import { getDictionary } from "@/lib/i18n/server";
 
 /**
  * One quiet list instead of four competing cards. Secondary destinations are
  * ambient UI: they should be findable, not read.
  */
-export function SidebarElsewhere({
+export async function SidebarElsewhere({
   entries,
 }: {
   entries: Array<{ href: string; label: string; note?: string }>;
 }) {
+  const d = await getDictionary();
   return (
-    <Panel label="Elsewhere in the archive" bodyClassName="p-0">
+    <Panel label={d.feed.elsewhere} bodyClassName="p-0">
       <ul>
         {entries.map((entry) => (
           <li key={entry.href}>

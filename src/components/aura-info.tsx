@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
+import { useD } from "@/lib/i18n/client";
 import { REACTION_KEYS, REACTION_META, REACTION_WEIGHTS } from "@/lib/ranking/aura";
 
 /**
@@ -21,6 +22,7 @@ export function AuraInfo({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const panelId = useId();
+  const d = useD();
 
   useEffect(() => {
     if (!open) return;
@@ -44,7 +46,7 @@ export function AuraInfo({ className }: { className?: string }) {
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label="How aura is counted"
+        aria-label={d.auraInfo.trigger}
         onClick={() => setOpen((value) => !value)}
         className={cn(
           "mono flex h-[14px] w-[14px] items-center justify-center border border-current",
@@ -60,7 +62,7 @@ export function AuraInfo({ className }: { className?: string }) {
         <div
           id={panelId}
           role="dialog"
-          aria-label="How aura is counted"
+          aria-label={d.auraInfo.trigger}
           className={cn(
             "yap-in z-50",
             // On a phone the trigger can sit anywhere across the width, so an
@@ -82,14 +84,11 @@ export function AuraInfo({ className }: { className?: string }) {
           )}
         >
           <header className="border-b border-ink px-3 py-2">
-            <span className="label-strong">How aura is counted</span>
+            <span className="label-strong">{d.auraInfo.trigger}</span>
           </header>
 
           <div className="px-3 py-2.5">
-            <p className="text-[12px] leading-[1.5]">
-              Aura is how hard the room reacted. Every reaction is worth a fixed number, and
-              the total is simply their sum.
-            </p>
+            <p className="text-[12px] leading-[1.5]">{d.auraInfo.lead}</p>
 
             <dl className="mt-2.5 border-t border-ink/15">
               {REACTION_KEYS.map((key) => (
@@ -98,7 +97,7 @@ export function AuraInfo({ className }: { className?: string }) {
                   className="flex items-center gap-2 border-b border-ink/15 py-1.5 last:border-b-0"
                 >
                   <dd className="text-[13px] leading-none">{REACTION_META[key].emoji}</dd>
-                  <dt className="label flex-1">{REACTION_META[key].label}</dt>
+                  <dt className="label flex-1">{d.reactions[key]}</dt>
                   <dd
                     className={cn(
                       "mono tabnums text-[12px] font-bold",
@@ -113,18 +112,12 @@ export function AuraInfo({ className }: { className?: string }) {
             </dl>
 
             {/* The two things that surprise people, in the order they surprise them. */}
-            <p className="label mt-2.5 leading-[1.5]">
-              cringe subtracts. that is the point — the archive records how a statement landed,
-              and some of them landed badly.
-            </p>
+            <p className="label mt-2.5 leading-[1.5]">{d.auraInfo.cringe}</p>
             <p className="label mt-2 leading-[1.5]">
-              you cannot react to your own statement. the author&apos;s channel is{" "}
-              <span className="text-ink">i said that</span>, and it moves no numbers.
+              {d.auraInfo.own} <span className="text-ink">{d.auraInfo.ownEmphasis}</span>
+              {d.auraInfo.ownTail}
             </p>
-            <p className="label mt-2 leading-[1.5]">
-              aura is not proof. whether a statement was really made is a separate question,
-              answered by witnesses.
-            </p>
+            <p className="label mt-2 leading-[1.5]">{d.auraInfo.notProof}</p>
           </div>
         </div>
       ) : null}

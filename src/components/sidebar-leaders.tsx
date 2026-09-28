@@ -1,17 +1,19 @@
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { Panel } from "@/components/ui/panel";
+import { getDictionary } from "@/lib/i18n/server";
 import { formatAura } from "@/lib/ranking/aura";
 import type { LeaderboardEntry } from "@/lib/types";
 
-export function SidebarLeaders({ entries }: { entries: LeaderboardEntry[] }) {
+export async function SidebarLeaders({ entries }: { entries: LeaderboardEntry[] }) {
+  const d = await getDictionary();
   return (
     <Panel
-      label="Top yappers"
+      label={d.feed.topYappers}
       bodyClassName="p-0"
       action={
         <Link href="/yappers" className="label hover:text-ink">
-          All →
+          {d.feed.all} →
         </Link>
       }
     >

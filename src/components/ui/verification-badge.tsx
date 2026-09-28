@@ -1,12 +1,14 @@
 import { cn } from "@/lib/cn";
-import { VERIFICATION_META, witnessLabel, type Verification } from "@/lib/verification";
+import { fill, plural } from "@/lib/i18n/locale";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
+import { VERIFICATION_META, type Verification } from "@/lib/verification";
 
 /**
  * Where a record sits on the verification ladder. In the feed only records that
  * someone has actually corroborated say anything; UNVERIFIED is silent there
  * and only announces itself on the record's own page.
  */
-export function VerificationBadge({
+export async function VerificationBadge({
   verification,
   witnesses,
   context = "feed",
@@ -21,6 +23,7 @@ export function VerificationBadge({
 
   const certified = verification === "CERTIFIED";
   const meta = VERIFICATION_META[verification];
+  const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
 
   return (
     <span
@@ -34,8 +37,16 @@ export function VerificationBadge({
       title={meta.blurb}
     >
       {certified ? <span aria-hidden>✓</span> : null}
-      {meta.label}
-      {witnesses > 0 ? <span className="opacity-60">· {witnessLabel(witnesses)}</span> : null}
+      {d.verification[verification]}
+      {witnesses > 0 ? (
+        <span className="opacity-60">
+          ·{" "}
+          {fill(
+            plural(locale, witnesses, [d.note.witnessOne, d.note.witnessFew, d.note.witnessMany]),
+            { n: witnesses },
+          )}
+        </span>
+      ) : null}
     </span>
   );
 }

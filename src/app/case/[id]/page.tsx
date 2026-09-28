@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { YapCard } from "@/components/yap-card";
 import { getViewer, requireViewer } from "@/lib/auth/team";
+import { getDictionary } from "@/lib/i18n/server";
 import { cn } from "@/lib/cn";
 import { formatCount, formatDate } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
@@ -27,14 +28,15 @@ export default async function CasePage({ params }: Params) {
   if (!Number.isInteger(caseId)) notFound();
 
   const { user, team } = await requireViewer(`/case/${id}`);
+  const d = await getDictionary();
   const file = await getCase(caseId, team.id, user.id);
   if (!file) notFound();
 
   const figures = [
-    { value: formatCount(file.recordCount), label: "Records" },
-    { value: formatCount(file.witnessCount), label: "Witnesses" },
-    { value: formatCount(file.evidenceCount), label: "Evidence" },
-    { value: formatAura(file.totalAura), label: "Aura" },
+    { value: formatCount(file.recordCount), label: d.sections.records },
+    { value: formatCount(file.witnessCount), label: d.sections.witnesses },
+    { value: formatCount(file.evidenceCount), label: d.sections.evidence },
+    { value: formatAura(file.totalAura), label: d.profile.aura },
   ];
 
   return (
@@ -92,7 +94,7 @@ export default async function CasePage({ params }: Params) {
       </div>
 
       <div className="mx-auto max-w-[1200px] px-4 py-8 pb-20 sm:px-6 lg:px-8">
-        <h2 className="label-strong border-b border-ink pb-2">Chronology</h2>
+        <h2 className="label-strong border-b border-ink pb-2">{d.sections.chronology}</h2>
 
         {/* A rail, so the episode reads in order rather than as a pile of cards. */}
         <ol className="mt-6">

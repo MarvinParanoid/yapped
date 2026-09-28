@@ -52,12 +52,14 @@ describe("card emphasis", () => {
 describe("archival notes", () => {
   test("a formal dispute outranks everything", () => {
     const note = archivalNote(record({ disputedAt: new Date(), evidence: [{ id: "e", url: "/x", caption: null, position: 1, width: null, height: null }] }));
-    assert.equal(note, "Disputed by yapper");
+    // A key, not a phrase: the module is pure and the interface names the
+    // marker in whichever language it is speaking.
+    assert.equal(note, "disputedByAuthor");
     assert.ok(isDisputed(note));
   });
 
   test("denials make a record disputed", () => {
-    assert.equal(archivalNote(record({ witnessCount: 2, denialCount: 2 })), "Disputed");
+    assert.equal(archivalNote(record({ witnessCount: 2, denialCount: 2 })), "disputed");
     assert.equal(archivalNote(record({ witnessCount: 8, denialCount: 1 })), null);
   });
 

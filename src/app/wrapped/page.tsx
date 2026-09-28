@@ -3,6 +3,7 @@ import Link from "next/link";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/cn";
 import { requireViewer } from "@/lib/auth/team";
+import { getDictionary } from "@/lib/i18n/server";
 import { listPeriods, periodLabel, periodSlug } from "@/lib/services/wrapped";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,7 @@ export const metadata: Metadata = { title: "Wrapped" };
 
 export default async function WrappedIndexPage() {
   const { team } = await requireViewer("/wrapped");
+  const d = await getDictionary();
   const periods = await listPeriods(team.id);
   const years = periods.filter((period) => period.month === null);
   const months = periods.filter((period) => period.month !== null);
@@ -19,23 +21,23 @@ export default async function WrappedIndexPage() {
     <div className="mx-auto max-w-[1000px] px-4 py-8 pb-20 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="label">Periodic self-assessment</span>
-          <h1 className="quote mt-2 text-[clamp(2rem,6vw,4rem)]">Wrapped</h1>
+          <span className="label">{d.wrapped.selfAssessment}</span>
+          <h1 className="quote mt-2 text-[clamp(2rem,6vw,4rem)]">{d.wrapped.heading}</h1>
         </div>
         <p className="label max-w-[34ch] leading-[1.6]">
-          what the organization said, quantified after the fact.
+          {d.wrapped.quantified}
         </p>
       </div>
 
       {periods.length === 0 ? (
         <div className="mt-8">
-          <EmptyState title="NOTHING TO WRAP UP." hint="the record is still empty" />
+          <EmptyState title={d.empty.nothingToWrap} hint={d.empty.nothingToWrapHint} />
         </div>
       ) : (
         <>
           {years.length > 0 ? (
             <section className="mt-8">
-              <h2 className="label-strong border-b border-ink pb-2">By year</h2>
+              <h2 className="label-strong border-b border-ink pb-2">{d.wrapped.byYear}</h2>
               <div className="mt-4 grid gap-px bg-ink sm:grid-cols-2 lg:grid-cols-3">
                 {years.map((period) => (
                   <Link
@@ -54,7 +56,7 @@ export default async function WrappedIndexPage() {
           ) : null}
 
           <section className="mt-10">
-            <h2 className="label-strong border-b border-ink pb-2">By month</h2>
+            <h2 className="label-strong border-b border-ink pb-2">{d.wrapped.byMonth}</h2>
             <ol className="mt-4 border border-ink">
               {months.map((period, index) => (
                 <li key={`${period.year}-${period.month}`}>
@@ -66,7 +68,7 @@ export default async function WrappedIndexPage() {
                     )}
                   >
                     <span className="text-[16px] font-bold">{periodLabel(period)}</span>
-                    <span className="label">open →</span>
+                    <span className="label">{d.wrapped.open} →</span>
                   </Link>
                 </li>
               ))}

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { removeMemberAction, setMemberRoleAction } from "@/app/actions";
 import { Avatar } from "@/components/ui/avatar";
+import { useD } from "@/lib/i18n/client";
+import { fill } from "@/lib/i18n/locale";
 import type { TeamRole } from "@/lib/auth/team";
 import type { MemberRow } from "@/lib/services/teams";
 
@@ -23,6 +25,7 @@ export function MemberTable({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
+  const d = useD();
 
   return (
     <div>
@@ -41,9 +44,9 @@ export function MemberTable({
             </Link>
             {/* A person the archive quotes but who has never signed in is not a
                 user yet — worth saying, because they cannot be given a role. */}
-            {member.hasAccount ? null : <span className="label">quoted only · no account</span>}
+            {member.hasAccount ? null : <span className="label">{d.admin.quotedOnly}</span>}
             <span className="label tabnums">
-              {member.yapCount} said · {member.filedCount} filed
+              {fill(d.admin.saidFiled, { said: member.yapCount, filed: member.filedCount })}
             </span>
 
             {/* Fixed height on both branches so a row with a control and a row
@@ -61,7 +64,7 @@ export function MemberTable({
                         member.userId,
                         event.target.value as TeamRole,
                       );
-                      if (!result.ok) setError(result.error ?? "Refused.");
+                      if (!result.ok) setError(result.error ?? d.admin.refused);
                       router.refresh();
                     })
                   }
@@ -86,13 +89,13 @@ export function MemberTable({
                       startTransition(async () => {
                         setError(null);
                         const result = await removeMemberAction(member.userId);
-                        if (!result.ok) setError(result.error ?? "Refused.");
+                        if (!result.ok) setError(result.error ?? d.admin.refused);
                         setConfirming(null);
                         router.refresh();
                       })
                     }
                   >
-                    really remove?
+                    {d.admin.reallyRemove}
                   </button>
                 ) : (
                   <button
@@ -100,7 +103,7 @@ export function MemberTable({
                     className="label hover:text-red"
                     onClick={() => setConfirming(member.userId)}
                   >
-                    remove
+                    {d.admin.remove}
                   </button>
                 )
               ) : null}
@@ -109,8 +112,7 @@ export function MemberTable({
         ))}
       </ul>
       <p className="label px-3 py-3 leading-[1.5]">
-        removing someone revokes their access and ends their sessions. their statements stay on
-        record — the archive is what was said, not who is still here.
+        {d.admin.removalNote}
       </p>
     </div>
   );
