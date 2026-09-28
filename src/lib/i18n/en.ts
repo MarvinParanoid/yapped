@@ -299,12 +299,6 @@ export const en = {
     reallyRemove: "really remove?",
     refused: "Refused.",
     redact: "redact",
-    edit: "edit",
-    editHeading: "Correct the wording",
-    editNote:
-      "Only the words change. Aura, witnesses and the author's position stay — a typo fixed is not a different statement.",
-    quoteText: "What was said",
-    loreText: "Context / lore",
     save: "Save",
     cancel: "Cancel",
     reallyRedact: "really redact?",
@@ -485,6 +479,12 @@ export const en = {
   },
 
   record: {
+    edit: "edit",
+    editHeading: "Correct the wording",
+    editNote:
+      "Only the words change. Aura, witnesses and the author's position stay — a typo fixed is not a different statement.",
+    quoteText: "What was said",
+    loreText: "Context / lore",
     loreWithheld: "context withheld pending request",
     screenshotThis: "1200 × 630 · screenshot this",
     auraUnit: "aura",

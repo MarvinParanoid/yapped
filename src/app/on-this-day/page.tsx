@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { YapCard } from "@/components/yap-card";
-import { requireViewer } from "@/lib/auth/team";
+import { canModerate, requireViewer } from "@/lib/auth/team";
 import { fill, plural } from "@/lib/i18n/locale";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { formatDate } from "@/lib/format";
@@ -33,7 +33,9 @@ export default async function OnThisDayPage({
   searchParams: Promise<{ date?: string }>;
 }) {
   const { date: dateParam } = await searchParams;
-  const { user, team } = await requireViewer("/on-this-day");
+  const viewer = await requireViewer("/on-this-day");
+  const { user, team } = viewer;
+  const manages = canModerate(viewer);
   const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
   const months = d.profile.months.split(" ");
   const report = await getOnThisDay(team.id, parseDate(dateParam), user.id);
@@ -125,7 +127,7 @@ export default async function OnThisDayPage({
               <div className="mt-6">
                 {entry.records.map((record) => (
                   <div key={record.id}>
-                    <YapCard yap={record} viewerId={user?.id} emphasis="standard" />
+                    <YapCard yap={record} viewerId={user?.id} viewerModerates={manages} emphasis="standard" />
                     {/* Aura is reconstructed from reaction timestamps, so the
                         archive can show what a statement was worth back then. */}
                     <div className="-mt-px flex flex-wrap items-center gap-x-6 gap-y-1 border border-ink bg-paper-2 px-4 py-2">

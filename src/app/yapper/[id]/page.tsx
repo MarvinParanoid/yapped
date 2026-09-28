@@ -6,7 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel } from "@/components/ui/panel";
 import { assignEmphasis } from "@/lib/archival";
-import { getViewer, requireViewer } from "@/lib/auth/team";
+import { canModerate, getViewer, requireViewer } from "@/lib/auth/team";
 import { fill, plural } from "@/lib/i18n/locale";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { cn } from "@/lib/cn";
@@ -30,7 +30,9 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function YapperPage({ params }: Params) {
   const { id } = await params;
-  const { user, team } = await requireViewer(`/yapper/${id}`);
+  const profileViewer = await requireViewer(`/yapper/${id}`);
+  const { user, team } = profileViewer;
+  const manages = canModerate(profileViewer);
   const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
   const profile = await getYapperProfile(id, team.id);
   if (!profile) notFound();
@@ -285,6 +287,7 @@ export default async function YapperPage({ params }: Params) {
                   key={yap.id}
                   yap={yap}
                   viewerId={user.id}
+                  viewerModerates={manages}
                   emphasis={emphasis.get(yap.id)}
                 />
               ))

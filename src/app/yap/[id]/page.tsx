@@ -18,7 +18,7 @@ import { YappedConfirmation } from "@/components/yapped-confirmation";
 import { Avatar } from "@/components/ui/avatar";
 import { Stamp } from "@/components/ui/stamp";
 import { VerificationBadge } from "@/components/ui/verification-badge";
-import { getViewer, requireViewer } from "@/lib/auth/team";
+import { canModerate, getViewer, requireViewer } from "@/lib/auth/team";
 import { formatCount, formatDate, formatStamp } from "@/lib/format";
 import { getYapBattleRecord } from "@/lib/services/battles";
 import {
@@ -58,7 +58,9 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
   const yapId = Number(id);
   if (!Number.isInteger(yapId)) notFound();
 
-  const { user, team } = await requireViewer(`/yap/${id}`);
+  const viewer = await requireViewer(`/yap/${id}`);
+  const { user, team } = viewer;
+  const manages = canModerate(viewer);
   const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
   const yap = await getYap(yapId, team.id, user.id);
   if (!yap) notFound();
@@ -107,7 +109,12 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
               />
             )}
             <div className="ml-auto">
-              <YapMenu yapId={yap.id} code={yap.code} canDelete={yap.submittedBy?.id === user?.id} />
+              <YapMenu
+                yapId={yap.id}
+                code={yap.code}
+                canEdit={yap.submittedBy?.id === user.id || manages}
+                canDelete={yap.submittedBy?.id === user.id || manages}
+              />
             </div>
           </div>
 
@@ -322,7 +329,7 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
             </h2>
             <div className="mt-6">
               {related.map((item) => (
-                <YapCard key={item.id} yap={item} viewerId={user?.id} emphasis="standard" />
+                <YapCard key={item.id} yap={item} viewerId={user?.id} viewerModerates={manages} emphasis="standard" />
               ))}
             </div>
           </section>

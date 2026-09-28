@@ -23,11 +23,14 @@ import type { YapView } from "@/lib/types";
 export async function YapCard({
   yap,
   viewerId,
+  viewerModerates = false,
   emphasis = "standard",
   momentum,
 }: {
   yap: YapView;
   viewerId?: string | null;
+  /** Moderators may correct and redact anything here, same as the service says. */
+  viewerModerates?: boolean;
   emphasis?: Emphasis;
   /** Only passed on Trending, and only rendered when it says something. */
   momentum?: Momentum;
@@ -36,7 +39,10 @@ export async function YapCard({
   const note = archivalNote(yap);
   const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
   const months = d.profile.months.split(" ");
-  const canDelete = yap.submittedBy?.id === viewerId;
+  // The menu used to offer these to the submitter only, while editYap and
+  // softDeleteYap have always accepted a moderator too — the interface was
+  // quietly stricter than the rule it was drawn from.
+  const canManage = yap.submittedBy?.id === viewerId || viewerModerates;
   // Steady and dormant records say nothing — an indicator on every card is
   // noise, not information.
   const moving =
@@ -53,7 +59,7 @@ export async function YapCard({
             <QuoteText text={yap.text} scale="compact" />
           </Link>
           <div className="shrink-0">
-            <YapMenu yapId={yap.id} code={yap.code} canDelete={canDelete} />
+            <YapMenu yapId={yap.id} code={yap.code} canEdit={canManage} canDelete={canManage} />
           </div>
         </div>
 
@@ -137,7 +143,7 @@ export async function YapCard({
                   )}`}
                 </Stamp>
               ) : null}
-              <YapMenu yapId={yap.id} code={yap.code} canDelete={canDelete} />
+              <YapMenu yapId={yap.id} code={yap.code} canEdit={canManage} canDelete={canManage} />
             </div>
           </div>
 

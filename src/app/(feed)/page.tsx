@@ -10,7 +10,7 @@ import { Panel } from "@/components/ui/panel";
 import { assignEmphasis, tagWeight } from "@/lib/archival";
 import { describeFilter, isEmptyFilter, parseSearch, type FilterChip } from "@/lib/search";
 import { cn } from "@/lib/cn";
-import { requireViewer } from "@/lib/auth/team";
+import { canModerate, requireViewer } from "@/lib/auth/team";
 import type { Dictionary } from "@/lib/i18n/en";
 import { fill, plural } from "@/lib/i18n/locale";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
@@ -104,6 +104,7 @@ export default async function FeedPage({
   const effectiveRange: RangeKey = filtering ? "all" : range;
 
   const viewer = await requireViewer("/");
+  const manages = canModerate(viewer);
   const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
   const teamId = viewer.team.id;
   const user = viewer.user;
@@ -249,6 +250,7 @@ export default async function FeedPage({
                   key={yap.id}
                   yap={yap}
                   viewerId={user.id}
+                  viewerModerates={manages}
                   emphasis={emphasis.get(yap.id)}
                   momentum={momentum?.get(yap.id)}
                 />
