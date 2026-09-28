@@ -200,10 +200,45 @@ The rollback target is recorded only *after* a deploy reports healthy, so it alw
 something that worked. A schema migration is **not** undone by it — roll the code back, then
 decide about the data.
 
-**Back up first, always.** There is no automated backup yet:
+See *Backups* below before a deploy that carries a migration.
+
+## Backups
+
+Nightly, by cron, with a weekly proof that they still restore.
 
 ```bash
-docker exec yapped-db-1 pg_dump -U yapped -d yapped > ~/yapped-$(date +%F-%H%M).sql
+./scripts/backup.sh                 # dump now
+./scripts/restore.sh --check        # restore the newest dump into a scratch
+                                    # database, compare, throw it away
+./scripts/restore.sh --into yapped_old   # restore beside the live archive
+./scripts/restore.sh --live         # replace the live archive (asks first)
+```
+
+Two things are kept, and they are kept differently. The **database** is dumped whole, gzipped
+and rotated — everything for 30 days, then one dump per month, forever. It is a few kilobytes,
+so the policy is deliberately generous: the expensive mistake is deleting a backup you turn out
+to need. The **uploads** are evidence images stored under a content hash and never modified or
+deleted, so re-archiving them nightly would copy the same bytes forever; they are mirrored
+instead, adding new files and rewriting nothing.
+
+A dump is only kept if it verifies: valid gzip, and carrying rows for `User`, `Team` and `Yap`.
+A backup that restores to an empty archive is the failure that looks like success.
+
+`--check` is the half that matters and the half everyone skips. It runs every Sunday, restores
+the newest dump into a throwaway database, counts what came back, compares it with the live
+archive and then drops it. A backup nobody has ever restored is a hope, not a backup.
+
+```cron
+15 4 * * *  cd /root/yapped && ./scripts/backup.sh  >> /root/yapped-backups/backup.log 2>&1
+45 4 * * 0  cd /root/yapped && ./scripts/restore.sh --check >> /root/yapped-backups/restore-check.log 2>&1
+```
+
+**This writes to the same disk the database is on.** It protects against a bad migration, a
+wrong `DELETE` and a fat-fingered redaction. It does *not* protect against losing the box. Set
+`BACKUP_MIRROR` to an rsync destination to get a copy off the machine:
+
+```bash
+BACKUP_MIRROR=you@elsewhere:/backups/yapped ./scripts/backup.sh
 ```
 
 ## Teams, invites and access
@@ -406,6 +441,9 @@ tests at a throwaway database. CI runs typecheck, both layers and a build on eve
 | `npm run db:seed:demo` | load the fictional demo archive |
 | `npm run db:reset` | drop, migrate and reseed |
 | `npm run db:studio` | browse the data |
+| `./scripts/backup.sh` | dump the database, mirror the uploads, rotate |
+| `./scripts/restore.sh --check` | prove the newest dump restores |
+| `./scripts/deploy.sh` | pull the newest published commit and roll it out |
 | `npm run bootstrap` | the first team and owner on an empty instance |
 | `npm run grant:admin` | list instance operators |
 | `npm run grant:admin -- <username>` | grant the instance role (`--revoke` takes it back) |

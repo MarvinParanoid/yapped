@@ -82,6 +82,17 @@ elif [[ "$PULL_GIT" == 1 ]]; then
     git --no-pager log --oneline "HEAD..origin/$BRANCH" 2>/dev/null | sed 's/^/   /'
   fi
 
+  # A file sitting here untracked that the incoming commit also provides blocks
+  # a fast-forward. On a deploy box that is always a leftover — a script copied
+  # up by hand to try it before it was committed — and the incoming version is
+  # the authoritative one, so drop the local copy rather than stopping.
+  while IFS= read -r path; do
+    [[ -e "$path" ]] || continue
+    git ls-files --error-unmatch "$path" >/dev/null 2>&1 && continue
+    note "replacing untracked $path with the committed version"
+    rm -f "$path"
+  done < <(git diff --name-only HEAD "origin/$BRANCH" 2>/dev/null)
+
   if git symbolic-ref --quiet HEAD >/dev/null; then
     git merge --ff-only "origin/$BRANCH"
   else
