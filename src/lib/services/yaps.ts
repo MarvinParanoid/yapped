@@ -705,6 +705,22 @@ export async function createYap(input: CreateYapInput): Promise<number> {
       tags: { create: tagRecords.map((tag) => ({ tagId: tag.id })) },
     },
   });
+
+  // Filing somebody else's line means you were there to hear it, so the
+  // archive stops asking you to say so twice: the person who files a record
+  // goes on it as a witness. It is testimony like any other and can be
+  // withdrawn or flipped to a denial on the record's own page.
+  //
+  // Not when the two are the same person: the author of a statement cannot
+  // corroborate it — that is what makes a witness worth anything — and filing
+  // your own words is already recorded above as owning up to them.
+  if (input.authorId !== input.submittedById) {
+    await prisma.witness.create({
+      data: { yapId: yap.id, userId: input.submittedById, stance: "PRESENT" },
+    });
+    await refreshVerification(yap.id);
+  }
+
   return yap.id;
 }
 

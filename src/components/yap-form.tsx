@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { submitYapAction, type SubmitState } from "@/app/actions";
 import { cn } from "@/lib/cn";
 import { slugifyTag } from "@/lib/format";
@@ -19,6 +19,39 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
   const [tagDraft, setTagDraft] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  /**
+   * When it was said, in the clock the person is looking at.
+   *
+   * This had two bugs stacked on each other, which is why it looked like a
+   * two-hour drift rather than nonsense. The default was
+   * `new Date().toISOString()`, a UTC wall clock, dropped into a
+   * `datetime-local` input that displays whatever it is given as *local* — so
+   * at 14:08 in Moscow the box opened on 11:08. And because the field is
+   * rendered on the server, that was the server's idea of now, not the
+   * reader's.
+   *
+   * Then the value came back as "2026-09-30T14:08" with no zone at all, which
+   * `new Date()` reads as local time — local to the container, which runs UTC.
+   * So the wrong default and the wrong parse cancelled out for anyone who left
+   * the box alone, and silently shifted the record for anyone who corrected it.
+   *
+   * Now: the visible field is the browser's local clock, and a hidden field
+   * carries the instant the browser resolved it to. The archive stores UTC and
+   * the person types the time they remember.
+   */
+  const [saidAtLocal, setSaidAtLocal] = useState("");
+  useEffect(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    setSaidAtLocal(now.toISOString().slice(0, 16));
+  }, []);
+
+  const saidAtInstant = (() => {
+    if (!saidAtLocal) return "";
+    const moment = new Date(saidAtLocal);
+    return Number.isNaN(moment.getTime()) ? "" : moment.toISOString();
+  })();
 
   function commitTag(raw: string) {
     const slug = slugifyTag(raw);
@@ -108,11 +141,13 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
             </label>
             <input
               id="saidAt"
-              name="saidAt"
               type="datetime-local"
               className="field mt-2"
-              defaultValue={new Date().toISOString().slice(0, 16)}
+              value={saidAtLocal}
+              onChange={(event) => setSaidAtLocal(event.target.value)}
             />
+            {/* What actually travels: the instant, not the wall clock. */}
+            <input type="hidden" name="saidAt" value={saidAtInstant} />
           </div>
         </div>
 

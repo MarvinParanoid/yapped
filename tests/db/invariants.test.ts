@@ -353,3 +353,60 @@ describe("correcting a misquote", () => {
     assert.equal((await editYap(yap.id, TEAM, author.id, { text: "Новое.", lore: null })).ok, false);
   });
 });
+
+/**
+ * Filing somebody else's line is itself testimony: you heard it.
+ *
+ * The team's reasoning, and it is hard to argue with — how would you file a
+ * quote you were not there for? The cost is that a record no longer starts at
+ * UNVERIFIED, so the ladder now measures "how many people beyond the one who
+ * wrote it down", which is what it was always trying to mean.
+ */
+describe("whoever files a record witnessed it", () => {
+  test("filing someone else's words puts you on the record as a witness", async () => {
+    await resetDatabase();
+    const author = await makeUser("Author");
+    const archivist = await makeUser("Archivist");
+
+    const id = await createYap({
+      teamId: TEAM,
+      text: "Рот ставлю.",
+      authorId: author.id,
+      submittedById: archivist.id,
+      saidAt: new Date(),
+      tags: [],
+    });
+
+    const yap = await prisma.yap.findUniqueOrThrow({
+      where: { id },
+      include: { witnesses: true },
+    });
+    assert.equal(yap.witnesses.length, 1);
+    assert.equal(yap.witnesses[0]?.userId, archivist.id);
+    assert.equal(yap.witnesses[0]?.stance, "PRESENT");
+    assert.equal(yap.witnessCount, 1, "the cached count moves with it");
+    assert.equal(yap.verification, "WITNESSED");
+  });
+
+  test("filing your own words does not make you your own witness", async () => {
+    await resetDatabase();
+    const author = await makeUser("Author");
+
+    const id = await createYap({
+      teamId: TEAM,
+      text: "Я это сказал.",
+      authorId: author.id,
+      submittedById: author.id,
+      saidAt: new Date(),
+      tags: [],
+    });
+
+    const yap = await prisma.yap.findUniqueOrThrow({
+      where: { id },
+      include: { witnesses: true },
+    });
+    assert.equal(yap.witnesses.length, 0, "an author corroborating themselves is not corroboration");
+    assert.equal(yap.verification, "UNVERIFIED");
+    assert.ok(yap.acknowledgedAt, "it is an acknowledgement instead");
+  });
+});
