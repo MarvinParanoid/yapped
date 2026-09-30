@@ -191,6 +191,13 @@ export const en = {
   },
 
   sections: {
+    archivists: "Archivists",
+    rankedByFiled: "ranked by records brought in. what a person said is the other table — these are the people who put it on file.",
+    filedColumn: "Filed",
+    discoveredColumn: "Discovered",
+    testimonyColumn: "Testimony",
+    votesColumn: "Verdicts",
+    nobodyFiledYet: "nobody has filed anything yet",
     wholeRecordSoFar: "the whole record so far",
     thisTimeOfYear: "this time of year, in earlier years",
     toTheDay: "to the day",

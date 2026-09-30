@@ -67,6 +67,17 @@ export type ArchiveStats = {
 export type SortKey = "trending" | "fresh" | "top";
 export type RangeKey = "today" | "week" | "month" | "all";
 
+/** Ranked for what someone brought in, rather than what they said. */
+export type ArchivistEntry = {
+  yapper: YapperRef;
+  filedCount: number;
+  /** Aura on the records they filed — how good the find was, not how many. */
+  discoveredAura: number;
+  testimonyCount: number;
+  battleVotes: number;
+  rank: number;
+};
+
 export type LeaderboardEntry = {
   yapper: YapperRef;
   yapCount: number;

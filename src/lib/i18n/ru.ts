@@ -211,6 +211,13 @@ export const ru: Dictionary = {
   },
 
   sections: {
+    archivists: "Архивариусы",
+    rankedByFiled: "рейтинг по внесённому в архив. сказанное — в таблице выше; здесь те, кто поставил это на учёт.",
+    filedColumn: "Внесено",
+    discoveredColumn: "Найдено ауры",
+    testimonyColumn: "Показаний",
+    votesColumn: "Вердиктов",
+    nobodyFiledYet: "пока никто ничего не вносил",
     wholeRecordSoFar: "весь архив с начала",
     thisTimeOfYear: "в это время года, в прошлые годы",
     toTheDay: "день в день",

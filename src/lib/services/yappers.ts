@@ -4,7 +4,7 @@ import { evaluateAchievements, type Achievement, type YapperStats } from "@/lib/
 import { titleFor, type Title } from "@/lib/titles";
 import { isContested } from "@/lib/verification";
 import { validateName } from "@/lib/names";
-import type { LeaderboardEntry, RangeKey, YapperRef } from "@/lib/types";
+import type { ArchivistEntry, LeaderboardEntry, RangeKey, YapperRef } from "@/lib/types";
 
 function toYapperRef(user: {
   id: string;
@@ -30,6 +30,96 @@ function sinceFor(range: RangeKey): Date | null {
   if (range === "month") return new Date(now - 30 * 24 * 60 * 60 * 1000);
   if (range === "today") return new Date(now - 24 * 60 * 60 * 1000);
   return null;
+}
+
+/**
+ * The other half of the archive.
+ *
+ * getLeaderboard groups by authorId, so it ranks people for what they *said* —
+ * and somebody who has never said anything quotable but files everybody else's
+ * lines, corroborates them and judges the arena does not appear on it at all.
+ * In this archive that person is the owner. Saying and filing are separate
+ * columns on a Yap on purpose; this is the one that was never ranked.
+ *
+ * Note the window: a speaker's month is measured by `saidAt`, because that is
+ * when they said it. An archivist's month is measured by `createdAt`, because
+ * that is when they did the work — filing a two-year-old quote today is this
+ * week's act of archiving, not a retroactive one.
+ *
+ * Ranked by records filed, with aura discovered as the tie-break. No composite
+ * score: adding a filing to a battle vote would need a made-up exchange rate,
+ * and every column is printed anyway.
+ */
+export async function getArchivistLeaderboard(
+  teamId: string,
+  range: RangeKey = "all",
+  take = 50,
+): Promise<ArchivistEntry[]> {
+  const since = sinceFor(range);
+  const filedWhere = {
+    teamId,
+    deletedAt: null,
+    submittedById: { not: null },
+    ...(since ? { createdAt: { gte: since } } : {}),
+  };
+
+  const [filed, testimony, votes] = await Promise.all([
+    prisma.yap.groupBy({
+      by: ["submittedById"],
+      where: filedWhere,
+      _count: { _all: true },
+      _sum: { aura: true },
+    }),
+    prisma.witness.groupBy({
+      by: ["userId"],
+      where: {
+        yap: { teamId, deletedAt: null },
+        ...(since ? { createdAt: { gte: since } } : {}),
+      },
+      _count: { _all: true },
+    }),
+    prisma.battle.groupBy({
+      by: ["voterId"],
+      where: { teamId, voterId: { not: null }, ...(since ? { createdAt: { gte: since } } : {}) },
+      _count: { _all: true },
+    }),
+  ]);
+
+  // Anyone who did any of the three belongs here, including the person with no
+  // filings and twenty verdicts.
+  const rows = new Map<string, Omit<ArchivistEntry, "yapper" | "rank">>();
+  const row = (id: string) => {
+    const found = rows.get(id);
+    if (found) return found;
+    const fresh = { filedCount: 0, discoveredAura: 0, testimonyCount: 0, battleVotes: 0 };
+    rows.set(id, fresh);
+    return fresh;
+  };
+
+  for (const entry of filed) {
+    if (!entry.submittedById) continue;
+    const target = row(entry.submittedById);
+    target.filedCount = entry._count._all;
+    target.discoveredAura = entry._sum.aura ?? 0;
+  }
+  for (const entry of testimony) row(entry.userId).testimonyCount = entry._count._all;
+  for (const entry of votes) {
+    if (!entry.voterId) continue;
+    row(entry.voterId).battleVotes = entry._count._all;
+  }
+  if (rows.size === 0) return [];
+
+  const users = await prisma.user.findMany({ where: { id: { in: [...rows.keys()] } } });
+  const userById = new Map(users.map((user) => [user.id, user]));
+
+  return [...rows.entries()]
+    .flatMap(([id, counts]) => {
+      const user = userById.get(id);
+      return user ? [{ yapper: toYapperRef(user), ...counts }] : [];
+    })
+    .sort((a, b) => b.filedCount - a.filedCount || b.discoveredAura - a.discoveredAura)
+    .slice(0, take)
+    .map((entry, index) => ({ ...entry, rank: index + 1 }));
 }
 
 export async function getLeaderboard(
