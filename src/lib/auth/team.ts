@@ -2,6 +2,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { knownZone } from "@/lib/zoned";
 import { getSessionUser, type SessionUser } from "./session";
 
 export const TEAM_COOKIE = "yapped_team";
@@ -20,12 +21,14 @@ export type ActiveTeam = {
   name: string;
   slug: string;
   role: ViewerRole;
+  /** The clock this archive keeps. Every date the interface prints uses it. */
+  timezone: string;
 };
 
 export type Viewer = {
   user: SessionUser;
   team: ActiveTeam;
-  teams: Array<{ id: string; name: string; slug: string; role: TeamRole }>;
+  teams: Array<{ id: string; name: string; slug: string; role: TeamRole; timezone: string }>;
 };
 
 /** Every team on the instance — only the operator has any business seeing this. */
@@ -50,6 +53,7 @@ export async function listMemberships(userId: string) {
     name: row.team.name,
     slug: row.team.slug,
     role: row.role as TeamRole,
+    timezone: knownZone(row.team.timezone),
   }));
 }
 
@@ -81,7 +85,13 @@ export const getViewer = cache(async function getViewer(): Promise<Viewer | null
     if (foreign) {
       return {
         user,
-        team: { id: foreign.id, name: foreign.name, slug: foreign.slug, role: "OPERATOR" },
+        team: {
+          id: foreign.id,
+          name: foreign.name,
+          slug: foreign.slug,
+          role: "OPERATOR",
+          timezone: knownZone(foreign.timezone),
+        },
         teams,
       };
     }

@@ -161,6 +161,7 @@ export const en = {
   },
 
   profile: {
+    awardedOn: "awarded {date}",
     peakYap: "Peak yap",
     nothingYet: "nothing on record yet",
     battleRecord: "Battle record",
@@ -277,6 +278,8 @@ export const en = {
   },
 
   admin: {
+    timezone: "Archive clock",
+    yourClock: "your browser says {zone}",
     administration: "Administration",
     members: "Members",
     OWNER: "Owner",
@@ -440,6 +443,8 @@ export const en = {
     OWNER_ONLY_REMOVE: "Only an owner can remove members.",
     NOT_YOURSELF: "You cannot remove yourself.",
     PICK_ANOTHER_NAME: "Pick a different name.",
+    SAVED: "Saved.",
+    TIMEZONE_UNKNOWN: "That is not a timezone this server recognises — try Europe/Moscow.",
     INVITE_USES_INVALID: "Uses must be a whole number from 1 to {n}, or blank for no limit.",
     INVITE_DAYS_INVALID: "Expiry must be a whole number of days from 1 to {n}, or blank for never.",
     INVITE_CREATED: "Invite created.",

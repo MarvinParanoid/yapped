@@ -29,8 +29,8 @@ export default async function WrappedYearPage({ params }: Params) {
 
   const { team } = await requireViewer(`/wrapped/${parsed}`);
   const [report, periods] = await Promise.all([
-    getWrapped({ year: parsed, month: null }, team.id),
-    listPeriods(team.id),
+    getWrapped({ year: parsed, month: null }, team.id, team.timezone),
+    listPeriods(team.id, team.timezone),
   ]);
 
   const years = periods.filter((period) => period.month === null);

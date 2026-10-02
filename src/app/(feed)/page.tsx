@@ -113,10 +113,10 @@ export default async function FeedPage({
     listYaps({ ...listOptions, viewerId: user.id, take: PER_PAGE, skip: (page - 1) * PER_PAGE }),
     countYaps(listOptions),
     getLeaderboard(teamId, "all", 6),
-    listPeriods(teamId),
+    listPeriods(teamId, viewer.team.timezone),
   ]);
   // Only offered when there is actually something to remember.
-  const anniversaries = await hasAnniversaryToday(teamId);
+  const anniversaries = await hasAnniversaryToday(teamId, new Date(), viewer.team.timezone);
 
   // Movement is only meaningful where the sort is about movement.
   // Movement is measured over a month, not a day: at this volume a shorter

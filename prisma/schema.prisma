@@ -18,8 +18,15 @@ model Team {
   slug      String   @unique
   createdAt DateTime @default(now())
 
+  /// The clock this archive keeps, as an IANA zone. Records are stored as
+  /// instants; every date, hour and anniversary the interface prints is that
+  /// instant read in here. An archive belongs to a group of people who were in
+  /// the same room, so it has one clock rather than one per reader.
+  timezone  String   @default("UTC")
+
   memberships Membership[]
   invites     Invite[]
+  achievements UserAchievement[]
   yaps        Yap[]
   battles     Battle[]
 }
@@ -267,12 +274,17 @@ model Battle {
 /// records who has been awarded what, and when.
 model UserAchievement {
   id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   key       String
   awardedAt DateTime @default(now())
 
-  @@unique([userId, key])
+  /// Per team, like everything else here. A badge is earned from one archive's
+  /// records, so one account carrying it across to another archive would be
+  /// the same leak the required teamId arguments exist to prevent.
+  @@unique([teamId, userId, key])
   @@index([userId])
 }
 

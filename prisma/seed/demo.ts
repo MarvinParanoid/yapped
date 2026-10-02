@@ -389,7 +389,7 @@ export async function seedDemo(): Promise<void> {
       ),
     });
     for (const badge of badges) {
-      await prisma.userAchievement.create({ data: { userId, key: badge.key } });
+      await prisma.userAchievement.create({ data: { teamId, userId, key: badge.key } });
     }
     void name;
   }

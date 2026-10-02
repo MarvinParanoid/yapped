@@ -38,7 +38,13 @@ import {
   releaseInvite,
   revokeInvite,
 } from "@/lib/services/invites";
-import { createTeam, removeMember, renameTeam, setMemberRole } from "@/lib/services/teams";
+import {
+  createTeam,
+  removeMember,
+  renameTeam,
+  setMemberRole,
+  setTeamTimezone,
+} from "@/lib/services/teams";
 import type { TeamRole } from "@/lib/auth/team";
 import { recordBattle } from "@/lib/services/battles";
 import { attachEvidence, isAcceptedImage, MAX_EVIDENCE_BYTES } from "@/lib/services/evidence";
@@ -503,6 +509,18 @@ export async function removeMemberAction(
   const result = await removeMember(viewer.team.id, userId);
   revalidatePath("/admin");
   return result.ok ? { ok: true } : { ok: false, error: await say(result) };
+}
+
+export async function setTeamTimezoneAction(
+  _previous: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  const viewer = await requireTeamAdmin("/admin");
+  const result = await setTeamTimezone(viewer.team.id, String(formData.get("timezone") ?? ""));
+  if (!result.ok) return { error: await say(result) };
+  revalidatePath("/admin");
+  revalidatePath("/", "layout");
+  return { ok: await say({ code: "SAVED" }) };
 }
 
 export async function renameTeamAction(

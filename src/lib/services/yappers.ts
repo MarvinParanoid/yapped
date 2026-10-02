@@ -201,7 +201,13 @@ export type YapperProfile = {
     hallRank: number | null;
   };
   title: Title;
-  badges: Achievement[];
+  /**
+   * Earned now, and when it was first earned if the archive has it on file.
+   * The badge list is derived from the person's current record, so it is the
+   * `UserAchievement` row — written the first time a badge shows up — that
+   * remembers the date. Until now nothing read that table at all.
+   */
+  badges: Array<Achievement & { awardedAt: Date | null }>;
   bestYap: { id: number; code: string; text: string; aura: number } | null;
   /** Colleagues who keep turning up in the same rooms. */
   associates: Array<{ user: YapperRef; count: number }>;
@@ -234,7 +240,7 @@ export async function getYapperProfile(
 
   const where = { teamId, authorId: id, deletedAt: null };
 
-  const [yaps, ranking, corroborators, filedCount, testimonyGiven] = await Promise.all([
+  const [yaps, ranking, corroborators, filedCount, testimonyGiven, awarded] = await Promise.all([
     prisma.yap.findMany({
       where,
       select: {
@@ -272,7 +278,14 @@ export async function getYapperProfile(
     // actually said them.
     prisma.yap.count({ where: { teamId, submittedById: id, deletedAt: null } }),
     prisma.witness.count({ where: { userId: id, stance: "PRESENT", yap: { teamId } } }),
+    // When each badge was first awarded, in this archive.
+    prisma.userAchievement.findMany({
+      where: { teamId, userId: id },
+      select: { key: true, awardedAt: true },
+    }),
   ]);
+
+  const awardedByKey = new Map(awarded.map((row) => [row.key, row.awardedAt]));
 
   const associateUsers = await prisma.user.findMany({
     where: { id: { in: corroborators.map((row) => row.userId) } },
@@ -367,7 +380,10 @@ export async function getYapperProfile(
       battleWins,
       loreCount,
     }),
-    badges: evaluateAchievements(stats),
+    badges: evaluateAchievements(stats).map((badge) => ({
+      ...badge,
+      awardedAt: awardedByKey.get(badge.key) ?? null,
+    })),
     bestYap: best ? { id: best.id, code: yapCode(best.id), text: best.text, aura: best.aura } : null,
     associates,
     rank: rankIndex >= 0 ? rankIndex + 1 : null,
@@ -381,9 +397,9 @@ export async function syncAchievements(userId: string, teamId: string): Promise<
   await Promise.all(
     profile.badges.map((badge) =>
       prisma.userAchievement.upsert({
-        where: { userId_key: { userId, key: badge.key } },
+        where: { teamId_userId_key: { teamId, userId, key: badge.key } },
         update: {},
-        create: { userId, key: badge.key },
+        create: { teamId, userId, key: badge.key },
       }),
     ),
   );

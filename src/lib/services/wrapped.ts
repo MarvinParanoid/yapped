@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { offsetMinutes, shift } from "@/lib/zoned";
 import { yapCode } from "@/lib/format";
 import type { YapperRef } from "@/lib/types";
 
@@ -49,16 +50,26 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-export function periodBounds(period: WrappedPeriod): { from: Date; to: Date } {
+/**
+ * "September" means September on the archive's clock, so the instants the
+ * query compares against are the local month edges, pushed back by the zone's
+ * offset. Without this, a team three hours east loses everything said before
+ * 03:00 on the 1st to the previous month.
+ */
+export function periodBounds(
+  period: WrappedPeriod,
+  timeZone = "UTC",
+): { from: Date; to: Date } {
+  const localEdge = (year: number, month: number) => {
+    const asUtc = new Date(Date.UTC(year, month, 1));
+    return new Date(asUtc.getTime() - offsetMinutes(asUtc, timeZone) * 60000);
+  };
   if (period.month === null) {
-    return {
-      from: new Date(Date.UTC(period.year, 0, 1)),
-      to: new Date(Date.UTC(period.year + 1, 0, 1)),
-    };
+    return { from: localEdge(period.year, 0), to: localEdge(period.year + 1, 0) };
   }
   return {
-    from: new Date(Date.UTC(period.year, period.month - 1, 1)),
-    to: new Date(Date.UTC(period.year, period.month, 1)),
+    from: localEdge(period.year, period.month - 1),
+    to: localEdge(period.year, period.month),
   };
 }
 
@@ -75,7 +86,7 @@ export function periodSlug(period: WrappedPeriod): string {
 }
 
 /** Every month the archive has anything to say about, newest first. */
-export async function listPeriods(teamId: string): Promise<WrappedPeriod[]> {
+export async function listPeriods(teamId: string, timeZone = "UTC"): Promise<WrappedPeriod[]> {
   const bounds = await prisma.yap.aggregate({
     where: { teamId, deletedAt: null },
     _min: { saidAt: true },
@@ -85,9 +96,13 @@ export async function listPeriods(teamId: string): Promise<WrappedPeriod[]> {
   const last = bounds._max.saidAt;
   if (!first || !last) return [];
 
+  // Which month a record belongs to is a question about the archive's clock.
+  const firstLocal = shift(first, timeZone);
+  const lastLocal = shift(last, timeZone);
+
   const periods: WrappedPeriod[] = [];
-  const cursor = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), 1));
-  const stop = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), 1));
+  const cursor = new Date(Date.UTC(lastLocal.getUTCFullYear(), lastLocal.getUTCMonth(), 1));
+  const stop = new Date(Date.UTC(firstLocal.getUTCFullYear(), firstLocal.getUTCMonth(), 1));
 
   while (cursor >= stop) {
     periods.push({ year: cursor.getUTCFullYear(), month: cursor.getUTCMonth() + 1 });
@@ -101,8 +116,9 @@ export async function listPeriods(teamId: string): Promise<WrappedPeriod[]> {
 export async function getWrapped(
   period: WrappedPeriod,
   teamId: string,
+  timeZone = "UTC",
 ): Promise<WrappedReport> {
-  const { from, to } = periodBounds(period);
+  const { from, to } = periodBounds(period, timeZone);
   const where = { teamId, deletedAt: null, saidAt: { gte: from, lt: to } };
 
   const [yaps, battleCount] = await Promise.all([
@@ -146,7 +162,8 @@ export async function getWrapped(
     if (yap.disputedAt || (yap.denialCount >= 2 && yap.denialCount * 2 >= yap.witnessCount)) {
       disputedCount += 1;
     }
-    hours[yap.saidAt.getUTCHours()] += 1;
+    // The hour the office actually experienced, not the hour in UTC.
+    hours[shift(yap.saidAt, timeZone).getUTCHours()] += 1;
 
     const tally = byAuthor.get(yap.authorId) ?? { aura: 0, count: 0 };
     tally.aura += yap.aura;

@@ -140,7 +140,9 @@ async function main(): Promise<void> {
 
     for (const badge of await tx.userAchievement.findMany({ where: { userId: from.id } })) {
       const taken = await tx.userAchievement.findUnique({
-        where: { userId_key: { userId: into.id, key: badge.key } },
+        where: {
+          teamId_userId_key: { teamId: badge.teamId, userId: into.id, key: badge.key },
+        },
       });
       if (taken) await tx.userAchievement.delete({ where: { id: badge.id } });
       else await tx.userAchievement.update({ where: { id: badge.id }, data: { userId: into.id } });

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { offsetMinutes, shift } from "@/lib/zoned";
 import type { YapView } from "@/lib/types";
 import { auraAsOfEach } from "./aura-history";
 import { getYaps } from "./yaps";
@@ -41,10 +42,29 @@ export async function getOnThisDay(
   teamId: string,
   reference: Date = new Date(),
   viewerId?: string | null,
+  timeZone = "UTC",
 ): Promise<OnThisDayReport> {
-  const year = reference.getUTCFullYear();
-  const month = reference.getUTCMonth();
-  const day = reference.getUTCDate();
+  // "This day" is the archive's day. Three hours east of UTC, anything said
+  // before 03:00 belongs to the day the office remembers, not the day UTC was
+  // having at the time.
+  const here = shift(reference, timeZone);
+  const year = here.getUTCFullYear();
+  const month = here.getUTCMonth();
+  const day = here.getUTCDate();
+
+  /** The last second of the local day a record was said on, as a real instant. */
+  const endOfLocalDay = (instant: Date) => {
+    const local = shift(instant, timeZone);
+    const wall = Date.UTC(
+      local.getUTCFullYear(),
+      local.getUTCMonth(),
+      local.getUTCDate(),
+      23,
+      59,
+      59,
+    );
+    return new Date(wall - offsetMinutes(instant, timeZone) * 60000);
+  };
 
   const bounds = await prisma.yap.aggregate({
     where: { teamId, deletedAt: null },
@@ -66,7 +86,7 @@ export async function getOnThisDay(
   if (archiveStart) {
     const spanMs = ANNIVERSARY_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 
-    for (let past = year - 1; past >= archiveStart.getUTCFullYear(); past -= 1) {
+    for (let past = year - 1; past >= shift(archiveStart, timeZone).getUTCFullYear(); past -= 1) {
       const anniversary = Date.UTC(past, month, day);
       const rows = await prisma.yap.findMany({
         where: {
@@ -85,19 +105,7 @@ export async function getOnThisDay(
       const ids = rows.map((row) => row.id);
       // Aura as it stood at the end of the day each statement was made.
       const cutoffs = new Map(
-        rows.map((row) => [
-          row.id,
-          new Date(
-            Date.UTC(
-              row.saidAt.getUTCFullYear(),
-              row.saidAt.getUTCMonth(),
-              row.saidAt.getUTCDate(),
-              23,
-              59,
-              59,
-            ),
-          ),
-        ]),
+        rows.map((row) => [row.id, endOfLocalDay(row.saidAt)]),
       );
 
       const [records, auraThen] = await Promise.all([
@@ -109,8 +117,9 @@ export async function getOnThisDay(
       const hydrated = records
         .map((record: YapView) => {
           const saidAt = saidAtById.get(record.id)!;
+          const said = shift(saidAt, timeZone);
           const offset = Math.round(
-            (Date.UTC(saidAt.getUTCFullYear(), saidAt.getUTCMonth(), saidAt.getUTCDate()) -
+            (Date.UTC(said.getUTCFullYear(), said.getUTCMonth(), said.getUTCDate()) -
               anniversary) /
               (24 * 60 * 60 * 1000),
           );
@@ -141,6 +150,7 @@ export async function getOnThisDay(
 export async function hasAnniversaryToday(
   teamId: string,
   reference: Date = new Date(),
+  timeZone = "UTC",
 ): Promise<number> {
   const bounds = await prisma.yap.aggregate({
     where: { teamId, deletedAt: null },
@@ -151,8 +161,9 @@ export async function hasAnniversaryToday(
 
   const spanMs = ANNIVERSARY_WINDOW_DAYS * 24 * 60 * 60 * 1000;
   const ranges: Array<{ gte: Date; lte: Date }> = [];
-  for (let past = reference.getUTCFullYear() - 1; past >= start.getUTCFullYear(); past -= 1) {
-    const anniversary = Date.UTC(past, reference.getUTCMonth(), reference.getUTCDate());
+  const here = shift(reference, timeZone);
+  for (let past = here.getUTCFullYear() - 1; past >= shift(start, timeZone).getUTCFullYear(); past -= 1) {
+    const anniversary = Date.UTC(past, here.getUTCMonth(), here.getUTCDate());
     ranges.push({ gte: new Date(anniversary - spanMs), lte: new Date(anniversary + spanMs) });
   }
   if (ranges.length === 0) return 0;

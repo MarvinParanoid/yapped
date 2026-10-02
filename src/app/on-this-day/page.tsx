@@ -38,7 +38,7 @@ export default async function OnThisDayPage({
   const manages = canModerate(viewer);
   const [d, locale] = await Promise.all([getDictionary(), getLocale()]);
   const months = d.profile.months.split(" ");
-  const report = await getOnThisDay(team.id, parseDate(dateParam), user.id);
+  const report = await getOnThisDay(team.id, parseDate(dateParam), user.id, team.timezone);
   const today = report.date;
 
   return (

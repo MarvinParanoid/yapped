@@ -258,6 +258,15 @@ pairHighId])` is what makes a verdict personal: re-voting is allowed and *replac
 result rather than stacking on it. `Yap.eloRating`, `battleWins` and `battleLosses` are caches
 of this table; `npm run recompute:elo` rebuilds them when the two disagree.
 
+**The archive's clock.** `Team.timezone` is an IANA zone, defaulting to `UTC`. Every
+timestamp is stored as an instant; the zone decides how those instants are read back —
+`lib/zoned.ts` returns a Date whose *UTC* parts are the wall-clock parts in that zone, which is
+what the rest of the codebase already knows how to take apart. One clock per archive rather
+than per reader, because "the most dangerous hour" is a fact about a room, and per-reader it
+would be a different fact for everyone. It governs Wrapped's hour histogram and month
+boundaries and `/on-this-day`'s notion of today; date *display* is still UTC, which is wrong
+only within the offset of midnight.
+
 **Witness** — one colleague going on the record about whether a statement happened.
 `id`, `yapId`, `userId`, `stance (PRESENT|DENIED)`, `createdAt`, `@@unique([yapId, userId])`.
 A person holds exactly one position per record and may switch it or withdraw it. `witnessCount`

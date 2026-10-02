@@ -181,6 +181,7 @@ export const ru: Dictionary = {
   },
 
   profile: {
+    awardedOn: "присвоено {date}",
     peakYap: "Лучшая цитата",
     nothingYet: "в архиве пока пусто",
     battleRecord: "Баттлы",
@@ -297,6 +298,8 @@ export const ru: Dictionary = {
   },
 
   admin: {
+    timezone: "Часы архива",
+    yourClock: "ваш браузер показывает {zone}",
     administration: "Администрирование",
     members: "Участники",
     OWNER: "Владелец",
@@ -460,6 +463,8 @@ export const ru: Dictionary = {
     OWNER_ONLY_REMOVE: "Удалять участников может только владелец.",
     NOT_YOURSELF: "Себя удалить нельзя.",
     PICK_ANOTHER_NAME: "Выберите другое название.",
+    SAVED: "Сохранено.",
+    TIMEZONE_UNKNOWN: "Такой часовой пояс сервер не знает — например, Europe/Moscow.",
     INVITE_USES_INVALID: "Использований: целое число от 1 до {n}, либо пусто — без ограничения.",
     INVITE_DAYS_INVALID: "Срок: целое число дней от 1 до {n}, либо пусто — бессрочно.",
     INVITE_CREATED: "Приглашение выпущено.",

@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function WrappedIndexPage() {
   const { team } = await requireViewer("/wrapped");
   const d = await getDictionary();
-  const periods = await listPeriods(team.id);
+  const periods = await listPeriods(team.id, team.timezone);
   const years = periods.filter((period) => period.month === null);
   const months = periods.filter((period) => period.month !== null);
 

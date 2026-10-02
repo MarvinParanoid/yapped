@@ -219,22 +219,29 @@ export default async function YapperPage({ params }: Params) {
             they have not. */}
         {profile.badges.length > 0 ? (
           <div className="mt-6 grid items-start gap-6 lg:grid-cols-3">
-            {profile.badges.length > 0 ? (
-              <Panel label={d.profile.achievements} bodyClassName="p-0">
-                <ul>
-                  {profile.badges.map((badge) => (
-                    <li
-                      key={badge.key}
-                      className="border-b border-ink px-3 py-2 last:border-b-0"
-                    >
-                      <span className="label-strong">
-                        {d.badges[badge.key as keyof typeof d.badges]}
+            <Panel label={d.profile.achievements} bodyClassName="p-0">
+              <ul>
+                {profile.badges.map((badge) => (
+                  <li
+                    key={badge.key}
+                    className="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-ink px-3 py-2 last:border-b-0"
+                  >
+                    <span className="label-strong">
+                      {d.badges[badge.key as keyof typeof d.badges]}
+                    </span>
+                    {/* A badge is worked out from the record every time; the
+                        date is the one thing only the archive remembers. */}
+                    {badge.awardedAt ? (
+                      <span className="label tabnums">
+                        {fill(d.profile.awardedOn, {
+                          date: formatDate(badge.awardedAt, d.profile.months.split(" ")),
+                        })}
                       </span>
-                    </li>
-                  ))}
-                </ul>
-              </Panel>
-            ) : null}
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </Panel>
           </div>
         ) : null}
 

@@ -19,6 +19,8 @@ import {acknowledgeYap,
 } from "@/lib/services/yaps";
 import { recordBattle } from "@/lib/services/battles";
 import { createInvite } from "@/lib/services/invites";
+import { getYapperProfile, syncAchievements } from "@/lib/services/yappers";
+import { joinTeam } from "@/lib/services/accounts";
 
 /**
  * One wall, checked from every door.
@@ -197,5 +199,60 @@ describe("an invite limit is never widened by accident", () => {
     const invite = await prisma.invite.findUniqueOrThrow({ where: { token } });
     assert.equal(invite.maxUses, 3);
     assert.ok(invite.expiresAt !== null);
+  });
+});
+
+/**
+ * A badge is earned from one archive's records and belongs to that archive.
+ *
+ * It used to be keyed on (userId, key) alone, so one account in two teams would
+ * carry "1000 AURA" from the first into the second. Nothing read the table, so
+ * nothing leaked — but a table nobody reads is exactly the one that gets read
+ * one day by somebody who assumes it is right.
+ */
+describe("badges belong to the archive that awarded them", () => {
+  before(async () => {
+    await resetDatabase();
+  });
+
+  test("the same person earns separately in each archive", async () => {
+    const loud = await makeUser("Loud");
+    const other = await makeTeam("elsewhere", "Elsewhere");
+    await joinTeam(loud.id, other.id);
+
+    // Plenty said here, nothing said there.
+    for (let i = 0; i < 25; i += 1) {
+      await makeYap({ authorId: loud.id, aura: 200 });
+    }
+
+    await syncAchievements(loud.id, TEAM);
+    await syncAchievements(loud.id, other.id);
+
+    const here = await prisma.userAchievement.count({ where: { teamId: TEAM, userId: loud.id } });
+    const there = await prisma.userAchievement.count({
+      where: { teamId: other.id, userId: loud.id },
+    });
+
+    assert.ok(here > 0, "earned where the records are");
+    assert.equal(there, 0, "and not carried into an archive where they have said nothing");
+  });
+
+  test("the profile reports when a badge was awarded, from the archive's own row", async () => {
+    const person = await makeUser("Decorated");
+    for (let i = 0; i < 25; i += 1) await makeYap({ authorId: person.id, aura: 200 });
+
+    const before = await getYapperProfile(person.id, TEAM);
+    assert.ok(before);
+    assert.ok(before.badges.length > 0);
+    assert.equal(
+      before.badges.every((badge) => badge.awardedAt === null),
+      true,
+      "nothing on file yet, so no date is invented",
+    );
+
+    await syncAchievements(person.id, TEAM);
+
+    const after = await getYapperProfile(person.id, TEAM);
+    assert.ok(after?.badges.every((badge) => badge.awardedAt !== null));
   });
 });

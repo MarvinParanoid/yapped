@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ContentTable, RedactedTable } from "@/components/admin/content-table";
 import { InviteManager } from "@/components/admin/invite-manager";
 import { MemberTable } from "@/components/admin/member-table";
-import { RenameTeam } from "@/components/admin/team-settings";
+import { RenameTeam, TeamTimezone } from "@/components/admin/team-settings";
 import { Panel } from "@/components/ui/panel";
 import { requireTeamAdmin } from "@/lib/auth/team";
 import { fill } from "@/lib/i18n/locale";
@@ -109,6 +109,9 @@ export default async function AdminPage() {
 
         <Panel label={d.admin.thisTeam}>
           <RenameTeam name={overview.name} />
+          <div className="mt-5 border-t border-ink pt-5">
+            <TeamTimezone timezone={viewer.team.timezone} />
+          </div>
         </Panel>
       </div>
     </div>

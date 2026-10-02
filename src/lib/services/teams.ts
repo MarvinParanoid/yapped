@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import type { Failure } from "@/lib/errors";
 import { validateName } from "@/lib/names";
+import { knownZone } from "@/lib/zoned";
 import type { Prisma } from "@/generated/prisma/client";
 import type { TeamRole } from "@/lib/auth/team";
 
@@ -240,6 +241,18 @@ export async function removeMember(teamId: string, userId: string): Promise<Role
 
     return { ok: true };
   });
+}
+
+/**
+ * The clock the archive keeps. Refused rather than quietly coerced when the
+ * runtime does not recognise it: silently filing everything under UTC because
+ * of a typo is how you end up distrusting every date in here.
+ */
+export async function setTeamTimezone(teamId: string, zone: string): Promise<RoleChange> {
+  const wanted = zone.trim();
+  if (!wanted || knownZone(wanted) !== wanted) return { ok: false, code: "TIMEZONE_UNKNOWN" };
+  await prisma.team.update({ where: { id: teamId }, data: { timezone: wanted } });
+  return { ok: true };
 }
 
 export async function renameTeam(teamId: string, name: string): Promise<RoleChange> {
