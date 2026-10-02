@@ -46,7 +46,7 @@ or is a rule that was argued about and settled:
   name claims their statements — while a different spelling deliberately starts a separate
   person;
 - **no read crosses between teams**: the feed, a record fetched by id, reactions,
-  leaderboards, profiles, tags and the arena are each checked against a second archive
+  leaderboards, profiles and the arena are each checked against a second archive
   holding a namesake and a higher-aura record. `tests/db/teams.test.ts` is the file to extend
   whenever a service grows a new query;
 - **no write crosses between teams either**, which is a separate file because it was a

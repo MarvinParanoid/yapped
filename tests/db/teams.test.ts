@@ -8,11 +8,9 @@ import {
   prisma,
   resetDatabase,
 } from "./setup";
-import {
-  countYaps,
+import {countYaps,
   createYap,
   getYap,
-  listTags,
   listYaps,
   restoreYap,
   softDeleteYap,
@@ -142,7 +140,7 @@ describe("one instance, separate archives", () => {
     );
   });
 
-  test("tags and the arena are per-team", async () => {
+  test("the arena is per-team", async () => {
     await resetDatabase();
     const other = await makeTeam("other", "Other Corp");
     const mine = await makeUser("Mine", TEAM);
@@ -154,7 +152,6 @@ describe("one instance, separate archives", () => {
       authorId: mine.id,
       submittedById: mine.id,
       saidAt: new Date(),
-      tags: ["деплой"],
     });
     await createYap({
       teamId: other.id,
@@ -162,11 +159,7 @@ describe("one instance, separate archives", () => {
       authorId: yours.id,
       submittedById: yours.id,
       saidAt: new Date(),
-      tags: ["deploy"],
     });
-
-    assert.deepEqual((await listTags(TEAM)).map((tag) => tag.slug), ["деплой"]);
-    assert.deepEqual((await listTags(other.id)).map((tag) => tag.slug), ["deploy"]);
 
     // Four records here, one there: the arena opens on one side only.
     for (let i = 0; i < 4; i += 1) await makeYap({ authorId: mine.id });

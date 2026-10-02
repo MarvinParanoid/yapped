@@ -13,7 +13,6 @@ export type TitleStats = {
   witnessedCount: number;
   battleWins: number;
   loreCount: number;
-  topTagCount: number;
 };
 
 export type Title = {

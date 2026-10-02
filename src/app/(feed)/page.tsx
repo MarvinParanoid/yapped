@@ -7,7 +7,7 @@ import { StatTicker } from "@/components/stat-ticker";
 import { YapCard } from "@/components/yap-card";
 import { EmptyState, FirstRun } from "@/components/ui/empty-state";
 import { Panel } from "@/components/ui/panel";
-import { assignEmphasis, tagWeight } from "@/lib/archival";
+import { assignEmphasis } from "@/lib/archival";
 import { describeFilter, isEmptyFilter, parseSearch, type FilterChip } from "@/lib/search";
 import { cn } from "@/lib/cn";
 import { canModerate, requireViewer } from "@/lib/auth/team";
@@ -15,7 +15,7 @@ import type { Dictionary } from "@/lib/i18n/en";
 import { fill, plural } from "@/lib/i18n/locale";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { formatCount } from "@/lib/format";
-import { countYaps, getArchiveStats, listTags, listYaps } from "@/lib/services/yaps";
+import { countYaps, getArchiveStats, listYaps } from "@/lib/services/yaps";
 import { getLeaderboard } from "@/lib/services/yappers";
 import { getMomentum } from "@/lib/services/aura-history";
 import { hasAnniversaryToday } from "@/lib/services/on-this-day";
@@ -29,8 +29,6 @@ function chipLabel(chip: FilterChip, d: Dictionary): string {
   switch (chip.kind) {
     case "text":
       return `“${chip.value}”`;
-    case "tag":
-      return `#${chip.value}`;
     case "verification":
       return d.verification[chip.value].toLowerCase();
     case "saidBy":
@@ -88,7 +86,6 @@ export default async function FeedPage({
       ? rangeParam
       : DEFAULT_RANGE[sort];
   const query = read("q") ?? "";
-  const tag = read("tag") ?? "";
   const pageParam = Number(read("page") ?? "1");
   const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
 
@@ -97,8 +94,8 @@ export default async function FeedPage({
   // Any query at all puts the feed in search mode — including one that parsed
   // to nothing, so an unrecognised qualifier is reported rather than silently
   // returning the ordinary feed.
-  const filtering = Boolean(query.trim()) || Boolean(tag);
-  const narrowed = !isEmptyFilter(filter) || Boolean(tag);
+  const filtering = Boolean(query.trim());
+  const narrowed = !isEmptyFilter(filter);
   // Searching is its own mode: it runs over the whole archive, and the window
   // control steps aside rather than silently hiding older matches.
   const effectiveRange: RangeKey = filtering ? "all" : range;
@@ -109,14 +106,13 @@ export default async function FeedPage({
   const teamId = viewer.team.id;
   const user = viewer.user;
   const PER_PAGE = 25;
-  const listOptions = { teamId, sort, range: effectiveRange, filter, tag };
+  const listOptions = { teamId, sort, range: effectiveRange, filter };
 
-  const [stats, yaps, total, leaders, tags, periods] = await Promise.all([
+  const [stats, yaps, total, leaders, periods] = await Promise.all([
     getArchiveStats(teamId),
     listYaps({ ...listOptions, viewerId: user.id, take: PER_PAGE, skip: (page - 1) * PER_PAGE }),
     countYaps(listOptions),
     getLeaderboard(teamId, "all", 6),
-    listTags(teamId, 30),
     listPeriods(teamId),
   ]);
   // Only offered when there is actually something to remember.
@@ -134,8 +130,6 @@ export default async function FeedPage({
   const emphasis = assignEmphasis(yaps);
   // Secondary panels arrive as the archive fills out, rather than sitting there
   // announcing how little is in it.
-  const MIN_TAGS_SHOWN = 5;
-  const showTags = tags.length >= MIN_TAGS_SHOWN;
   const elsewhere = [
     { href: "/random", label: d.nav.random, note: d.feed.randomNote },
     { href: "/battle/hall", label: d.feed.hallOfYap, note: d.feed.hallNote },
@@ -159,22 +153,12 @@ export default async function FeedPage({
     if (sort !== "trending") search.set("sort", sort);
     if (effectiveRange !== "all") search.set("range", effectiveRange);
     if (query) search.set("q", query);
-    if (tag) search.set("tag", tag);
     if (target > 1) search.set("page", String(target));
     const qs = search.toString();
     return qs ? `/?${qs}` : "/";
   };
   // An empty archive is a first day, not a failure.
   const archiveEmpty = stats.yapCount === 0;
-  const maxTagCount = tags[0]?.count ?? 1;
-
-  const TAG_STYLES = [
-    "text-[10px] text-muted",
-    "text-[11px] text-ink/70",
-    "text-[13px] font-bold text-ink",
-    "text-[16px] font-bold text-ink",
-  ];
-
   return (
     <div className="mx-auto max-w-[1400px] px-4 pb-16 sm:px-6 lg:px-8">
       <StatTicker stats={stats} />
@@ -204,11 +188,6 @@ export default async function FeedPage({
                 <span className="label text-paper">
                   {narrowed ? d.feed.filteringBy : d.feed.noFilter}
                 </span>
-                {tag ? (
-                  <span className="mono border border-paper/30 px-2 py-0.5 text-[12px]">
-                    #{tag}
-                  </span>
-                ) : null}
                 {describeFilter(filter).map((chip, index) => (
                   <span
                     key={`${chip.kind}-${index}`}
@@ -241,7 +220,7 @@ export default async function FeedPage({
             {yaps.length === 0 ? (
               <EmptyState
                 hint={
-                  query || tag ? d.empty.noResultsHint : d.empty.nothingInWindow
+                  d.empty.noResultsHint
                 }
               />
             ) : (
@@ -285,28 +264,6 @@ export default async function FeedPage({
         <aside className="hidden flex-col gap-6 lg:flex">
           <div className="sticky top-[120px] flex flex-col gap-6">
             <SidebarLeaders entries={leaders} />
-
-            {/* Size is frequency: the team's vocabulary, ranked by damage.
-                Hidden until there is enough of one to rank. */}
-            {showTags ? (
-            <Panel label={d.feed.tags} bodyClassName="px-3 py-3">
-              <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                {tags.map((item) => (
-                  <Link
-                    key={item.slug}
-                    href={`/?tag=${encodeURIComponent(item.slug)}`}
-                    title={fill(plural(locale, item.count, [d.feed.yapCountOne, d.feed.yapCountFew, d.feed.yapCountMany]), { n: formatCount(item.count) })}
-                    className={cn(
-                      "font-mono leading-tight transition-colors duration-100 hover:text-acid-deep",
-                      TAG_STYLES[tagWeight(item.count, maxTagCount)],
-                    )}
-                  >
-                    #{item.label}
-                  </Link>
-                ))}
-              </div>
-            </Panel>
-            ) : null}
 
             <Link href="/battle" className="group block border border-ink bg-ink p-4 text-paper">
               <span className="label text-muted-dark">{d.feed.battleKicker}</span>

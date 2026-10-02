@@ -14,7 +14,6 @@ export type SearchFilter = {
   text: string;
   author?: string;
   submitter?: string;
-  tag?: string;
   aura?: { op: AuraOp; value: number };
   verification?: "UNVERIFIED" | "WITNESSED" | "CONFIRMED" | "CERTIFIED";
   has: Array<"evidence" | "lore" | "witnesses" | "dispute">;
@@ -26,7 +25,6 @@ export type SearchFilter = {
 export const SEARCH_QUALIFIERS = [
   { example: "from:anna", hint: "whoSaid" },
   { example: "by:dima", hint: "whoFiled" },
-  { example: "tag:прод", hint: "tagged" },
   { example: "aura:>500", hint: "comparison" },
   { example: "status:certified", hint: "statuses" },
   { example: "has:evidence", hint: "haves" },
@@ -86,9 +84,6 @@ export function parseSearch(input: string): SearchFilter {
       case "submitter":
         filter.submitter = value;
         break;
-      case "tag":
-        filter.tag = value.replace(/^#/, "").toLowerCase();
-        break;
       case "aura": {
         const aura = parseAura(value);
         if (aura) filter.aura = aura;
@@ -142,7 +137,6 @@ export function isEmptyFilter(filter: SearchFilter): boolean {
     !filter.text &&
     !filter.author &&
     !filter.submitter &&
-    !filter.tag &&
     !filter.aura &&
     !filter.verification &&
     filter.has.length === 0 &&
@@ -160,7 +154,6 @@ const ISO = (date: Date) => date.toISOString().slice(0, 10);
  */
 export type FilterChip =
   | { kind: "text"; value: string }
-  | { kind: "tag"; value: string }
   | { kind: "verification"; value: "UNVERIFIED" | "WITNESSED" | "CONFIRMED" | "CERTIFIED" }
   | { kind: "saidBy" | "filedBy"; name: string }
   | { kind: "auraChip"; op: string; value: number }
@@ -173,7 +166,6 @@ export function describeFilter(filter: SearchFilter): FilterChip[] {
   if (filter.text) chips.push({ kind: "text", value: filter.text });
   if (filter.author) chips.push({ kind: "saidBy", name: filter.author });
   if (filter.submitter) chips.push({ kind: "filedBy", name: filter.submitter });
-  if (filter.tag) chips.push({ kind: "tag", value: filter.tag });
   if (filter.aura) chips.push({ kind: "auraChip", op: filter.aura.op, value: filter.aura.value });
   if (filter.verification) chips.push({ kind: "verification", value: filter.verification });
   for (const has of filter.has) {

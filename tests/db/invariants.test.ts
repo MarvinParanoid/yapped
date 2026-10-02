@@ -112,7 +112,6 @@ describe("the author's own position", () => {
       authorId: author.id,
       submittedById: author.id,
       saidAt: new Date(),
-      tags: [],
     });
     const mine = await prisma.yap.findUniqueOrThrow({ where: { id } });
     assert.ok(mine.acknowledgedAt);
@@ -124,7 +123,6 @@ describe("the author's own position", () => {
       authorId: author.id,
       submittedById: other.id,
       saidAt: new Date(),
-      tags: [],
     });
     assert.equal((await prisma.yap.findUniqueOrThrow({ where: { id: id2 } })).acknowledgedAt, null);
   });
@@ -374,7 +372,6 @@ describe("whoever files a record witnessed it", () => {
       authorId: author.id,
       submittedById: archivist.id,
       saidAt: new Date(),
-      tags: [],
     });
 
     const yap = await prisma.yap.findUniqueOrThrow({
@@ -398,7 +395,6 @@ describe("whoever files a record witnessed it", () => {
       authorId: author.id,
       submittedById: author.id,
       saidAt: new Date(),
-      tags: [],
     });
 
     const yap = await prisma.yap.findUniqueOrThrow({

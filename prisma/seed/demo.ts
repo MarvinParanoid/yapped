@@ -6,7 +6,6 @@ import { verificationFor } from "../../src/lib/verification";
 import { nextRatings } from "../../src/lib/ranking/elo";
 import { buildKey, createLocalDriver } from "../../src/lib/storage/local";
 import { hashPassword } from "../../src/lib/auth/password";
-import { slugifyTag } from "../../src/lib/format";
 import { AUDIENCE, UNCLAIMED_YAPPER, YAPPERS, YAPS, type SeedYap } from "./fixture";
 
 /**
@@ -92,11 +91,9 @@ export async function seedDemo(): Promise<void> {
     prisma.reaction.deleteMany(),
     prisma.witness.deleteMany(),
     prisma.evidence.deleteMany(),
-    prisma.yapTag.deleteMany(),
     prisma.userAchievement.deleteMany(),
     prisma.session.deleteMany(),
     prisma.yap.deleteMany(),
-    prisma.tag.deleteMany(),
     prisma.invite.deleteMany(),
     prisma.membership.deleteMany(),
     prisma.user.deleteMany(),
@@ -150,17 +147,6 @@ export async function seedDemo(): Promise<void> {
   }
   const everyone = [...yapperIds.values(), ...audienceIds];
 
-  const tagIds = new Map<string, string>();
-  const ensureTag = async (label: string) => {
-    const slug = slugifyTag(label);
-    if (!slug) return null;
-    const existing = tagIds.get(slug);
-    if (existing) return existing;
-    const tag = await prisma.tag.create({ data: { teamId, slug, label: slug } });
-    tagIds.set(slug, tag.id);
-    return tag.id;
-  };
-
   let reactionRows = 0;
   let witnessRows = 0;
   const createdYapIds: number[] = [];
@@ -209,13 +195,6 @@ export async function seedDemo(): Promise<void> {
       },
     });
     createdYapIds.push(yap.id);
-
-    for (const label of seed.tags) {
-      const tagId = await ensureTag(label);
-      if (tagId) {
-        await prisma.yapTag.create({ data: { yapId: yap.id, tagId } }).catch(() => undefined);
-      }
-    }
 
     if (seed.evidence) {
       const rendered = await renderEvidence(seed.evidence);
@@ -408,7 +387,6 @@ export async function seedDemo(): Promise<void> {
         (Date.now() - Math.min(...authored.map((yap) => yap.saidAt.getTime()))) /
           (24 * 60 * 60 * 1000),
       ),
-      topTagCount: 0,
     });
     for (const badge of badges) {
       await prisma.userAchievement.create({ data: { userId, key: badge.key } });

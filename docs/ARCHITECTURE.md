@@ -103,7 +103,7 @@ constants in the two ranking modules.
 
 ### 1.3c Tenancy: a required argument, not a filter
 
-An instance holds one or more **teams**, and a team *is* an archive — records, tags,
+An instance holds one or more **teams**, and a team *is* an archive — records,
 battles, leaderboard, Wrapped. Nothing crosses between them.
 
 The enforcement is a type, not a convention: `teamId` is a **required parameter** of every
@@ -217,15 +217,14 @@ User ──< Session
 User ──< UserAchievement
 User ──< Battle (voterId)
 Yap  ──< Evidence
-Yap  ──< YapTag >── Tag
 Yap  ──< Battle (winnerId / loserId)
 ```
 
 ### Tables
 
-**Team** — an archive. `id (cuid)`, `name`, `slug @unique`, `createdAt`. `Yap`, `Tag`
-and `Battle` each carry a non-null `teamId`; `Tag` is unique on `(teamId, slug)`, so two teams
-may both have a `#плесень` and they are different tags.
+**Team** — an archive. `id (cuid)`, `name`, `slug @unique`, `createdAt`. `Yap` and
+`Battle` each carry a non-null `teamId`, and every service takes the team as a required
+argument, so a forgotten filter is a compile error rather than a leak.
 
 **Membership** — a person's standing in one archive. `teamId`, `userId`,
 `role (OWNER|ADMIN|MEMBER)`, `joinedAt`, `@@unique([teamId, userId])`. A team always keeps at
@@ -269,9 +268,6 @@ deletes any that already existed and recomputes the tallies.
 **Reaction** — one row per (yap, user, type). `@@unique([yapId, userId, type])` enforces
 "a user can only give each reaction once"; a second click deletes the row (toggle).
 Types: `BASED 🔥 | DEAD 💀 | REAL 😭 | CRINGE 🤡 | STONE 🗿`.
-
-**Tag** — `id`, `slug @unique` (normalized, lowercased, unicode-safe), `label`, `createdAt`.
-**YapTag** — join table, `@@id([yapId, tagId])`.
 
 **Evidence** — `id`, `yapId`, `storageKey` (path inside the storage driver, *not* a URL),
 `mimeType`, `width?`, `height?`, `caption?`, `position` (so "EVIDENCE #01" is stable),
@@ -325,7 +321,7 @@ makes it the visual regression fixture as much as the demo. `Плесень ха
 
 | Route | Rendering | Purpose |
 |---|---|---|
-| `/` | dynamic RSC | Feed. `?sort=trending\|fresh\|top` × `?range=today\|week\|month\|all`, `?q=`, `?tag=` |
+| `/` | dynamic RSC | Feed. `?sort=trending\|fresh\|top` × `?range=today\|week\|month\|all`, `?q=` |
 | `/yap/[id]` | dynamic RSC | Yap detail: quote, lore, evidence, reactions, archival metadata, more from the same yapper |
 | `/yap/[id]/share` | dynamic RSC | Preview of the 1200×630 `ShareCard` at exact size — the future OG-image source |
 | `/market` | dynamic RSC | YAP INDEX: movers, new listings and dormant records over `?window=` |
@@ -333,7 +329,7 @@ makes it the visual regression fixture as much as the demo. `Плесень ха
 | `/wrapped` | dynamic RSC | Available periods |
 | `/wrapped/[year]` · `/wrapped/[year]/[month]` | dynamic RSC | The period report |
 | `/yappers` | dynamic RSC | Leaderboard, `?range=` all time / month / week |
-| `/yapper/[id]` | dynamic RSC | Profile: stats, badges, tag breakdown, best yap, full history |
+| `/yapper/[id]` | dynamic RSC | Profile: stats, badges, best yap, full history |
 | `/random` | dynamic RSC | One fullscreen quote, "GET YAPPED AGAIN" |
 | `/battle` | dynamic RSC + action | WHO YAPPED HARDER? two quotes, vote, next pair |
 | `/battle/hall` | dynamic RSC | HALL OF YAP — Elo leaderboard |
@@ -544,8 +540,16 @@ a status and a chronology. It was withdrawn once the archive held real records: 
 answers "why does this record exist", and a case number on top of that was ceremony for a
 situation that came up about never.
 
-If six quotes from one call ever do need to be read together, that is a shared tag or a "more
-from this day" view, not a second domain entity.
+**Tags went the same way, and for the same reason.** Every record could carry up to six of
+them; the submit form asked for them before a quote could be filed, the sidebar ranked them by
+frequency, and `tag:` was a search qualifier. Six records into a real archive nobody had
+filtered by one. They were withdrawn on the team's own call: decide again when there is enough
+in here that finding something is actually hard, with real usage to look at rather than a
+guess. Search still has free text, `from:`, `by:`, `aura:`, `status:`, `has:`, `before:` and
+`after:`.
+
+If six quotes from one call ever do need to be read together, that is a "more from this day"
+view, not a second domain entity.
 
 ### 5.3a Search qualifiers
 
@@ -596,8 +600,8 @@ the sections and the window control have disjoint vocabularies:
 | Fresh | none | ordered by arrival; a window would say nothing |
 
 Search is an action rather than a filter, so it lives in the header as a collapsed `⌕` (and on
-the `/` key) instead of competing with the window control. An active search or tag renders as
-one inverted banner above the feed with a record count and a clear.
+the `/` key) instead of competing with the window control. An active search renders as one
+inverted banner above the feed with a record count and a clear.
 
 ### 5.5 A control must look like a control
 

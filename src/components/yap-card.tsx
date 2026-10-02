@@ -4,7 +4,6 @@ import { Stamp } from "@/components/ui/stamp";
 import { VerificationBadge } from "@/components/ui/verification-badge";
 import { QuoteText } from "@/components/quote-text";
 import { ReactionBar } from "@/components/reaction-bar";
-import { TagList } from "@/components/tag-list";
 import { YapMenu } from "@/components/yap-menu";
 import { archivalNote, isDisputed, type Emphasis } from "@/lib/archival";
 import { fill, plural } from "@/lib/i18n/locale";
@@ -71,7 +70,6 @@ export async function YapCard({
             — {yap.author.displayName}
           </Link>
           <span className="label">{formatDate(yap.saidAt, months)}</span>
-          <TagList tags={yap.tags} max={2} />
           <div className="ml-auto">
             <ReactionBar
               yapId={yap.id}
@@ -167,7 +165,6 @@ export async function YapCard({
               — {yap.author.displayName}
             </Link>
             <span className="label">{formatDate(yap.saidAt, months)}</span>
-            <TagList tags={yap.tags} max={3} />
           </div>
 
           {/* A line of lore changes the card's rhythm without unfolding it. */}

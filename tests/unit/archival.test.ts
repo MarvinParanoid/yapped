@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { archivalNote, assignEmphasis, isDisputed, tagWeight } from "@/lib/archival";
+import { archivalNote, assignEmphasis, isDisputed } from "@/lib/archival";
 import { classifyMomentum } from "@/lib/ranking/momentum";
 import type { YapView } from "@/lib/types";
 
@@ -14,7 +14,7 @@ function record(over: Partial<YapView> = {}): YapView {
     aura: 100, reactionCount: 0, viewCount: 0,
     eloRating: 1500, battleWins: 0, battleLosses: 0,
     author: { id: "a", displayName: "A", handle: null, avatarUrl: null, title: null, hasAccount: true },
-    submittedBy: null, tags: [], evidence: [],
+    submittedBy: null, evidence: [],
     counts: { BASED: 0, DEAD: 0, REAL: 0, CRINGE: 0, STONE: 0 },
     viewerReactions: [], viewerStance: null,
     ...over,
@@ -65,14 +65,6 @@ describe("archival notes", () => {
 
   test("popularity is not a marker", () => {
     assert.equal(archivalNote(record({ aura: 99999, reactionCount: 500 })), null);
-  });
-});
-
-describe("tag weight", () => {
-  test("scales with frequency and never divides by zero", () => {
-    assert.equal(tagWeight(4, 4), 3);
-    assert.equal(tagWeight(1, 4), 0);
-    assert.equal(tagWeight(1, 1), 1);
   });
 });
 

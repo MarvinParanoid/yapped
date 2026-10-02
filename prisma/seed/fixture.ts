@@ -6,7 +6,6 @@ export type SeedYap = {
   daysAgo: number;
   hour: number;
   minute: number;
-  tags: string[];
   lore?: string;
   /** 0..1 — how hard the office reacted. Drives seeded reaction volume. */
   heat: number;
@@ -67,7 +66,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 28,
     hour: 14,
     minute: 37,
-    tags: ["плесень", "хайп", "классика", "дизайн"],
     heat: 1,
     testimony: { witnesses: 4 },
     classification: "CLASSIFIED",
@@ -84,7 +82,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 8,
     hour: 11,
     minute: 2,
-    tags: ["легендарное", "рот", "база"],
     heat: 0.95,
     testimony: { witnesses: 2, denials: 2 },
     classification: "UNHINGED",
@@ -96,7 +93,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 14,
     hour: 16,
     minute: 21,
-    tags: ["продакшн", "вайб", "риски"],
     heat: 0.88,
     testimony: { witnesses: 0 },
     lore: "Речь шла о миграции базы. Вайб не помог.",
@@ -107,7 +103,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 23,
     hour: 12,
     minute: 9,
-    tags: ["инфра", "надежда", "cdn"],
     heat: 0.85,
     lore: "Ответ на вопрос «мы точно не хотим CDN?». Интернет не вывез. Интернет отдал 12 мегабайт JPEG каждому посетителю лендинга.",
   },
@@ -117,7 +112,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 31,
     hour: 10,
     minute: 44,
-    tags: ["классика", "баг", "фича"],
     heat: 0.8,
   },
   {
@@ -126,7 +120,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 5,
     hour: 18,
     minute: 3,
-    tags: ["вайб", "процессы"],
     heat: 0.78,
   },
   {
@@ -135,7 +128,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 12,
     hour: 19,
     minute: 48,
-    tags: ["prod", "famous-last-words", "friday"],
     heat: 0.82,
     lore: "It was not, in any meaningful sense, a typo fix. It touched 41 files and one of them was the auth middleware.",
     evidence: {
@@ -150,7 +142,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 19,
     hour: 13,
     minute: 15,
-    tags: ["метрики", "оптимизм"],
     heat: 0.74,
   },
   {
@@ -159,7 +150,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 27,
     hour: 9,
     minute: 58,
-    tags: ["классика", "локально"],
     heat: 0.7,
   },
   {
@@ -168,7 +158,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 4,
     hour: 15,
     minute: 32,
-    tags: ["инфра", "решение"],
     heat: 0.55,
   },
   {
@@ -177,7 +166,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 16,
     hour: 11,
     minute: 27,
-    tags: ["легаси", "археология"],
     heat: 0.86,
     lore: "На момент фразы был сентябрь.",
   },
@@ -187,7 +175,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 9,
     hour: 17,
     minute: 12,
-    tags: ["дизайн", "кнопка"],
     heat: 0.68,
   },
   {
@@ -196,7 +183,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 6,
     hour: 10,
     minute: 5,
-    tags: ["meeting", "vibe", "corporate"],
     heat: 0.72,
   },
   {
@@ -205,7 +191,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 35,
     hour: 14,
     minute: 2,
-    tags: ["техдолг", "характер"],
     heat: 0.9,
     classification: "UNHINGED",
   },
@@ -215,7 +200,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 41,
     hour: 16,
     minute: 40,
-    tags: ["тесты", "qa", "классика"],
     heat: 0.84,
   },
   {
@@ -225,7 +209,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 21,
     hour: 12,
     minute: 51,
-    tags: ["онбординг", "очевидно"],
     heat: 0.6,
     lore: "Это не было очевидно. Это не было очевидно вообще никому, включая автора, что выяснилось через сорок минут.",
   },
@@ -238,7 +221,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 48,
     hour: 18,
     minute: 22,
-    tags: ["документация", "ложь"],
     heat: 0.76,
     lore: "Документация состояла из одного файла README.md, в котором было написано «TODO».",
   },
@@ -249,7 +231,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 55,
     hour: 11,
     minute: 8,
-    tags: ["оценка", "сроки"],
     heat: 0.8,
     lore: "Заняло три недели. Из них две — на то, чтобы понять, почему первая неделя не сработала.",
   },
@@ -259,7 +240,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 13,
     hour: 15,
     minute: 44,
-    tags: ["agile", "retro", "ship"],
     heat: 0.71,
   },
   {
@@ -268,7 +248,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 7,
     hour: 13,
     minute: 36,
-    tags: ["база", "предчувствие"],
     heat: 0.66,
     lore: "База не пережила. Рита теперь говорит «я же сказала» примерно раз в неделю, и это справедливо.",
   },
@@ -278,7 +257,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 3,
     hour: 9,
     minute: 14,
-    tags: ["прод", "расследование"],
     heat: 0.79,
   },
   {
@@ -287,7 +265,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 29,
     hour: 20,
     minute: 6,
-    tags: ["архитектура", "if"],
     heat: 0.73,
   },
   {
@@ -296,7 +273,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 11,
     hour: 12,
     minute: 30,
-    tags: ["дизайн", "согласование"],
     heat: 0.69,
   },
   {
@@ -305,7 +281,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 38,
     hour: 22,
     minute: 17,
-    tags: ["magic", "legacy", "prod"],
     heat: 0.87,
     classification: "CLASSIFIED",
   },
@@ -315,7 +290,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 1,
     hour: 10,
     minute: 55,
-    tags: ["поток", "фокус"],
     heat: 0.5,
   },
   {
@@ -324,7 +298,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 18,
     hour: 14,
     minute: 24,
-    tags: ["созвон", "память"],
     heat: 0.83,
   },
   {
@@ -333,7 +306,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 25,
     hour: 16,
     minute: 11,
-    tags: ["данные", "паша"],
     heat: 0.75,
   },
   {
@@ -342,7 +314,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 44,
     hour: 19,
     minute: 2,
-    tags: ["грейды", "философия"],
     heat: 0.67,
   },
   {
@@ -351,7 +322,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 10,
     hour: 11,
     minute: 49,
-    tags: ["процессы", "решение"],
     heat: 0.64,
   },
   {
@@ -360,7 +330,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 33,
     hour: 13,
     minute: 58,
-    tags: ["дискуссия", "уточнение"],
     heat: 0.62,
   },
   {
@@ -369,7 +338,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 52,
     hour: 21,
     minute: 33,
-    tags: ["прод", "философия", "страх"],
     heat: 0.89,
     classification: "UNHINGED",
     lore: "Сказано в 21:33 в пятницу. К 22:10 это перестало быть шуткой.",
@@ -380,7 +348,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 20,
     hour: 10,
     minute: 41,
-    tags: ["рефакторинг", "переосмысление"],
     heat: 0.7,
   },
   {
@@ -389,7 +356,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 15,
     hour: 15,
     minute: 19,
-    tags: ["перфоманс", "ноутбук"],
     heat: 0.65,
   },
   {
@@ -398,7 +364,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 2,
     hour: 10,
     minute: 1,
-    tags: ["стендап", "время"],
     heat: 0.77,
     lore: "46 минут.",
   },
@@ -408,7 +373,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 26,
     hour: 17,
     minute: 55,
-    tags: ["прод", "проверка"],
     heat: 0.81,
     lore: "Случилось. Через сорок минут. У всех.",
   },
@@ -418,7 +382,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 6,
     hour: 23,
     minute: 12,
-    tags: ["сервер", "эвфемизм"],
     heat: 0.86,
   },
   {
@@ -427,7 +390,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 17,
     hour: 9,
     minute: 37,
-    tags: ["приоритеты", "срочно"],
     heat: 0.72,
   },
   {
@@ -436,7 +398,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 30,
     hour: 12,
     minute: 14,
-    tags: ["agile", "дедлайн"],
     heat: 0.74,
   },
   {
@@ -445,7 +406,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 40,
     hour: 14,
     minute: 46,
-    tags: ["согласование", "архив"],
     heat: 0.68,
   },
   {
@@ -454,7 +414,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 22,
     hour: 18,
     minute: 59,
-    tags: ["хотфикс", "стратегия"],
     heat: 0.71,
   },
   {
@@ -463,7 +422,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 36,
     hour: 11,
     minute: 23,
-    tags: ["логи", "оптимизм"],
     heat: 0.84,
   },
   {
@@ -472,7 +430,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 45,
     hour: 16,
     minute: 8,
-    tags: ["ответственность", "надежда"],
     heat: 0.63,
   },
   {
@@ -481,7 +438,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 50,
     hour: 13,
     minute: 27,
-    tags: ["architecture", "irony"],
     heat: 0.78,
     lore: "Said while adding a fourth abstraction layer to a function that formats a date.",
   },
@@ -491,7 +447,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 60,
     hour: 15,
     minute: 5,
-    tags: ["метрики", "продукт", "фильтр"],
     heat: 0.88,
     classification: "CLASSIFIED",
     evidence: {
@@ -506,7 +461,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 365,
     hour: 12,
     minute: 15,
-    tags: ["архив", "история", "раньше"],
     heat: 0.66,
     lore: "Сказано ровно за год до того, как архив всё-таки завели.",
   },
@@ -516,7 +470,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 365,
     hour: 17,
     minute: 48,
-    tags: ["память", "прогноз", "классика"],
     heat: 0.81,
     testimony: { witnesses: 3 },
     lore: "Вспомнили. Ровно через год, на этой самой странице.",
@@ -527,7 +480,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 366,
     hour: 10,
     minute: 32,
-    tags: ["временное", "прод", "легаси"],
     heat: 0.74,
     lore: "Решение проработало без изменений весь следующий год.",
   },
@@ -537,7 +489,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 28,
     hour: 14,
     minute: 37,
-    tags: ["плесень", "архив", "основание"],
     heat: 0.62,
     lore: "Момент, в который Yapped стал неизбежен.",
   },
@@ -547,7 +498,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 28,
     hour: 14,
     minute: 38,
-    tags: ["плесень", "вопрос"],
     heat: 0.55,
   },
   {
@@ -556,7 +506,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 27,
     hour: 11,
     minute: 4,
-    tags: ["плесень", "дизайн", "просьба"],
     heat: 0.58,
   },
   {
@@ -565,7 +514,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 27,
     hour: 11,
     minute: 9,
-    tags: ["плесень", "фича", "классика"],
     heat: 0.72,
     lore: "Плесень осталась на макете ещё на две недели.",
   },
@@ -575,7 +523,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 43,
     hour: 10,
     minute: 18,
-    tags: ["договорённости", "память"],
     heat: 0.58,
   },
   {
@@ -584,7 +531,6 @@ export const YAPS: SeedYap[] = [
     daysAgo: 58,
     hour: 19,
     minute: 41,
-    tags: ["прод", "данные", "реализм"],
     heat: 0.85,
     lore: "В базе продакшена три недели жил пользователь «Тест Тестович Тестов» с балансом 999 999 ₽. Его нашли только потому, что он попал в топ лидерборда.",
   },

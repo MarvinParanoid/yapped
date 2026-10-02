@@ -55,7 +55,7 @@ gap is the most interesting thing the archive can show you.
 | | |
 |---|---|
 | <img src="docs/screenshots/record.png" alt="A record" width="100%"> | <img src="docs/screenshots/profile.png" alt="A yapper's profile" width="100%"> |
-| **A record.** Lore, evidence, the verification ladder and the chain of testimony. | **A yapper.** Said vs. filed, battle record, known associates, frequent vocabulary. |
+| **A record.** Lore, evidence, the verification ladder and the chain of testimony. | **A yapper.** Said vs. filed, battle record, known associates, badges earned. |
 | <img src="docs/screenshots/battle.png" alt="Yap battle" width="100%"> | <img src="docs/screenshots/wrapped.png" alt="Wrapped" width="100%"> |
 | **Yap battle.** Two quotes, one vote, Elo underneath. | **Wrapped.** The period, quantified after the fact. |
 | <img src="docs/screenshots/market.png" alt="Aura market" width="100%"> | |
@@ -264,7 +264,7 @@ BACKUP_MIRROR=you@elsewhere:/backups/yapped ./scripts/backup.sh
 
 ## Teams, invites and access
 
-An instance holds one or more **teams**, and a team is an archive: its own records, tags,
+An instance holds one or more **teams**, and a team is an archive: its own records,
 leaderboard, battles and Wrapped. Nothing crosses between them.
 
 Access is by invitation only — there is no open registration and no anonymous browsing.
@@ -363,7 +363,7 @@ the first record is assigned `#00001`, and every page has its own empty copy.
 
 ```
 docs/ARCHITECTURE.md     the plan: schema, routes, component tree, design tokens
-prisma/schema.prisma     users, yaps, reactions, tags, evidence, battles, achievements
+prisma/schema.prisma     users, yaps, reactions, evidence, battles, achievements
 prisma/seed.ts           seed entry point — dispatches on SEED_MODE
 prisma/seed/base.ts      production baseline (deliberately empty)
 prisma/seed/demo.ts      the deterministic demo archive / regression fixture
@@ -395,7 +395,7 @@ aura reconstructed as it stood back then from reaction timestamps.
 **Wrapped** — `src/lib/services/wrapped.ts`. Monthly and yearly reports, derived on read from
 existing timestamps — no snapshot tables, so any past period can be opened at any time.
 
-**Search qualifiers** — `src/lib/search.ts`. `from:` `by:` `tag:` `aura:>500` `status:certified`
+**Search qualifiers** — `src/lib/search.ts`. `from:` `by:` `aura:>500` `status:certified`
 `has:evidence` `before:` `after:`, plus free text. Adding one is an entry in the parser
 and a clause in `buildWhere`.
 

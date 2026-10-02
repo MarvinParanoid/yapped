@@ -24,8 +24,6 @@ export type EvidenceView = {
   height: number | null;
 };
 
-export type TagView = { slug: string; label: string };
-
 /** The DTO every component speaks. Prisma types never leave the service layer. */
 export type YapView = {
   id: number;
@@ -50,7 +48,6 @@ export type YapView = {
   battleLosses: number;
   author: YapperRef;
   submittedBy: YapperRef | null;
-  tags: TagView[];
   evidence: EvidenceView[];
   counts: ReactionCounts;
   viewerReactions: ReactionKey[];

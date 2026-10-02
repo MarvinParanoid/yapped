@@ -21,7 +21,6 @@ model Team {
   memberships Membership[]
   invites     Invite[]
   yaps        Yap[]
-  tags        Tag[]
   battles     Battle[]
 }
 
@@ -139,7 +138,6 @@ model Yap {
 
   reactions    Reaction[]
   witnesses    Witness[]
-  tags         YapTag[]
   evidence     Evidence[]
   battlesWon   Battle[]   @relation("BattleWinner")
   battlesLost  Battle[]   @relation("BattleLoser")
@@ -219,31 +217,6 @@ model Witness {
 enum WitnessStance {
   PRESENT /// I was there
   DENIED /// cap
-}
-
-/// Tags are per team: one office's #прод is not another's.
-model Tag {
-  id        String   @id @default(cuid())
-  teamId    String
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  slug      String
-  label     String
-  createdAt DateTime @default(now())
-
-  yaps YapTag[]
-
-  @@unique([teamId, slug])
-  @@index([teamId])
-}
-
-model YapTag {
-  yapId Int
-  yap   Yap    @relation(fields: [yapId], references: [id], onDelete: Cascade)
-  tagId String
-  tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@id([yapId, tagId])
-  @@index([tagId])
 }
 
 /// EVIDENCE #01. The file itself lives behind the storage driver; the database

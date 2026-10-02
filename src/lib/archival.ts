@@ -63,12 +63,3 @@ export function isDisputed(note: ArchivalNote | null): boolean {
   return note === "disputed" || note === "disputedByAuthor";
 }
 
-/** Tag frequency drives type size: the team's vocabulary, ranked by damage. */
-export function tagWeight(count: number, max: number): 0 | 1 | 2 | 3 {
-  if (max <= 1) return 1;
-  const share = count / max;
-  if (share >= 0.85) return 3;
-  if (share >= 0.55) return 2;
-  if (share >= 0.3) return 1;
-  return 0;
-}

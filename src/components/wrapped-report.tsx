@@ -208,21 +208,6 @@ export async function WrappedReportView({
                 </Link>
               ) : null}
 
-              {report.topTag ? (
-                <Link
-                  href={`/?tag=${encodeURIComponent(report.topTag.slug)}`}
-                  className="border border-ink px-5 py-6 transition-colors duration-100 hover:bg-paper-2"
-                >
-                  <span className="label">{d.wrapped.mostDiscussed}</span>
-                  <p className="mono mt-1.5 text-[clamp(1.5rem,3.4vw,2.4rem)] font-bold">
-                    #{report.topTag.label}
-                  </p>
-                  <p className="label mt-1.5">
-                    {formatCount(report.topTag.count)}{" "}
-                    {fill(plural(locale, report.topTag.count, [d.sections.recordCountOne, d.sections.recordCountFew, d.sections.recordCountMany]), { n: formatCount(report.topTag.count) })}
-                  </p>
-                </Link>
-              ) : null}
             </div>
 
             {/* When the yapping actually happens. */}

@@ -202,7 +202,6 @@ export type YapperProfile = {
   };
   title: Title;
   badges: Achievement[];
-  topTags: Array<{ slug: string; label: string; count: number }>;
   bestYap: { id: number; code: string; text: string; aura: number } | null;
   /** Colleagues who keep turning up in the same rooms. */
   associates: Array<{ user: YapperRef; count: number }>;
@@ -235,7 +234,7 @@ export async function getYapperProfile(
 
   const where = { teamId, authorId: id, deletedAt: null };
 
-  const [yaps, tagLinks, ranking, corroborators, filedCount, testimonyGiven] = await Promise.all([
+  const [yaps, ranking, corroborators, filedCount, testimonyGiven] = await Promise.all([
     prisma.yap.findMany({
       where,
       select: {
@@ -255,7 +254,6 @@ export async function getYapperProfile(
         disputedAt: true,
       },
     }),
-    prisma.yapTag.findMany({ where: { yap: where }, include: { tag: true } }),
     prisma.yap.groupBy({
       by: ["authorId"],
       where: { teamId, deletedAt: null },
@@ -316,18 +314,6 @@ export async function getYapperProfile(
     if (!best || yap.aura > best.aura) best = { id: yap.id, text: yap.text, aura: yap.aura };
   }
 
-  const tagCounts = new Map<string, { slug: string; label: string; count: number }>();
-  for (const link of tagLinks) {
-    const entry = tagCounts.get(link.tag.slug) ?? {
-      slug: link.tag.slug,
-      label: link.tag.label,
-      count: 0,
-    };
-    entry.count += 1;
-    tagCounts.set(link.tag.slug, entry);
-  }
-  const topTags = [...tagCounts.values()].sort((a, b) => b.count - a.count).slice(0, 6);
-
   const stats: YapperStats = {
     yapCount,
     totalAura,
@@ -338,7 +324,6 @@ export async function getYapperProfile(
     oldestYapAgeDays: oldest
       ? Math.floor((Date.now() - oldest.getTime()) / (24 * 60 * 60 * 1000))
       : 0,
-    topTagCount: topTags[0]?.count ?? 0,
   };
 
   const rankIndex = ranking.findIndex((row) => row.authorId === id);
@@ -381,10 +366,8 @@ export async function getYapperProfile(
       witnessedCount,
       battleWins,
       loreCount,
-      topTagCount: topTags[0]?.count ?? 0,
     }),
     badges: evaluateAchievements(stats),
-    topTags,
     bestYap: best ? { id: best.id, code: yapCode(best.id), text: best.text, aura: best.aura } : null,
     associates,
     rank: rankIndex >= 0 ? rankIndex + 1 : null,

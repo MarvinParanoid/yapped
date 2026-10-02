@@ -11,7 +11,6 @@ import { LorePanel } from "@/components/lore-panel";
 import { WitnessPanel } from "@/components/witness-panel";
 import { QuoteText } from "@/components/quote-text";
 import { ReactionBar } from "@/components/reaction-bar";
-import { TagList } from "@/components/tag-list";
 import { YapCard } from "@/components/yap-card";
 import { YapMenu } from "@/components/yap-menu";
 import { YappedConfirmation } from "@/components/yapped-confirmation";
@@ -207,20 +206,6 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
           {evidence ? <EvidencePanel evidence={evidence} /> : null}
         </div>
 
-        {yap.tags.length > 0 ? (
-          <div className="mt-6 flex flex-wrap items-center gap-3 border border-ink px-3 py-3">
-            <span className="label">{d.record.tags}</span>
-            {yap.tags.map((tag) => (
-              <Link
-                key={tag.slug}
-                href={`/?tag=${encodeURIComponent(tag.slug)}`}
-                className="border border-ink px-2 py-1 font-mono text-[11px] transition-colors duration-100 hover:bg-ink hover:text-paper"
-              >
-                #{tag.label}
-              </Link>
-            ))}
-          </div>
-        ) : null}
 
         {/* Pseudo-archival metadata. Understated on purpose. */}
         <dl className="mt-6 grid grid-cols-2 border-l border-t border-ink sm:grid-cols-3 lg:grid-cols-5">

@@ -8,14 +8,12 @@ import {
   prisma,
   resetDatabase,
 } from "./setup";
-import {
-  acknowledgeYap,
+import {acknowledgeYap,
   createYap,
   disputeYap,
   editYap,
   restoreYap,
   setWitnessStance,
-  listTags,
   softDeleteYap,
   toggleReaction,
 } from "@/lib/services/yaps";
@@ -62,7 +60,6 @@ describe("writes do not cross between teams", () => {
           authorId: outsider.userId,
           submittedById: insider.id,
           saidAt: new Date(),
-          tags: [],
         }),
       /NOT_A_MEMBER/,
       "the author field arrives from a form — it has to be checked against the team",
@@ -84,7 +81,6 @@ describe("writes do not cross between teams", () => {
           authorId: insider.id,
           submittedById: outsider.userId,
           saidAt: new Date(),
-          tags: [],
         }),
       /NOT_A_MEMBER/,
     );
@@ -201,46 +197,5 @@ describe("an invite limit is never widened by accident", () => {
     const invite = await prisma.invite.findUniqueOrThrow({ where: { token } });
     assert.equal(invite.maxUses, 3);
     assert.ok(invite.expiresAt !== null);
-  });
-});
-
-/**
- * A tag's number is a claim about what the archive holds right now.
- */
-describe("tag sizes count what is still on the shelf", () => {
-  before(async () => {
-    await resetDatabase();
-  });
-
-  test("a redacted record stops counting towards its tag", async () => {
-    const owner = await makeUser("Owner");
-    await prisma.membership.updateMany({
-      where: { teamId: TEAM, userId: owner.id },
-      data: { role: "OWNER" },
-    });
-
-    const kept = await createYap({
-      teamId: TEAM, text: "Останется в деле.", authorId: owner.id,
-      submittedById: owner.id, saidAt: new Date(), tags: ["деплой"],
-    });
-    const redacted = await createYap({
-      teamId: TEAM, text: "Это вычеркнут.", authorId: owner.id,
-      submittedById: owner.id, saidAt: new Date(), tags: ["деплой", "плесень"],
-    });
-
-    assert.deepEqual(
-      (await listTags(TEAM)).map((tag) => [tag.slug, tag.count]),
-      [["деплой", 2], ["плесень", 1]],
-    );
-
-    assert.equal(await softDeleteYap(redacted, TEAM, owner.id), true);
-
-    assert.deepEqual(
-      (await listTags(TEAM)).map((tag) => [tag.slug, tag.count]),
-      [["деплой", 1]],
-      "the redacted record must stop inflating деплой, and take плесень off the list entirely",
-    );
-
-    assert.ok(await prisma.yap.findUnique({ where: { id: kept } }));
   });
 });

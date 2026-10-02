@@ -13,7 +13,7 @@ import {
   requireViewer,
   TEAM_COOKIE,
 } from "@/lib/auth/team";
-import { slugifyTag } from "@/lib/format";
+
 import type { Failure } from "@/lib/errors";
 import { NAME_MAX, NAME_MIN } from "@/lib/names";
 import { fill } from "@/lib/i18n/locale";
@@ -180,12 +180,6 @@ export async function submitYapAction(
   if (Number.isNaN(saidAt.getTime())) return { error: await say({ code: "DATE_INVALID" }) };
   if (saidAt.getTime() > Date.now() + 60_000) return { error: await say({ code: "DATE_FUTURE" }) };
 
-  const tags = String(formData.get("tags") ?? "")
-    .split(/[,\s]+/)
-    .map(slugifyTag)
-    .filter(Boolean)
-    .slice(0, 6);
-
   const lore = String(formData.get("lore") ?? "").trim();
 
   let yapId: number;
@@ -197,7 +191,6 @@ export async function submitYapAction(
       submittedById: viewer.user.id,
       lore,
       saidAt,
-      tags,
     });
   } catch {
     return { error: await say({ code: "REFUSED" }) };

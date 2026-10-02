@@ -217,36 +217,8 @@ export default async function YapperPage({ params }: Params) {
         </div>
         {/* These arrive as the person earns them rather than announcing that
             they have not. */}
-        {profile.topTags.length > 0 || profile.badges.length > 0 ? (
+        {profile.badges.length > 0 ? (
           <div className="mt-6 grid items-start gap-6 lg:grid-cols-3">
-            {profile.topTags.length > 0 ? (
-              <Panel
-                label={d.profile.frequentVocabulary}
-                className="lg:col-span-2"
-                bodyClassName="px-3 py-3"
-              >
-                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
-                  {profile.topTags.map((tag, index) => (
-                    <Link
-                      key={tag.slug}
-                      href={`/?tag=${encodeURIComponent(tag.slug)}`}
-                      className={cn(
-                        "font-mono transition-colors duration-100 hover:text-acid-deep",
-                        index === 0
-                          ? "text-[18px] font-bold"
-                          : index < 3
-                            ? "text-[14px] font-bold"
-                            : "text-[12px] text-muted",
-                      )}
-                    >
-                      #{tag.label}
-                      <span className="ml-1 text-[10px] opacity-50">{tag.count}</span>
-                    </Link>
-                  ))}
-                </div>
-              </Panel>
-            ) : null}
-
             {profile.badges.length > 0 ? (
               <Panel label={d.profile.achievements} bodyClassName="p-0">
                 <ul>

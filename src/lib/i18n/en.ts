@@ -71,7 +71,6 @@ export const en = {
     retrieving: "Retrieving...",
     getYappedAgain: "Get yapped again",
     all: "All",
-    tags: "Tags",
     elsewhere: "Elsewhere in the archive",
     battlePrompt: "Who yapped harder?",
     battleKicker: "Yap battle",
@@ -172,7 +171,6 @@ export const en = {
     averageAura: "Average aura / yap",
     knownAssociates: "Known associates",
     noAssociates: "no corroborating witnesses on file",
-    frequentVocabulary: "Frequent vocabulary",
     achievements: "Achievements",
     yapsSaid: "Yaps said",
     recordsFiled: "Records filed",
@@ -223,7 +221,6 @@ export const en = {
     backToAllArchives: "Back to every archive",
     window: "Window",
     feedWindow: "Feed window",
-    episodes: "Episodes, not one-liners",
     rankedByElo: "Ranked by head-to-head rating",
     fieldTooThin: "The field is too thin.",
     fieldTooThinBody:
@@ -333,7 +330,7 @@ export const en = {
     openArchive: "Open archive",
     opening: "Opening...",
     anotherArchiveNote:
-      "a separate team on this instance, with its own records, tags, leaderboard and battles. nothing crosses between them. you become its owner.",
+      "a separate team on this instance, with its own records, leaderboard and battles. nothing crosses between them. you become its owner.",
     operatorNote:
       "entering an archive you are not a member of is logged nowhere and hidden nowhere: the header reads OPERATOR instead of a role for as long as you are in it. deleting an archive is not offered here — it would take every record in it with it, and that is a psql decision, not a button.",
   },
@@ -362,7 +359,6 @@ export const en = {
     auraGenerated: "Aura generated",
     yapOfPeriod: "Yap of the period",
     topYapper: "Top yapper",
-    mostDiscussed: "Most discussed subject",
     peakHour: "Peak yapping hour",
     newYappers: "New yappers",
     battles: "Battles",
@@ -453,7 +449,6 @@ export const en = {
   search: {
     whoSaid: "who said it",
     whoFiled: "who filed it",
-    tagged: "tagged",
     comparison: "= < > <= >=",
     statuses: "unverified · witnessed · confirmed · certified",
     haves: "evidence · lore · witnesses · dispute",
@@ -505,7 +500,6 @@ export const en = {
     evidenceNumber: "Evidence #{n}",
     attachedEvidence: "Attached evidence",
     enlarge: "Enlarge",
-    tags: "Tags",
     submittedBy: "Submitted by",
     archivedAt: "Archived",
     classification: "Classification",
@@ -580,7 +574,6 @@ export const en = {
   },
 
   submit: {
-    sixIsPlenty: "six is plenty",
     uploadImage: "Upload image",
     orDragDrop: "or drag and drop",
     verbatimHint: "verbatim, please. context goes below.",
@@ -599,8 +592,6 @@ export const en = {
     when: "When",
     lore: "Context / lore",
     loreHint: "so this still makes sense in six months.",
-    tags: "Tags",
-    addTag: "+ add tag",
     evidence: "Evidence (optional)",
     file: "File it",
     filing: "Filing...",

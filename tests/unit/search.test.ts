@@ -15,12 +15,11 @@ describe("search qualifiers", () => {
 
   test("parses every supported qualifier", () => {
     const f = parseSearch(
-      'плесень from:anna by:dima tag:прод aura:>500 status:certified has:evidence has:lore before:2026-10-01 after:2026-01-01',
+      'плесень from:anna by:dima aura:>500 status:certified has:evidence has:lore before:2026-10-01 after:2026-01-01',
     );
     assert.equal(f.text, "плесень");
     assert.equal(f.author, "anna");
     assert.equal(f.submitter, "dima");
-    assert.equal(f.tag, "прод");
     assert.deepEqual(f.aura, { op: ">", value: 500 });
     assert.equal(f.verification, "CERTIFIED");
     assert.deepEqual(f.has.sort(), ["evidence", "lore"]);
@@ -35,9 +34,6 @@ describe("search qualifiers", () => {
     }
   });
 
-  test("strips a leading hash from tags", () => {
-    assert.equal(parseSearch("tag:#прод").tag, "прод");
-  });
 
   test("is:disputed is a has: filter, not a verification rung", () => {
     const f = parseSearch("is:disputed");

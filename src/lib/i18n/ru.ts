@@ -90,7 +90,6 @@ export const ru: Dictionary = {
     retrieving: "Достаём...",
     getYappedAgain: "Ещё одну",
     all: "Все",
-    tags: "Теги",
     elsewhere: "Ещё в архиве",
     battlePrompt: "Кто наговорил сильнее?",
     battleKicker: "Баттл цитат",
@@ -192,7 +191,6 @@ export const ru: Dictionary = {
     averageAura: "Средняя аура за цитату",
     knownAssociates: "Известные соучастники",
     noAssociates: "подтверждающих свидетелей не найдено",
-    frequentVocabulary: "Излюбленные слова",
     achievements: "Достижения",
     yapsSaid: "Сказано",
     recordsFiled: "Внесено",
@@ -243,7 +241,6 @@ export const ru: Dictionary = {
     backToAllArchives: "Ко всем архивам",
     window: "Окно",
     feedWindow: "Окно ленты",
-    episodes: "Эпизоды, а не отдельные фразы",
     rankedByElo: "Рейтинг по личным встречам",
     fieldTooThin: "Поле слишком редкое.",
     fieldTooThinBody:
@@ -353,7 +350,7 @@ export const ru: Dictionary = {
     openArchive: "Открыть архив",
     opening: "Открываем...",
     anotherArchiveNote:
-      "отдельная команда на этом инстансе: свои записи, теги, рейтинг и баттлы. между ними ничего не пересекается. вы становитесь её владельцем.",
+      "отдельная команда на этом инстансе: свои записи, рейтинг и баттлы. между ними ничего не пересекается. вы становитесь её владельцем.",
     operatorNote:
       "вход в архив, где вы не состоите, нигде не журналируется и нигде не прячется: пока вы внутри, в шапке вместо роли написано OPERATOR. удаления архива здесь нет — оно унесло бы с собой все записи, а это решение уровня psql, а не кнопки.",
   },
@@ -382,7 +379,6 @@ export const ru: Dictionary = {
     auraGenerated: "Ауры нагенерировано",
     yapOfPeriod: "Цитата периода",
     topYapper: "Главный оратор",
-    mostDiscussed: "Самая обсуждаемая тема",
     peakHour: "Час пик болтовни",
     newYappers: "Новых ораторов",
     battles: "Баттлов",
@@ -473,7 +469,6 @@ export const ru: Dictionary = {
   search: {
     whoSaid: "кто сказал",
     whoFiled: "кто внёс",
-    tagged: "по тегу",
     comparison: "= < > <= >=",
     statuses: "не проверено · есть свидетель · подтверждено · заверено",
     haves: "улика · предыстория · свидетели · возражение",
@@ -525,7 +520,6 @@ export const ru: Dictionary = {
     evidenceNumber: "Улика №{n}",
     attachedEvidence: "Приложенная улика",
     enlarge: "Увеличить",
-    tags: "Теги",
     submittedBy: "Внёс в архив",
     archivedAt: "Занесено",
     classification: "Гриф",
@@ -600,7 +594,6 @@ export const ru: Dictionary = {
   },
 
   submit: {
-    sixIsPlenty: "шести достаточно",
     uploadImage: "Приложить изображение",
     orDragDrop: "или перетащите сюда",
     verbatimHint: "дословно. обстоятельства — ниже.",
@@ -619,8 +612,6 @@ export const ru: Dictionary = {
     when: "Когда",
     lore: "Контекст / предыстория",
     loreHint: "чтобы через полгода это всё ещё было понятно.",
-    tags: "Теги",
-    addTag: "+ добавить тег",
     evidence: "Улика (необязательно)",
     file: "Занести",
     filing: "Заносим...",

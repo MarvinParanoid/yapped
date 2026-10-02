@@ -36,7 +36,6 @@ export type WrappedReport = {
   topYapper: { yapper: YapperRef; aura: number; yapCount: number } | null;
   yapOfThePeriod: { id: number; code: string; text: string; aura: number; author: string } | null;
   longest: { id: number; code: string; text: string } | null;
-  topTag: { slug: string; label: string; count: number } | null;
   /** 24 buckets, index = UTC hour. */
   hours: number[];
   peakHour: number | null;
@@ -106,7 +105,7 @@ export async function getWrapped(
   const { from, to } = periodBounds(period);
   const where = { teamId, deletedAt: null, saidAt: { gte: from, lt: to } };
 
-  const [yaps, tagLinks, battleCount] = await Promise.all([
+  const [yaps, battleCount] = await Promise.all([
     prisma.yap.findMany({
       where,
       select: {
@@ -124,7 +123,6 @@ export async function getWrapped(
         _count: { select: { evidence: true } },
       },
     }),
-    prisma.yapTag.findMany({ where: { yap: where }, include: { tag: true } }),
     prisma.battle.count({ where: { teamId, createdAt: { gte: from, lt: to } } }),
   ]);
 
@@ -163,18 +161,6 @@ export async function getWrapped(
   const topAuthor = topAuthorId
     ? yaps.find((yap) => yap.authorId === topAuthorId[0])?.author
     : undefined;
-
-  const tagCounts = new Map<string, { slug: string; label: string; count: number }>();
-  for (const link of tagLinks) {
-    const entry = tagCounts.get(link.tag.slug) ?? {
-      slug: link.tag.slug,
-      label: link.tag.label,
-      count: 0,
-    };
-    entry.count += 1;
-    tagCounts.set(link.tag.slug, entry);
-  }
-  const topTag = [...tagCounts.values()].sort((a, b) => b.count - a.count)[0] ?? null;
 
   // Someone whose very first statement lands in this period.
   const firstEver = await prisma.yap.groupBy({
@@ -228,7 +214,6 @@ export async function getWrapped(
         }
       : null,
     longest: longest ? { id: longest.id, code: yapCode(longest.id), text: longest.text } : null,
-    topTag,
     hours,
     peakHour,
     activeYappers: byAuthor.size,

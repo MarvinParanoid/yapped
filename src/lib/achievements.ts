@@ -10,7 +10,6 @@ export type YapperStats = {
   battleWins: number;
   hasLore: boolean;
   oldestYapAgeDays: number;
-  topTagCount: number;
 };
 
 export type Achievement = {

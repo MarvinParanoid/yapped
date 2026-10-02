@@ -23,7 +23,6 @@ import type {
 const yapInclude = {
   author: true,
   submittedBy: true,
-  tags: { include: { tag: true } },
   evidence: { orderBy: { position: "asc" } },
 } as const;
 
@@ -76,7 +75,6 @@ function toYapView(
     battleLosses: row.battleLosses,
     author: toYapperRef(row.author),
     submittedBy: row.submittedBy ? toYapperRef(row.submittedBy) : null,
-    tags: row.tags.map((link) => ({ slug: link.tag.slug, label: link.tag.label })),
     evidence: row.evidence.map((item) => ({
       id: item.id,
       url: storage().url(item.storageKey),
@@ -172,7 +170,6 @@ export type ListYapsOptions = {
   sort?: SortKey;
   range?: RangeKey;
   query?: string;
-  tag?: string;
   authorId?: string;
   /** Parsed search qualifiers — see lib/search.ts. */
   filter?: SearchFilter;
@@ -187,7 +184,7 @@ export type ListYapsOptions = {
  * not the other.
  */
 function buildWhere(options: ListYapsOptions) {
-  const { teamId, sort, range = "all", query, tag, authorId, filter } = options;
+  const { teamId, sort, range = "all", query, authorId, filter } = options;
   // Trending used to cut everything older than sixty days. The decay already
   // sinks an old record to the bottom, so the cut only ever removed it from the
   // view entirely — and Trending is the default view. An archive whose motto is
@@ -202,7 +199,6 @@ function buildWhere(options: ListYapsOptions) {
   if (filter?.before) saidAt.lt = filter.before;
 
   const text = filter?.text || query;
-  const slug = filter?.tag ?? tag;
 
   const and: Record<string, unknown>[] = [];
 
@@ -258,7 +254,6 @@ function buildWhere(options: ListYapsOptions) {
     ...(authorId ? { authorId } : {}),
     ...(Object.keys(saidAt).length > 0 ? { saidAt } : {}),
     ...(text ? { text: { contains: text, mode: "insensitive" as const } } : {}),
-    ...(slug ? { tags: { some: { tag: { slug } } } } : {}),
     ...(and.length > 0 ? { AND: and } : {}),
   };
 }
@@ -663,7 +658,6 @@ export type CreateYapInput = {
   submittedById: string;
   lore?: string | null;
   saidAt: Date;
-  tags: string[];
   classification?: Classification;
 };
 
@@ -680,16 +674,6 @@ export async function createYap(input: CreateYapInput): Promise<number> {
   });
   if (belong !== people.length) throw new Error("NOT_A_MEMBER");
 
-  const tagRecords = await Promise.all(
-    input.tags.map((slug) =>
-      prisma.tag.upsert({
-        where: { teamId_slug: { teamId: input.teamId, slug } },
-        update: {},
-        create: { teamId: input.teamId, slug, label: slug },
-      }),
-    ),
-  );
-
   const yap = await prisma.yap.create({
     data: {
       teamId: input.teamId,
@@ -702,7 +686,6 @@ export async function createYap(input: CreateYapInput): Promise<number> {
       lore: input.lore?.trim() ? input.lore.trim() : null,
       saidAt: input.saidAt,
       classification: input.classification ?? "QUESTIONABLE",
-      tags: { create: tagRecords.map((tag) => ({ tagId: tag.id })) },
     },
   });
 
@@ -848,35 +831,3 @@ export async function getArchiveStats(teamId: string): Promise<ArchiveStats> {
   };
 }
 
-export async function listTags(
-  teamId: string,
-  take = 24,
-): Promise<Array<{ slug: string; label: string; count: number }>> {
-  // Counted over living records only. A tag's size is a claim about what the
-  // archive currently holds, and a redacted record is not held: counting it
-  // both inflates the number and keeps tags in the list whose every record is
-  // gone, so the cloud offers a link to an empty page.
-  //
-  // The count has to drive the ordering too, which is why this groups the join
-  // table rather than asking for a filtered `_count` — `take` applied to the
-  // unfiltered order would pick the wrong tags before the filter ever ran.
-  const counts = await prisma.yapTag.groupBy({
-    by: ["tagId"],
-    where: { yap: { teamId, deletedAt: null } },
-    _count: { _all: true },
-    orderBy: { _count: { tagId: "desc" } },
-    take,
-  });
-  if (counts.length === 0) return [];
-
-  const tags = await prisma.tag.findMany({
-    where: { teamId, id: { in: counts.map((row) => row.tagId) } },
-    select: { id: true, slug: true, label: true },
-  });
-  const byId = new Map(tags.map((tag) => [tag.id, tag]));
-
-  return counts.flatMap((row) => {
-    const tag = byId.get(row.tagId);
-    return tag ? [{ slug: tag.slug, label: tag.label, count: row._count._all }] : [];
-  });
-}

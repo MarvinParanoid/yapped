@@ -3,7 +3,6 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { submitYapAction, type SubmitState } from "@/app/actions";
 import { cn } from "@/lib/cn";
-import { slugifyTag } from "@/lib/format";
 import { useD } from "@/lib/i18n/client";
 import { NAME_MAX } from "@/lib/names";
 import type { YapperRef } from "@/lib/types";
@@ -15,8 +14,6 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
   const [text, setText] = useState("");
   const [authorId, setAuthorId] = useState("");
   const d = useD();
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagDraft, setTagDraft] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -52,12 +49,6 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
     const moment = new Date(saidAtLocal);
     return Number.isNaN(moment.getTime()) ? "" : moment.toISOString();
   })();
-
-  function commitTag(raw: string) {
-    const slug = slugifyTag(raw);
-    if (slug && !tags.includes(slug) && tags.length < 6) setTags([...tags, slug]);
-    setTagDraft("");
-  }
 
   return (
     <form action={action} className="border border-ink bg-paper">
@@ -164,44 +155,6 @@ export function YapForm({ yappers }: { yappers: YapperRef[] }) {
             className="field mt-2 resize-y"
           />
           <p className="label mt-1">{d.submit.loreHint}</p>
-        </div>
-
-        <div className="mt-6">
-          <span className="label">{d.submit.tags}</span>
-          <div className="mt-2 flex flex-wrap items-center gap-2 border border-ink px-2 py-2">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center gap-2 border border-ink bg-paper-2 px-2 py-1 font-mono text-[11px]"
-              >
-                #{tag}
-                <button
-                  type="button"
-                  onClick={() => setTags(tags.filter((item) => item !== tag))}
-                  className="text-muted hover:text-red"
-                  aria-label={`Remove ${tag}`}
-                >
-                  ✕
-                </button>
-              </span>
-            ))}
-            <input
-              value={tagDraft}
-              onChange={(event) => setTagDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === "," || event.key === " ") {
-                  event.preventDefault();
-                  commitTag(tagDraft);
-                }
-                if (event.key === "Backspace" && !tagDraft) setTags(tags.slice(0, -1));
-              }}
-              onBlur={() => commitTag(tagDraft)}
-              placeholder={tags.length >= 6 ? d.submit.sixIsPlenty : d.submit.addTag}
-              disabled={tags.length >= 6}
-              className="min-w-[110px] flex-1 bg-transparent px-1 py-1 font-mono text-[12px] outline-none"
-            />
-          </div>
-          <input type="hidden" name="tags" value={tags.join(",")} />
         </div>
 
         <div className="mt-6">

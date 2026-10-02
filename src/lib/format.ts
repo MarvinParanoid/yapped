@@ -30,19 +30,6 @@ export function formatCount(value: number): string {
   return value.toLocaleString("en-US");
 }
 
-/** Unicode-safe: слово-тоже-слаг */
-export function slugifyTag(input: string): string {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/^#+/, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/[^\p{L}\p{N}-]/gu, "")
-    .replace(/-{2,}/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 40);
-}
-
 export function initials(name: string): string {
   return name
     .split(/\s+/)
