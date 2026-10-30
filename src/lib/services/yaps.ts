@@ -8,7 +8,7 @@ import {
   type ReactionKey,
 } from "@/lib/ranking/aura";
 import type { SearchFilter } from "@/lib/search";
-import { verificationFor, type Verification } from "@/lib/verification";
+import { isContested, verificationFor, type Verification } from "@/lib/verification";
 import type {
   ArchiveStats,
   Classification,
@@ -242,9 +242,13 @@ function buildWhere(options: ListYapsOptions) {
     if (has === "evidence") and.push({ evidence: { some: {} } });
     if (has === "lore") and.push({ lore: { not: null } });
     if (has === "witnesses") and.push({ witnessCount: { gt: 0 } });
-    // Disputed covers both a formal dispute and enough people denying it.
+    // Disputed covers a formal dispute and the informal kind: enough people
+    // denying it, *and* enough of them relative to the people who confirmed —
+    // which is what `isContested` says and what the cards, the profile and
+    // Wrapped all print. Search used to ask only the first half, so it returned
+    // records every other surface calls uncontested.
     if (has === "dispute") {
-      and.push({ OR: [{ disputedAt: { not: null } }, { denialCount: { gte: 2 } }] });
+      and.push({ OR: [{ disputedAt: { not: null } }, { contested: true }] });
     }
   }
 
@@ -524,7 +528,14 @@ export async function refreshVerification(yapId: number): Promise<WitnessState> 
   const verification = verificationFor(witnessCount);
   await prisma.yap.update({
     where: { id: yapId },
-    data: { witnessCount, denialCount, verification },
+    // `contested` is stored beside the counts it comes from, so the one place
+    // that knows the rule is still lib/verification.ts.
+    data: {
+      witnessCount,
+      denialCount,
+      verification,
+      contested: isContested(witnessCount, denialCount),
+    },
   });
 
   return { stance: null, witnessCount, denialCount, verification };

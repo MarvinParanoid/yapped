@@ -1,6 +1,6 @@
 import { after, before, describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_TEAM_ID as TEAM, makeUser, makeYap, prisma, resetDatabase } from "./setup";
+import { DEFAULT_TEAM_ID as TEAM, makeQuotedYapper, makeUser, makeYap, prisma, resetDatabase } from "./setup";
 import {
   createYap,
   acknowledgeYap,
@@ -440,5 +440,55 @@ describe("trending pages through exactly what it ranked", () => {
   test("fresh and top still count the whole archive", async () => {
     const fresh = await countYaps({ teamId: TEAM, sort: "fresh" });
     assert.equal(fresh, 5, "only trending is windowed");
+  });
+});
+
+/**
+ * One definition of "contested", asked by everything.
+ *
+ * The rule is in lib/verification.ts and weighs denials against twice their own
+ * number, which a Prisma filter cannot express — so search asked a cheaper
+ * question and returned records every rendered surface called uncontested. The
+ * answer is now stored beside the counts it comes from.
+ */
+describe("search agrees with the cards about what is contested", () => {
+  test("two denials against plenty of witnesses is not a dispute, anywhere", async () => {
+    await resetDatabase();
+    const author = await makeQuotedYapper("Author");
+    const yap = await makeYap({ authorId: author.id });
+
+    // Six confirm, two deny: outnumbered, so not contested.
+    for (let i = 0; i < 6; i += 1) {
+      const w = await makeUser(`Witness ${i}`);
+      await setWitnessStance(yap.id, TEAM, w.id, "PRESENT");
+    }
+    for (let i = 0; i < 2; i += 1) {
+      const d = await makeUser(`Denier ${i}`);
+      await setWitnessStance(yap.id, TEAM, d.id, "DENIED");
+    }
+
+    const stored = await prisma.yap.findUniqueOrThrow({ where: { id: yap.id } });
+    assert.equal(stored.contested, false);
+    assert.equal(
+      await countYaps({ teamId: TEAM, filter: parseSearch("has:dispute") }),
+      0,
+      "search used to return this one on the denial count alone",
+    );
+  });
+
+  test("denials that hold their own against the witnesses are", async () => {
+    await resetDatabase();
+    const author = await makeQuotedYapper("Author");
+    const yap = await makeYap({ authorId: author.id });
+
+    const present = await makeUser("Present");
+    await setWitnessStance(yap.id, TEAM, present.id, "PRESENT");
+    for (let i = 0; i < 2; i += 1) {
+      const d = await makeUser(`Denier ${i}`);
+      await setWitnessStance(yap.id, TEAM, d.id, "DENIED");
+    }
+
+    assert.equal((await prisma.yap.findUniqueOrThrow({ where: { id: yap.id } })).contested, true);
+    assert.equal(await countYaps({ teamId: TEAM, filter: parseSearch("has:dispute") }), 1);
   });
 });

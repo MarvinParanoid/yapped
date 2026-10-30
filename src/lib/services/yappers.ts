@@ -407,12 +407,26 @@ export async function syncAchievements(userId: string, teamId: string): Promise<
 
 /** Actual yappers first — the people most likely to have said it again. */
 export async function listYappers(teamId: string): Promise<YapperRef[]> {
-  const users = await prisma.user.findMany({
-    where: { memberships: { some: { teamId } } },
-    include: { _count: { select: { yaps: true } } },
-    orderBy: [{ yaps: { _count: "desc" } }, { displayName: "asc" }],
-  });
-  return users.map(toYapperRef);
+  // Ordered by how much each person has said *here*. A plain `_count` on the
+  // relation counts every archive they belong to, which would order this list
+  // by activity the viewer is not allowed to see.
+  const [users, saidHere] = await Promise.all([
+    prisma.user.findMany({ where: { memberships: { some: { teamId } } } }),
+    prisma.yap.groupBy({
+      by: ["authorId"],
+      where: { teamId, deletedAt: null },
+      _count: { _all: true },
+    }),
+  ]);
+  const countByAuthor = new Map(saidHere.map((row) => [row.authorId, row._count._all]));
+
+  return users
+    .sort(
+      (a, b) =>
+        (countByAuthor.get(b.id) ?? 0) - (countByAuthor.get(a.id) ?? 0) ||
+        a.displayName.localeCompare(b.displayName),
+    )
+    .map(toYapperRef);
 }
 
 /** The person who said it may not have an account yet. Make them one anyway. */

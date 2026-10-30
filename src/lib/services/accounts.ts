@@ -101,23 +101,31 @@ export async function registerAccount(
     },
   });
 
-  if (existing) {
-    const claimed = await prisma.user.update({
-      where: { id: existing.id },
-      data: { username: login, passwordHash },
-    });
-    return { ok: true, userId: claimed.id };
-  }
+  // `validateRegistration` already looked for this username, but two people
+  // can clear that check at the same moment and only one of them can have it.
+  // The unique index decides; the loser is told so, rather than being handed a
+  // crash after their invite seat has already been spent.
+  try {
+    if (existing) {
+      const claimed = await prisma.user.update({
+        where: { id: existing.id },
+        data: { username: login, passwordHash },
+      });
+      return { ok: true, userId: claimed.id };
+    }
 
-  const created = await prisma.user.create({
-    data: {
-      username: login,
-      passwordHash,
-      displayName: name,
-      memberships: { create: { teamId } },
-    },
-  });
-  return { ok: true, userId: created.id };
+    const created = await prisma.user.create({
+      data: {
+        username: login,
+        passwordHash,
+        displayName: name,
+        memberships: { create: { teamId } },
+      },
+    });
+    return { ok: true, userId: created.id };
+  } catch {
+    return { ok: false, code: "USERNAME_TAKEN" };
+  }
 }
 
 /** An existing account redeeming an invite for a team it is not in yet. */

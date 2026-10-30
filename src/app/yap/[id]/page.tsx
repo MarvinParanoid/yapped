@@ -38,7 +38,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   // viewer softly and says nothing about a team it cannot see.
   const viewer = await getViewer();
   if (!viewer) return { title: "Yapped." };
-  const yap = await getYapSummary(Number(id), viewer.team.id);
+  // `/yap/abc` is a wrong address, not a server fault: guard here as well as in
+  // the page, because metadata runs first and would reach Prisma with a NaN.
+  const yapId = Number(id);
+  if (!Number.isInteger(yapId)) notFound();
+  const yap = await getYapSummary(yapId, viewer.team.id);
   // Raised here as well as in the page so the response carries a real 404.
   if (!yap) notFound();
   const d = await getDictionary();

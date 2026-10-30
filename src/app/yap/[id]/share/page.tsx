@@ -12,9 +12,11 @@ export const dynamic = "force-dynamic";
  */
 export default async function SharePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const yapId = Number(id);
+  if (!Number.isInteger(yapId)) notFound();
   const { team } = await requireViewer(`/yap/${id}/share`);
   const d = await getDictionary();
-  const yap = await getYap(Number(id), team.id);
+  const yap = await getYap(yapId, team.id);
   if (!yap) notFound();
 
   return (

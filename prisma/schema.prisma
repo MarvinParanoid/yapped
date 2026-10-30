@@ -123,6 +123,12 @@ model Yap {
   verification Verification @default(UNVERIFIED)
   witnessCount Int          @default(0)
   denialCount  Int          @default(0)
+  /// `isContested` as a stored fact, because SQL cannot be asked the question:
+  /// the rule weighs denials against twice their own number and a Prisma filter
+  /// has no arithmetic. Maintained by refreshVerification beside the two counts
+  /// it derives from, so search and every rendered surface answer with one
+  /// definition instead of two that drift.
+  contested    Boolean      @default(false)
 
   /// The author's own position on the record. Acknowledgement is NOT a
   /// witness statement: a witness is independent corroboration, and the person

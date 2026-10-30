@@ -190,6 +190,21 @@ export async function submitYapAction(
 
   const lore = String(formData.get("lore") ?? "").trim();
 
+  // Judge the exhibit before filing anything. These two checks used to run
+  // after createYap had already committed, so a wrong file type was reported
+  // as a refusal for a record that existed — and the obvious response, filing
+  // it again, left two.
+  const evidence = formData.get("evidence");
+  const exhibit = evidence instanceof File && evidence.size > 0 ? evidence : null;
+  if (exhibit) {
+    if (!isAcceptedImage(exhibit.type)) {
+      return { error: await say({ code: "EVIDENCE_TYPE" }) };
+    }
+    if (exhibit.size > MAX_EVIDENCE_BYTES) {
+      return { error: await say({ code: "EVIDENCE_SIZE" }) };
+    }
+  }
+
   let yapId: number;
   try {
     yapId = await createYap({
@@ -204,21 +219,15 @@ export async function submitYapAction(
     return { error: await say({ code: "REFUSED" }) };
   }
 
-  const evidence = formData.get("evidence");
-  if (evidence instanceof File && evidence.size > 0) {
-    if (!isAcceptedImage(evidence.type)) {
-      return { error: await say({ code: "EVIDENCE_TYPE" }) };
-    }
-    if (evidence.size > MAX_EVIDENCE_BYTES) {
-      return { error: await say({ code: "EVIDENCE_SIZE" }) };
-    }
+  if (exhibit) {
     try {
       await attachEvidence(yapId, teamId, {
-        buffer: Buffer.from(await evidence.arrayBuffer()),
-        mimeType: evidence.type,
+        buffer: Buffer.from(await exhibit.arrayBuffer()),
+        mimeType: exhibit.type,
       });
     } catch {
-      // The yap stands even if the exhibit does not.
+      // The yap stands even if the exhibit does not: the words are the record,
+      // and re-filing them to retry a screenshot would be worse.
     }
   }
 

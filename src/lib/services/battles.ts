@@ -149,9 +149,19 @@ export async function recordBattle(
   try {
     return await prisma.$transaction(
       async (tx) => {
+        // Redacted records are out of the arena: getBattlePair never offers
+        // one, so a verdict naming one did not come from the interface, and
+        // letting it move the ladder would leave the journal holding results
+        // that `recompute:elo` would faithfully replay.
         const [winner, loser] = await Promise.all([
-          tx.yap.findFirst({ where: { id: winnerId, teamId }, select: { eloRating: true } }),
-          tx.yap.findFirst({ where: { id: loserId, teamId }, select: { eloRating: true } }),
+          tx.yap.findFirst({
+            where: { id: winnerId, teamId, deletedAt: null },
+            select: { eloRating: true },
+          }),
+          tx.yap.findFirst({
+            where: { id: loserId, teamId, deletedAt: null },
+            select: { eloRating: true },
+          }),
         ]);
         if (!winner || !loser) return null;
 
