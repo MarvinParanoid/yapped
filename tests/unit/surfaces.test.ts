@@ -97,6 +97,8 @@ describe("interface text", () => {
     // not a text node, not a quoted attribute, not a ternary. Only the literal
     // part of a template is checked — the ${...} holes are expressions.
     const template = /\{`([^`]*)`\}/g;
+    // A text node that carries an expression inside it.
+    const mixed = />([^<>]*\{[^<>]*\}[^<>]*)</g;
     // Props whose value is an identifier, a URL or a class list, never a
     // sentence — a match there is a false alarm, and one false alarm is how a
     // rule like this gets deleted.
@@ -121,6 +123,20 @@ describe("interface text", () => {
         const [, attr, text] = match;
         if (technical.test(attr!) || !prose.test(text!)) continue;
         offenders.push(`${where}: ${attr}=${JSON.stringify(text)}`);
+      }
+
+      // Text with a value in the middle of it — `battle {round} / {ROUNDS}`,
+      // `More from the same mouth — {name}` — is a JSX text node that every
+      // rule above skips, because the braces disqualify it as plain text and
+      // it is not a template literal either. Eleven strings were living there.
+      for (const match of source.matchAll(mixed)) {
+        const text = match[1]!
+          .replace(/\{[^{}]*\}/g, " ")
+          .replace(/&[a-z]+;/g, "")
+          .trim();
+        if (!text || code.test(text) || /[-:]/.test(text)) continue;
+        if (!/[A-Za-z]{3,}/.test(text)) continue;
+        offenders.push(`${where}: ${JSON.stringify(text.replace(/\s+/g, " "))}`);
       }
 
       for (const match of source.matchAll(template)) {

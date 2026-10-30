@@ -70,7 +70,7 @@ export default async function WrappedIndexPage() {
                       index === months.length - 1 && "border-b-0",
                     )}
                   >
-                    <span className="text-[16px] font-bold">{periodLabel(period)}</span>
+                    <span className="text-[16px] font-bold">{periodLabel(period, d.wrapped.monthsLong.split(" "))}</span>
                     <span className="label">{d.wrapped.open} →</span>
                   </Link>
                 </li>

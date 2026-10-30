@@ -115,7 +115,9 @@ export function WitnessPanel({
             <li
               key={rung}
               className={cn(
-                "flex-1 border-r border-ink px-2 py-2 text-center last:border-r-0 transition-colors duration-100",
+                // `min-w-0` so a rung may wrap instead of forcing the
+                // ladder — and with it the page — wider than a 320px screen.
+                "min-w-0 flex-1 border-r border-ink px-2 py-2 text-center last:border-r-0 transition-colors duration-100",
                 current
                   ? "bg-acid font-bold text-ink"
                   : reached

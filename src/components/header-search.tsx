@@ -92,7 +92,7 @@ export function HeaderSearch() {
 
   return (
     <form
-      className="relative flex items-stretch border border-ink bg-paper"
+      className="relative flex min-w-0 flex-1 items-stretch border border-ink bg-paper sm:flex-none"
       onSubmit={(event) => {
         event.preventDefault();
         const query = value.trim();
@@ -111,13 +111,19 @@ export function HeaderSearch() {
         onBlur={() => setTimeout(() => setHelping(false), 120)}
         placeholder={d.nav.searchPlaceholder}
         aria-label={d.nav.searchAria}
-        className="w-[160px] bg-transparent px-2.5 font-mono text-[12px] outline-none placeholder:text-muted sm:w-[230px]"
+        className="w-full min-w-0 bg-transparent px-2.5 font-mono text-[12px] outline-none placeholder:text-muted sm:w-[230px]"
       />
       <button
         type="submit"
+        aria-label={d.nav.searchGo}
         className="border-l border-ink px-2.5 label-strong hover:bg-ink hover:text-paper"
       >
-        Go
+        {/* The word costs 40-70px, which on a 320px screen is most of the
+            field it is meant to submit. An arrow says the same thing there. */}
+        <span className="hidden sm:inline">{d.nav.searchGo}</span>
+        <span className="sm:hidden" aria-hidden>
+          →
+        </span>
       </button>
       <button
         type="button"

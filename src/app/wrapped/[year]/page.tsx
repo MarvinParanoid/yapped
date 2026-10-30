@@ -28,8 +28,9 @@ export default async function WrappedYearPage({ params }: Params) {
   if (!parsed) notFound();
 
   const { team } = await requireViewer(`/wrapped/${parsed}`);
+  const d = await getDictionary();
   const [report, periods] = await Promise.all([
-    getWrapped({ year: parsed, month: null }, team.id, team.timezone),
+    getWrapped({ year: parsed, month: null }, team.id, team.timezone, d.wrapped.monthsLong.split(" ")),
     listPeriods(team.id, team.timezone),
   ]);
 

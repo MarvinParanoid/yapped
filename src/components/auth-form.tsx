@@ -90,16 +90,15 @@ export function AuthForm({
                 <p className="label mt-1.5 leading-[1.5] normal-case tracking-normal">
                   {claim.yapCount > 0 ? (
                     <>
-                      {claim.displayName} is already quoted here —{" "}
-                      {claim.yapCount} {claim.yapCount === 1 ? "statement" : "statements"} worth{" "}
-                      {formatAura(claim.totalAura)} aura. Registering under this name takes them
-                      over.
+                      {fill(d.auth.claimKnown, {
+                        name: claim.displayName,
+                        n: claim.yapCount,
+                        aura: formatAura(claim.totalAura),
+                      })}
                     </>
                   ) : (
                     <>
-                      {claim.displayName} is already on file without an account, but has said
-                      nothing on record yet. Registering takes over that entry instead of creating
-                      a second person.
+                      {fill(d.auth.claimSilent, { name: claim.displayName })}
                     </>
                   )}
                 </p>

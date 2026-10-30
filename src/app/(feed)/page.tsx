@@ -135,7 +135,7 @@ export default async function FeedPage({
     { href: "/battle/hall", label: d.feed.hallOfYap, note: d.feed.hallNote },
     { href: "/market", label: d.feed.auraMarket, note: d.feed.marketNote },
     ...(latestPeriod
-      ? [{ href: periodSlug(latestPeriod), label: d.feed.wrapped, note: periodLabel(latestPeriod) }]
+      ? [{ href: periodSlug(latestPeriod), label: d.feed.wrapped, note: periodLabel(latestPeriod, d.wrapped.monthsLong.split(" ")) }]
       : []),
     ...(anniversaries > 0
       ? [

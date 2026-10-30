@@ -13,3 +13,8 @@ npm-debug.log*
 
 # Written on the server by scripts/deploy.sh — the commit a rollback returns to.
 .deploy-state
+
+# Review material: screenshots, contact sheets and the audit bundle. Produced
+# on demand from a local demo archive, never part of the source.
+/artifacts/
+/yapped-visual-audit.zip

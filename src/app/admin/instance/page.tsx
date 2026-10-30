@@ -82,7 +82,11 @@ export default async function InstancePage() {
                   <span className="min-w-[12rem] text-[14px] font-semibold">{team.name}</span>
                   <span className="label">/{team.slug}</span>
                   <span className="label tabnums">
-                    {team.yapCount} records · {team.memberCount} members · {team.accountCount}{" "}
+                    {fill(d.admin.archiveTally, {
+                      records: team.yapCount,
+                      members: team.memberCount,
+                      accounts: team.accountCount,
+                    })}{" "}
                     accounts
                   </span>
                   <span className="label">

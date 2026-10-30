@@ -73,10 +73,15 @@ export function periodBounds(
   };
 }
 
-export function periodLabel(period: WrappedPeriod): string {
+/**
+ * The month names arrive as an argument, the way `formatDate` takes them:
+ * this module stays pure, and the headline stops reading OCTOBER 2026 to a
+ * Russian reader.
+ */
+export function periodLabel(period: WrappedPeriod, months: readonly string[] = MONTHS): string {
   return period.month === null
     ? String(period.year)
-    : `${MONTHS[period.month - 1]} ${period.year}`;
+    : `${months[period.month - 1]} ${period.year}`;
 }
 
 export function periodSlug(period: WrappedPeriod): string {
@@ -117,6 +122,7 @@ export async function getWrapped(
   period: WrappedPeriod,
   teamId: string,
   timeZone = "UTC",
+  months: readonly string[] = MONTHS,
 ): Promise<WrappedReport> {
   const { from, to } = periodBounds(period, timeZone);
   const where = { teamId, deletedAt: null, saidAt: { gte: from, lt: to } };
@@ -194,7 +200,7 @@ export async function getWrapped(
 
   return {
     period,
-    label: periodLabel(period),
+    label: periodLabel(period, months),
     from,
     to,
     yapCount: yaps.length,

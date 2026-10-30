@@ -66,7 +66,9 @@ export function DisputePanel({
         {statement ? (
           <blockquote className="mt-4 border-l-2 border-ink pl-3">
             <p className="text-[15px] italic leading-[1.5]">“{statement}”</p>
-            <footer className="label mt-2">— {authorName}, yapper statement</footer>
+            <footer className="label mt-2">
+              {fill(d.verification.statementBy, { name: authorName })}
+            </footer>
           </blockquote>
         ) : null}
 

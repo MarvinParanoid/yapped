@@ -53,7 +53,10 @@ export async function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
           <HeaderSearch />
-          <Link href="/submit" className="btn btn-acid">
+          {/* The bottom tab bar already carries this on a phone, and two of
+              them is what pushed the header off the right edge once the search
+              field was open. */}
+          <Link href="/submit" className="btn btn-acid hidden sm:inline-flex">
             {d.nav.submit}
           </Link>
           {user ? (

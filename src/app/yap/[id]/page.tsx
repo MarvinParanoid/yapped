@@ -179,7 +179,10 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
               : "grid items-start gap-6"
           }
         >
-          <div className="flex flex-col gap-6">
+          {/* `min-w-0`: a grid item keeps its min-content width unless told
+              otherwise, and the verification ladder's four rungs are wider
+              than a 320px phone. */}
+          <div className="flex min-w-0 flex-col gap-6">
             {yap.lore ? <LorePanel lore={yap.lore} defaultOpen /> : null}
             <DisputePanel
               yapId={yap.id}
@@ -314,7 +317,7 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
         {related.length > 0 ? (
           <section className="mt-12">
             <h2 className="label-strong border-b border-ink pb-2">
-              More from the same mouth — {yap.author.displayName}
+              {fill(d.sections.sameMouthNamed, { name: yap.author.displayName })}
             </h2>
             <div className="mt-6">
               {related.map((item) => (

@@ -38,6 +38,7 @@ export const ru: Dictionary = {
   },
 
   nav: {
+    searchGo: "Искать",
     trending: "Актуальное",
     fresh: "Всё",
     top: "Топ",
@@ -210,6 +211,16 @@ export const ru: Dictionary = {
   },
 
   sections: {
+    daysAgo: "{n} дн. назад",
+    auraThatDay: "аура в тот день",
+    auraToday: "сегодня",
+    witnessesSince: "свидетелей с тех пор",
+    sameMouthNamed: "Ещё из тех же уст — {name}",
+    signInWord: "войдите",
+    toCastAVote: "чтобы голосовать",
+    battleRound: "бой {round} из {total}",
+    battleSkip: "Пропустить",
+    overWindow: "за {window}",
     voteLost: "Вердикт не записан. Выберите ещё раз.",
     archivists: "Архивариусы",
     rankedByFiled: "рейтинг по внесённому в архив. сказанное — в таблице выше; здесь те, кто поставил это на учёт.",
@@ -300,6 +311,7 @@ export const ru: Dictionary = {
   },
 
   admin: {
+    archiveTally: "{records} записей · {members} участников · {accounts}",
     resetPassword: "сбросить пароль",
     resetLinkReady: "Передайте эту ссылку",
     resetLinkNote: "срабатывает один раз, живёт сутки и завершает все сеансы этой учётной записи. пароль, который человек выберет, вам не виден.",
@@ -364,6 +376,9 @@ export const ru: Dictionary = {
   },
 
   wrapped: {
+    auraEarned: "{aura} ауры с",
+    monthsLong: "Январь Февраль Март Апрель Май Июнь Июль Август Сентябрь Октябрь Ноябрь Декабрь",
+    wholeOf: "Весь {year}",
     peopleOne: "{n} участник",
     peopleFew: "{n} участника",
     peopleMany: "{n} участников",
@@ -558,6 +573,7 @@ export const ru: Dictionary = {
   },
 
   verification: {
+    statementBy: "— {name}, слово оратора",
     heading: "Проверка",
     chain: "Цепочка свидетельств",
     author: "Автор",
@@ -646,6 +662,8 @@ export const ru: Dictionary = {
   },
 
   auth: {
+    claimKnown: "{name} здесь уже цитируется — записей: {n}, на {aura} ауры. Регистрация под этим именем забирает их себе.",
+    claimSilent: "{name} уже значится в архиве без учётной записи, но пока ничего не сказано под протокол. Регистрация займёт эту строку, а не создаст второго человека.",
     forgotten: "забыли пароль? тот, кто ведёт архив, выдаст ссылку — почты здесь нет, отправлять некуда.",
     identify: "Представьтесь",
     closedArchive: "архив закрыт. только для участников, по приглашению.",

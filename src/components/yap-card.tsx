@@ -100,7 +100,12 @@ export async function YapCard({
     >
       <div className="flex">
         <div className="min-w-0 flex-1 px-4 py-4 sm:px-5 sm:py-5">
-          <div className="flex items-center gap-3">
+          {/* Two columns, not one row: the metadata wraps inside its own
+              column while the menu stays pinned to the corner. As a single
+              non-wrapping row, a long status — «ОСПАРИВАЕТСЯ» — pushed itself
+              straight out past the card's right edge on a phone. */}
+          <div className="flex items-start gap-3">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1.5">
             <Link
               href={`/yap/${yap.id}`}
               className="mono text-[11px] tracking-[0.1em] text-muted hover:text-ink"
@@ -119,7 +124,12 @@ export async function YapCard({
               </span>
             ) : null}
             {moving ? (
-              <span className="label" title={fill(d.feed.auraOverWindow, { n: moving.delta })}>
+              // The mark and the word are one token; allowed to break apart,
+              // the bullet is left stranded on the line above.
+              <span
+                className="label whitespace-nowrap"
+                title={fill(d.feed.auraOverWindow, { n: moving.delta })}
+              >
                 {MOMENTUM_META[moving.state].mark}{" "}
                 {moving.state === "NEW"
                   ? d.feed.momentumNew
@@ -128,7 +138,8 @@ export async function YapCard({
                     : `${Math.round(moving.percent)}%`}
               </span>
             ) : null}
-            <div className="ml-auto flex items-center gap-3">
+            </div>
+            <div className="flex shrink-0 items-center gap-3">
               {feature && yap.verification === "CERTIFIED" ? (
                 <Stamp>
                   {`${d.record.certifiedStamp} · ${fill(

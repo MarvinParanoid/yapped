@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const parsed = parse(await params);
   if (!parsed) notFound();
   const d = await getDictionary();
-  return { title: `${periodLabel(parsed)} ${d.pageTitles.wrapped}` };
+  return { title: `${periodLabel(parsed, d.wrapped.monthsLong.split(" "))} ${d.pageTitles.wrapped}` };
 }
 
 export default async function WrappedMonthPage({ params }: Params) {
@@ -29,8 +29,9 @@ export default async function WrappedMonthPage({ params }: Params) {
   if (!parsed) notFound();
 
   const { team } = await requireViewer(`/wrapped/${parsed.year}/${parsed.month}`);
+  const d = await getDictionary();
   const [report, periods] = await Promise.all([
-    getWrapped(parsed, team.id, team.timezone),
+    getWrapped(parsed, team.id, team.timezone, d.wrapped.monthsLong.split(" ")),
     listPeriods(team.id, team.timezone),
   ]);
 

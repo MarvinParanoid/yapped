@@ -48,8 +48,11 @@ function Table({
   fromZero: string;
 }) {
   return (
-    <section className="border border-ink">
-      <header className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2">
+    // The columns are a ticker: narrow screens scroll the table rather than
+    // the whole page, and the figures keep their alignment instead of being
+    // squeezed until they wrap.
+    <section className="overflow-x-auto border border-ink">
+      <header className="flex min-w-[300px] items-center justify-between gap-3 border-b border-ink px-3 py-2">
         <span className="label-strong">{title}</span>
         <span className="label">{rows.length}</span>
       </header>
@@ -61,7 +64,7 @@ function Table({
             <li key={row.id} className="border-b border-ink last:border-b-0">
               <Link
                 href={`/yap/${row.id}`}
-                className="flex items-center gap-3 px-3 py-2.5 transition-colors duration-100 hover:bg-paper-2"
+                className="flex min-w-[300px] items-center gap-3 px-3 py-2.5 transition-colors duration-100 hover:bg-paper-2"
               >
                 <span
                   className={cn(
@@ -133,7 +136,7 @@ export default async function MarketPage({
               <span className="label mt-2 block">
                 {market.indexPercent === null
                   ? d.sections.wholeRecordSoFar
-                  : `over ${selected.label}`}
+                  : fill(d.sections.overWindow, { window: selected.label })}
               </span>
             </div>
             <div>
@@ -188,7 +191,10 @@ export default async function MarketPage({
           <EmptyState title={d.sections.noListings} hint={d.empty.nothingToTrade} />
         ) : (
           <div className="grid gap-6 lg:grid-cols-2">
-            <div className="lg:col-span-2">
+            {/* `min-w-0`: without it a grid item keeps its min-content width,
+                and this table's fixed columns dragged the whole page wider
+                than the screen. */}
+            <div className="min-w-0 lg:col-span-2">
               <Table
                 title={`${d.sections.movers} — ${selected.label}`}
                 rows={market.movers}

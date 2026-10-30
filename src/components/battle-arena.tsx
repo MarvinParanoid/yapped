@@ -159,18 +159,18 @@ export function BattleArena({
         </div>
         <div className="flex items-center gap-6">
           <span className="label">
-            battle {round} / {ROUNDS}
+            {fill(d.sections.battleRound, { round, total: ROUNDS })}
           </span>
           <button type="button" onClick={skip} className="btn" disabled={pending}>
-            Skip →
+            {d.sections.battleSkip} →
           </button>
         </div>
         {!signedIn ? (
           <p className="label text-red">
             <Link href="/login" className="underline underline-offset-2">
-              sign in
+              {d.sections.signInWord}
             </Link>{" "}
-            to cast a vote
+            {d.sections.toCastAVote}
           </p>
         ) : null}
       </div>

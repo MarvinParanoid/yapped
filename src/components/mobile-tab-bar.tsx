@@ -24,7 +24,10 @@ export function MobileTabBar() {
             key={tab.href}
             href={tab.href}
             className={cn(
-              "flex flex-col items-center gap-1 border-r border-ink py-2 last:border-r-0",
+              // `min-w-0`: a grid item keeps its min-content width, and
+              // «+ЦИТАТА» is wider than «+YAP» — enough to push the bar
+              // past a 320px screen in Russian.
+              "flex min-w-0 flex-col items-center gap-1 border-r border-ink px-1 py-2 last:border-r-0",
               active ? "bg-ink text-paper" : "text-muted",
               tab.key === "submitShort" && !active ? "bg-acid text-ink" : "",
             )}

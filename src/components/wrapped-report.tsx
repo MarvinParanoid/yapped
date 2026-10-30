@@ -105,7 +105,7 @@ export async function WrappedReportView({
             ) : null}
             {report.period.month !== null ? (
               <Link href={`/wrapped/${report.period.year}`} className="btn">
-                The whole of {report.period.year}
+                {fill(d.wrapped.wholeOf, { year: report.period.year })}
               </Link>
             ) : null}
           </div>
@@ -144,7 +144,8 @@ export async function WrappedReportView({
                   “{report.yapOfThePeriod.text}”
                 </p>
                 <p className="label mt-3">
-                  {report.yapOfThePeriod.author} · {formatAura(report.yapOfThePeriod.aura)} aura
+                  {report.yapOfThePeriod.author} ·{" "}
+                  {formatAura(report.yapOfThePeriod.aura)} {d.empty.auraUnit}
                 </p>
               </Link>
             ) : null}
@@ -176,7 +177,7 @@ export async function WrappedReportView({
                     — {report.yapOfThePeriod.author}
                   </span>
                   <span className="mono text-[17px] font-bold text-acid">
-                    {formatAura(report.yapOfThePeriod.aura)} aura
+                    {formatAura(report.yapOfThePeriod.aura)} {d.empty.auraUnit}
                   </span>
                   <span className="label">{report.yapOfThePeriod.code}</span>
                 </p>
@@ -200,7 +201,7 @@ export async function WrappedReportView({
                       {report.topYapper.yapper.displayName}
                     </p>
                     <p className="label mt-1.5">
-                      {formatAura(report.topYapper.aura)} aura from{" "}
+                      {fill(d.wrapped.auraEarned, { aura: formatAura(report.topYapper.aura) })}{" "}
                       {formatCount(report.topYapper.yapCount)}{" "}
                       {fill(plural(locale, report.topYapper.yapCount, [d.wrapped.statementsOne, d.wrapped.statementsFew, d.wrapped.statementsMany]), { n: formatCount(report.topYapper.yapCount) })}
                     </p>

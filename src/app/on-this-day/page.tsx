@@ -132,23 +132,23 @@ export default async function OnThisDayPage({
                         archive can show what a statement was worth back then. */}
                     <div className="-mt-px flex flex-wrap items-center gap-x-6 gap-y-1 border border-ink bg-paper-2 px-4 py-2">
                       <span className="label">
-                        <span className="mono font-bold text-ink">{record.daysAgo}</span> days ago
+                        {fill(d.sections.daysAgo, { n: record.daysAgo })}
                         {record.offsetDays === 0 ? ` · ${d.sections.toTheDay}` : ""}
                       </span>
                       <span className="label">
-                        aura that day{" "}
+                        {d.sections.auraThatDay}{" "}
                         <span className="mono ml-1 font-bold text-ink">
                           {formatAura(record.auraThen)}
                         </span>
                       </span>
                       <span className="label">
-                        today{" "}
+                        {d.sections.auraToday}{" "}
                         <span className="mono ml-1 font-bold text-ink">
                           {formatAura(record.aura)}
                         </span>
                       </span>
                       <span className="label">
-                        witnesses since{" "}
+                        {d.sections.witnessesSince}{" "}
                         <span className="mono ml-1 font-bold text-ink">
                           {record.witnessCount}
                         </span>

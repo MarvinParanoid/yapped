@@ -52,7 +52,7 @@ export default async function RandomPage({
     <div className="on-ink grid-ghost flex h-full flex-col">
       <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
-          <span className="label">Random yap · {yap.code}</span>
+          <span className="label">{d.pageTitles.randomYap} · {yap.code}</span>
           <Link href={`/yap/${yap.id}`} className="label hover:text-acid">
             {d.feed.openRecord} →
           </Link>

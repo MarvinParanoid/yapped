@@ -19,6 +19,7 @@ export const en = {
   },
 
   nav: {
+    searchGo: "Go",
     trending: "Trending",
     fresh: "All",
     top: "Top",
@@ -190,6 +191,16 @@ export const en = {
   },
 
   sections: {
+    daysAgo: "{n} days ago",
+    auraThatDay: "aura that day",
+    auraToday: "today",
+    witnessesSince: "witnesses since",
+    sameMouthNamed: "More from the same mouth — {name}",
+    signInWord: "sign in",
+    toCastAVote: "to cast a vote",
+    battleRound: "battle {round} / {total}",
+    battleSkip: "Skip",
+    overWindow: "over {window}",
     voteLost: "That verdict did not land. Pick again.",
     archivists: "Archivists",
     rankedByFiled: "ranked by records brought in. what a person said is the other table — these are the people who put it on file.",
@@ -280,6 +291,7 @@ export const en = {
   },
 
   admin: {
+    archiveTally: "{records} records · {members} members · {accounts}",
     resetPassword: "reset password",
     resetLinkReady: "Hand this over",
     resetLinkNote: "works once, expires in a day, and ends every session that account has. you never see the password they choose.",
@@ -344,6 +356,9 @@ export const en = {
   },
 
   wrapped: {
+    auraEarned: "{aura} aura from",
+    monthsLong: "January February March April May June July August September October November December",
+    wholeOf: "The whole of {year}",
     peopleOne: "{n} person",
     peopleFew: "{n} people",
     peopleMany: "{n} people",
@@ -538,6 +553,7 @@ export const en = {
   },
 
   verification: {
+    statementBy: "— {name}, yapper statement",
     heading: "Verification",
     chain: "Chain of testimony",
     author: "Author",
@@ -626,6 +642,8 @@ export const en = {
   },
 
   auth: {
+    claimKnown: "{name} is already quoted here — {n} on record, worth {aura} aura. Registering under this name takes them over.",
+    claimSilent: "{name} is already on file without an account, but has said nothing on record yet. Registering takes over that entry instead of creating a second person.",
     forgotten: "forgotten the password? whoever administers the archive can hand you a link — there is no email here to send one to.",
     identify: "Identify yourself",
     closedArchive: "the archive is closed. members only, by invitation.",
