@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { removeMemberAction, setMemberRoleAction } from "@/app/actions";
+import { issueResetAction, removeMemberAction, setMemberRoleAction } from "@/app/actions";
 import { Avatar } from "@/components/ui/avatar";
 import { useD } from "@/lib/i18n/client";
 import { fill } from "@/lib/i18n/locale";
@@ -24,6 +24,7 @@ export function MemberTable({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [link, setLink] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
   const d = useD();
 
@@ -79,6 +80,31 @@ export function MemberTable({
                 <span className="label">{d.admin[member.role]}</span>
               )}
 
+              {/* Somebody who cannot get in cannot ask for this themselves,
+                  so an administrator mints the link and hands it over. The
+                  password is set by its holder — never seen here. */}
+              {canManage && member.hasAccount ? (
+                <button
+                  type="button"
+                  disabled={pending}
+                  className="label hover:text-ink"
+                  onClick={() =>
+                    startTransition(async () => {
+                      setError(null);
+                      setLink(null);
+                      const result = await issueResetAction(member.userId);
+                      if (result.token) {
+                        setLink(`${window.location.origin}/reset/${result.token}`);
+                      } else {
+                        setError(result.error ?? d.admin.refused);
+                      }
+                    })
+                  }
+                >
+                  {d.admin.resetPassword}
+                </button>
+              ) : null}
+
               {canManage && member.userId !== viewerId ? (
                 confirming === member.userId ? (
                   <button
@@ -111,6 +137,19 @@ export function MemberTable({
           </li>
         ))}
       </ul>
+      {link ? (
+        <div className="border-t border-ink bg-paper-2 px-3 py-3">
+          <p className="label-strong">{d.admin.resetLinkReady}</p>
+          <input
+            readOnly
+            value={link}
+            onFocus={(event) => event.currentTarget.select()}
+            className="field mono mt-2 text-[12px]"
+          />
+          <p className="label mt-2 leading-[1.5]">{d.admin.resetLinkNote}</p>
+        </div>
+      ) : null}
+
       <p className="label px-3 py-3 leading-[1.5]">
         {d.admin.removalNote}
       </p>

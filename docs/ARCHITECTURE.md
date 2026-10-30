@@ -258,6 +258,15 @@ pairHighId])` is what makes a verdict personal: re-voting is allowed and *replac
 result rather than stacking on it. `Yap.eloRating`, `battleWins` and `battleLosses` are caches
 of this table; `npm run recompute:elo` rebuilds them when the two disagree.
 
+**Getting back in.** There is no email address anywhere in this schema and nothing that sends
+mail, so "check your inbox" has nothing to work with. A reset is a link minted by someone who
+administers the team and handed over in the chat they are all in — the same trust model and the
+same shape as an invitation. `PasswordReset` holds it: single use, a day's life, and issuing a
+new one spends every earlier one for that person. Spending it ends every session that account
+had, because whoever needed the link could not get in, so a session that still works is either
+forgotten or somebody else's. The issuer never sees the password. `npm run reset:password` is
+the same thing from the server, for when the person locked out is the administrator.
+
 **The archive's clock.** `Team.timezone` is an IANA zone, defaulting to `UTC`. Every
 timestamp is stored as an instant; the zone decides how those instants are read back —
 `lib/zoned.ts` returns a Date whose *UTC* parts are the wall-clock parts in that zone, which is

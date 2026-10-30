@@ -278,6 +278,9 @@ export const en = {
   },
 
   admin: {
+    resetPassword: "reset password",
+    resetLinkReady: "Hand this over",
+    resetLinkNote: "works once, expires in a day, and ends every session that account has. you never see the password they choose.",
     timezone: "Archive clock",
     yourClock: "your browser says {zone}",
     administration: "Administration",
@@ -444,6 +447,10 @@ export const en = {
     NOT_YOURSELF: "You cannot remove yourself.",
     PICK_ANOTHER_NAME: "Pick a different name.",
     SAVED: "Saved.",
+    NO_ACCOUNT_YET: "That person has no account here yet — they claim their records by registering.",
+    PASSWORDS_DIFFER: "Those two do not match.",
+    RESET_UNUSABLE: "That link has been used already, or it has expired. Ask for a new one.",
+    RESET_ISSUED: "Link created. Hand it over — it works once, and only for a day.",
     TIMEZONE_UNKNOWN: "That is not a timezone this server recognises — try Europe/Moscow.",
     INVITE_USES_INVALID: "Uses must be a whole number from 1 to {n}, or blank for no limit.",
     INVITE_DAYS_INVALID: "Expiry must be a whole number of days from 1 to {n}, or blank for never.",
@@ -613,6 +620,7 @@ export const en = {
   },
 
   auth: {
+    forgotten: "forgotten the password? whoever administers the archive can hand you a link — there is no email here to send one to.",
     identify: "Identify yourself",
     closedArchive: "the archive is closed. members only, by invitation.",
     signIn: "Sign in",
@@ -634,6 +642,22 @@ export const en = {
     claimPrefix: "already quoted here without an account? use exactly the same name to claim those records — a different spelling starts a separate person.",
     claimingRecord: "Claiming an existing record",
     claimingEntry: "Claiming an entry",
+  },
+
+  reset: {
+    heading: "A way back in",
+    forWhom: "Set a new password for {name}",
+    signingInAs: "the account signs in as {username}.",
+    newPassword: "New password",
+    againPassword: "Again, to be sure",
+    setIt: "Set it",
+    saving: "Setting...",
+    endsSessions: "every session this account had ends here, on every device.",
+    UNKNOWN: "NO SUCH LINK.",
+    EXPIRED: "THAT LINK HAS EXPIRED.",
+    SPENT: "THAT LINK HAS BEEN USED.",
+    askForAnother: "ask whoever administers the archive for a new one. they work once, and only for a day.",
+    backToDoor: "Back to the door",
   },
 
   join: {

@@ -20,6 +20,7 @@ import { fill } from "@/lib/i18n/locale";
 import { returnTo } from "@/lib/return-to";
 import { isLocale, LOCALE_COOKIE } from "@/lib/i18n/locale";
 import { getDictionary } from "@/lib/i18n/server";
+import { consumeReset, issueReset } from "@/lib/services/password-reset";
 import type { ReactionKey } from "@/lib/ranking/aura";
 import {
   authenticate,
@@ -509,6 +510,42 @@ export async function removeMemberAction(
   const result = await removeMember(viewer.team.id, userId);
   revalidatePath("/admin");
   return result.ok ? { ok: true } : { ok: false, error: await say(result) };
+}
+
+/**
+ * Mint a way back in for someone who is locked out, to be handed over in chat.
+ * Returns the token rather than the whole URL: the browser knows the origin,
+ * and a server that guesses it gets it wrong behind a proxy.
+ */
+export async function issueResetAction(userId: string): Promise<AdminState & { token?: string }> {
+  const viewer = await requireTeamAdmin("/admin");
+  const result = await issueReset({
+    teamId: viewer.team.id,
+    userId,
+    issuedById: viewer.user.id,
+  });
+  if (!result.ok) return { error: await say(result) };
+  revalidatePath("/admin");
+  return { ok: await say({ code: "RESET_ISSUED" }), token: result.token };
+}
+
+/** Spend a reset link. Reachable without a session — that is the whole point. */
+export async function resetPasswordAction(
+  _previous: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const token = String(formData.get("token") ?? "");
+  const password = String(formData.get("password") ?? "");
+  const again = String(formData.get("again") ?? "");
+  if (password !== again) return { error: await say({ code: "PASSWORDS_DIFFER" }) };
+
+  const result = await consumeReset(token, password);
+  if (!result.ok) return { error: await say(result) };
+
+  // Every old session was just ended, including any this browser held. Signing
+  // them in here means the link does what the person expected it to do.
+  await createSession(result.userId);
+  redirect("/");
 }
 
 export async function setTeamTimezoneAction(

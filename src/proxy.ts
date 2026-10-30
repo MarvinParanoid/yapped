@@ -19,7 +19,7 @@ import type { NextRequest } from "next/server";
 const SESSION_COOKIE = "yapped_session";
 
 /** Reachable without a session: the door, and the things the door needs. */
-const OPEN = ["/login", "/register", "/join", "/api"];
+const OPEN = ["/login", "/register", "/join", "/reset", "/api"];
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;

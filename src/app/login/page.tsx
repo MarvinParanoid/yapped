@@ -50,6 +50,10 @@ export default async function LoginPage({
         <AuthForm mode="login" next={next?.startsWith("/") ? next : "/"} />
       </div>
 
+      {/* There is no self-serve reset because there is no email to send one
+          to, so the honest thing is to say who to ask. */}
+      <p className="label mt-6 leading-[1.6]">{d.auth.forgotten}</p>
+
       {/* Only where the demo archive is actually loaded. A real instance has
           no business advertising credentials that do not exist on it. */}
       {demo ? (

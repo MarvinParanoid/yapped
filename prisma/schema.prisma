@@ -27,6 +27,7 @@ model Team {
   memberships Membership[]
   invites     Invite[]
   achievements UserAchievement[]
+  resets      PasswordReset[]
   yaps        Yap[]
   battles     Battle[]
 }
@@ -85,6 +86,8 @@ model User {
 
   memberships  Membership[]
   invitesMade  Invite[]          @relation("InviteAuthor")
+  resets       PasswordReset[]   @relation("ResetSubject")
+  resetsIssued PasswordReset[]   @relation("ResetIssuer")
   yaps         Yap[]             @relation("SaidBy")
   submissions  Yap[]             @relation("SubmittedBy")
   reactions    Reaction[]
@@ -224,6 +227,29 @@ model Witness {
 enum WitnessStance {
   PRESENT /// I was there
   DENIED /// cap
+}
+
+/// A way back in for someone who forgot their password.
+///
+/// There is no email anywhere in this archive, so there is nobody to send a
+/// link to — it is handed over the same way an invitation is, by a person who
+/// already administers the team, in the chat they are all in anyway. The
+/// password itself is never seen by the issuer: the link lets its holder set
+/// one.
+model PasswordReset {
+  token      String    @id
+  userId     String
+  user       User      @relation("ResetSubject", fields: [userId], references: [id], onDelete: Cascade)
+  teamId     String
+  team       Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  issuedById String?
+  issuedBy   User?     @relation("ResetIssuer", fields: [issuedById], references: [id], onDelete: SetNull)
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 /// EVIDENCE #01. The file itself lives behind the storage driver; the database
