@@ -1,6 +1,7 @@
 import { after, before, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  makeQuotedYapper,
   DEFAULT_TEAM_ID as TEAM,
   makeTeam,
   makeUser,
@@ -420,7 +421,9 @@ describe("running a team", () => {
 
   test("the member table separates saying from filing", async () => {
     await resetDatabase();
-    const author = await makeUser("Author");
+    // The author here is someone the archive only knows by name, which is the
+    // ordinary case for a quote: somebody files what a colleague said.
+    const author = await makeQuotedYapper("Author");
     const archivist = await makeUser("Archivist");
     await makeYap({ authorId: author.id, submittedById: archivist.id });
     await makeYap({ authorId: author.id, submittedById: archivist.id });
@@ -490,5 +493,29 @@ describe("the roster is the owner's", () => {
     assert.equal(canModerate(asModerator), true, "records, yes");
     assert.equal(canManageMembers(asModerator), false, "people, no");
     assert.equal(canManageMembers(asOwner), true);
+  });
+});
+
+/**
+ * The one-way trap: an archive that can be locked and never reopened.
+ */
+describe("an archive cannot be shut from the outside", () => {
+  test("somebody who cannot sign in cannot be made its owner", async () => {
+    await resetDatabase();
+    const owner = await makeUser("Owner");
+    await setMemberRole(TEAM, owner.id, "OWNER");
+    // Quoted, never registered: a row with a name and no credentials.
+    const quoted = await makeQuotedYapper("Quoted Only");
+
+    const promoted = await setMemberRole(TEAM, quoted.id, "OWNER");
+    assert.equal(promoted.ok, false, "they have no password, so nobody could ever use it");
+    assert.equal((await setMemberRole(TEAM, quoted.id, "ADMIN")).ok, false);
+
+    // Which is what keeps the next step from being the end of the archive.
+    assert.equal(
+      (await setMemberRole(TEAM, owner.id, "MEMBER")).ok,
+      false,
+      "and the real owner still cannot step down to nobody",
+    );
   });
 });

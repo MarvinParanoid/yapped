@@ -190,6 +190,7 @@ export const en = {
   },
 
   sections: {
+    voteLost: "That verdict did not land. Pick again.",
     archivists: "Archivists",
     rankedByFiled: "ranked by records brought in. what a person said is the other table — these are the people who put it on file.",
     filedColumn: "Filed",
@@ -447,6 +448,8 @@ export const en = {
     NOT_YOURSELF: "You cannot remove yourself.",
     PICK_ANOTHER_NAME: "Pick a different name.",
     SAVED: "Saved.",
+    RESET_CROSSES_ARCHIVES: "That account belongs to more than one archive, so one archive's owner cannot set its password. The instance operator can.",
+    RESET_OPERATOR_ONLY: "That account runs this instance. Only another operator can hand it a way back in.",
     OWNER_ONLY_RESET: "Only the archive's owner hands out a way back into an account.",
     NO_ACCOUNT_YET: "That person has no account here yet — they claim their records by registering.",
     PASSWORDS_DIFFER: "Those two do not match.",

@@ -12,6 +12,7 @@ import {
   softDeleteYap,
   editYap,
   toggleReaction,
+  TRENDING_WINDOW,
 } from "@/lib/services/yaps";
 import { computeAura, REACTION_WEIGHTS } from "@/lib/ranking/aura";
 import { parseSearch } from "@/lib/search";
@@ -404,5 +405,40 @@ describe("whoever files a record witnessed it", () => {
     assert.equal(yap.witnesses.length, 0, "an author corroborating themselves is not corroboration");
     assert.equal(yap.verification, "UNVERIFIED");
     assert.ok(yap.acknowledgedAt, "it is an acknowledgement instead");
+  });
+});
+
+/**
+ * The pager must not offer a page that cannot exist.
+ *
+ * Trending ranks a window of records in memory, because the decay expression
+ * is not something Prisma can order by, and then slices that ranking. The
+ * count behind the pager used to count the whole archive, so a feed with more
+ * records than the window advertised pages that were always empty.
+ */
+describe("trending pages through exactly what it ranked", () => {
+  test("the count never promises more than the window holds", async () => {
+    await resetDatabase();
+    const author = await makeUser("Author");
+    for (let i = 0; i < 5; i += 1) await makeYap({ authorId: author.id, aura: 10 });
+
+    const options = { teamId: TEAM, sort: "trending" as const };
+    const counted = await countYaps(options);
+    assert.equal(counted, 5, "a small archive counts normally");
+    assert.ok(counted <= TRENDING_WINDOW);
+
+    // Every page the count promises returns something.
+    const page = await listYaps({ ...options, take: 20, skip: 0 });
+    assert.equal(page.length, 5);
+    assert.equal(
+      (await listYaps({ ...options, take: 20, skip: counted })).length,
+      0,
+      "and the page past the end is the only empty one",
+    );
+  });
+
+  test("fresh and top still count the whole archive", async () => {
+    const fresh = await countYaps({ teamId: TEAM, sort: "fresh" });
+    assert.equal(fresh, 5, "only trending is windowed");
   });
 });

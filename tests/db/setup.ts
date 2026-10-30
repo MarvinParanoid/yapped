@@ -54,11 +54,34 @@ export async function makeTeam(slug: string, name = slug) {
 
 let counter = 0;
 
+/**
+ * An ordinary member: someone who registered and can sign in. That is what
+ * almost every test means by a person, and roles above MEMBER now require it —
+ * a moderator or owner who has no password is a door that cannot be opened.
+ */
 export async function makeUser(displayName?: string, teamId: string = DEFAULT_TEAM_ID) {
+  counter += 1;
+  const n = counter;
+  return prisma.user.create({
+    data: {
+      displayName: displayName ?? `Person ${n}`,
+      username: `person${n}`,
+      passwordHash: "scrypt:test:test",
+      memberships: { create: { teamId } },
+    },
+  });
+}
+
+/**
+ * Someone the archive only knows because they were quoted: a name, no
+ * credentials, nothing to sign in with. They claim their records by
+ * registering under exactly that name.
+ */
+export async function makeQuotedYapper(displayName?: string, teamId: string = DEFAULT_TEAM_ID) {
   counter += 1;
   return prisma.user.create({
     data: {
-      displayName: displayName ?? `Person ${counter}`,
+      displayName: displayName ?? `Quoted ${counter}`,
       memberships: { create: { teamId } },
     },
   });

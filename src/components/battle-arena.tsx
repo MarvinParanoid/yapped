@@ -29,6 +29,7 @@ export function BattleArena({
   const router = useRouter();
   const [round, setRound] = useState(1);
   const [picked, setPicked] = useState<number | null>(null);
+  const [failed, setFailed] = useState(false);
   const [upset, setUpset] = useState<{ gap: number; delta: number } | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -41,6 +42,15 @@ export function BattleArena({
     setPicked(winner.id);
     startTransition(async () => {
       const result = await battleVoteAction(winner.id, loser.id);
+      // A vote that did not land must not look like one that did: stay on this
+      // pair so the same click can be made again, rather than moving on and
+      // leaving the person certain they voted.
+      if (!result.ok) {
+        setPicked(null);
+        setFailed(true);
+        return;
+      }
+      setFailed(false);
       // An underdog win is worth announcing; everything else is silent.
       setUpset(
         result.upset && result.delta !== undefined && result.gap !== undefined
@@ -124,6 +134,12 @@ export function BattleArena({
 
         {card(right, left, "right")}
       </div>
+
+      {failed ? (
+        <div className="yap-in mt-4 border border-red px-4 py-2 text-center">
+          <span className="label-strong text-red">{d.sections.voteLost}</span>
+        </div>
+      ) : null}
 
       {upset ? (
         <div className="yap-in mt-4 flex flex-wrap items-center justify-center gap-3 border border-ink bg-acid px-4 py-2">

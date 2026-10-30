@@ -288,7 +288,11 @@ export async function battleVoteAction(
   const viewer = await getViewer();
   if (!viewer) return { ok: false };
   const outcome = await recordBattle(winnerId, loserId, viewer.team.id, viewer.user.id);
-  return { ok: true, delta: outcome?.delta, upset: outcome?.upset, gap: outcome?.gap };
+  // null means nothing landed: a record outside this archive, or a transaction
+  // that lost the serializable race. Reporting that as success is how a vote
+  // disappears while the arena cheerfully deals the next pair.
+  if (!outcome) return { ok: false };
+  return { ok: true, delta: outcome.delta, upset: outcome.upset, gap: outcome.gap };
 }
 
 export type AuthState = { error?: string };
@@ -529,6 +533,7 @@ export async function issueResetAction(userId: string): Promise<AdminState & { t
     teamId: viewer.team.id,
     userId,
     issuedById: viewer.user.id,
+    issuerIsOperator: viewer.user.isAdmin,
   });
   if (!result.ok) return { error: await say(result) };
   revalidatePath("/admin");

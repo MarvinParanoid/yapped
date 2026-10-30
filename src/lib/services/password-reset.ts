@@ -54,15 +54,35 @@ export async function issueReset(input: {
   teamId: string;
   userId: string;
   issuedById: string;
+  /** Whether the issuer holds the instance role, which widens what they may do. */
+  issuerIsOperator: boolean;
 }): Promise<ResetState> {
   const membership = await prisma.membership.findUnique({
     where: { teamId_userId: { teamId: input.teamId, userId: input.userId } },
-    include: { user: { select: { username: true } } },
+    include: {
+      user: { select: { username: true, role: true, _count: { select: { memberships: true } } } },
+    },
   });
   if (!membership) return { ok: false, code: "NOT_A_MEMBER" };
   // Someone who was only ever quoted has no password to reset — they claim
   // their records by registering, which is a different door.
   if (!membership.user.username) return { ok: false, code: "NO_ACCOUNT_YET" };
+
+  // A password is one per account, not one per archive, so setting it reaches
+  // everywhere that account goes. Issuing a link is therefore only a team
+  // decision while the account is only in this team — otherwise one archive's
+  // owner would be deciding who gets into another archive they have never
+  // been invited to. The instance operator may do it, because the operator can
+  // already enter any archive and the header says so.
+  if (!input.issuerIsOperator) {
+    if (membership.user._count.memberships > 1) {
+      return { ok: false, code: "RESET_CROSSES_ARCHIVES" };
+    }
+    // And never hand out the keys to the person who holds the instance.
+    if (membership.user.role === "ADMIN") {
+      return { ok: false, code: "RESET_OPERATOR_ONLY" };
+    }
+  }
 
   await sweep(input.userId);
 

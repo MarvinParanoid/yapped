@@ -196,9 +196,20 @@ export async function setMemberRole(
   return lastOwnerSafe(async (tx) => {
     const membership = await tx.membership.findUnique({
       where: { teamId_userId: { teamId, userId } },
+      include: { user: { select: { username: true } } },
     });
     if (!membership) return { ok: false, code: "NOT_A_MEMBER" };
     if (membership.role === role) return { ok: true };
+
+    // A role above MEMBER has to belong to somebody who can actually sign in.
+    // Without this an archive can be locked shut and stay that way: make a
+    // quoted-only person OWNER, step down yourself — the last-owner guard is
+    // satisfied, there *is* an owner — and now the only owner has no password,
+    // and a reset link is refused precisely because they have no account. The
+    // door closes from the outside and nothing inside the app reopens it.
+    if (role !== "MEMBER" && !membership.user.username) {
+      return { ok: false, code: "NO_ACCOUNT_YET" };
+    }
 
     if (membership.role === "OWNER") {
       const owners = await tx.membership.count({ where: { teamId, role: "OWNER" } });

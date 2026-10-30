@@ -258,17 +258,32 @@ function buildWhere(options: ListYapsOptions) {
   };
 }
 
+/**
+ * How many records trending ranks at once. Wide enough that the archive it is
+ * built for will not reach it, and the point at which someone should move the
+ * ordering into SQL rather than raise this number again.
+ */
+export const TRENDING_WINDOW = 2000;
+
 export async function listYaps(options: ListYapsOptions): Promise<YapView[]> {
   const { sort = "trending", take = 20, skip = 0, viewerId } = options;
   const where = buildWhere(options);
 
-  // Trending needs the decay expression, which only SQL can order by.
+  // Trending ranks by a decay expression Prisma cannot order by, so the
+  // candidates are fetched and scored here instead. That is only honest while
+  // the window is wide enough to hold the whole archive — otherwise this is the
+  // sixty-day cutoff again in another costume, quietly hiding old records from
+  // the default view. At this archive's pace the window is decades of material;
+  // `countYaps` agrees with it so the interface never offers a page that cannot
+  // exist. Doing it in SQL would mean writing `buildWhere` a second time in
+  // another language, and the two disagreeing is the bug that function exists
+  // to prevent.
   if (sort === "trending") {
     const candidates = await prisma.yap.findMany({
       where,
       select: { id: true, aura: true, createdAt: true },
       orderBy: { createdAt: "desc" },
-      take: 300,
+      take: TRENDING_WINDOW,
     });
     const now = Date.now();
     const ranked = candidates
@@ -308,7 +323,11 @@ export async function listYaps(options: ListYapsOptions): Promise<YapView[]> {
 }
 
 export async function countYaps(options: ListYapsOptions): Promise<number> {
-  return prisma.yap.count({ where: buildWhere(options) });
+  const total = await prisma.yap.count({ where: buildWhere(options) });
+  // Trending can only page through what it ranked, so the pager must not
+  // advertise more than that. Counting everything made the feed offer pages
+  // that were always empty.
+  return (options.sort ?? "trending") === "trending" ? Math.min(total, TRENDING_WINDOW) : total;
 }
 
 /**

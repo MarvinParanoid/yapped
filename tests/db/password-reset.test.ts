@@ -1,8 +1,15 @@
 import assert from "node:assert/strict";
 import { before, describe, test } from "node:test";
-import { DEFAULT_TEAM_ID as TEAM, makeTeam, makeUser, prisma, resetDatabase } from "./setup";
+import {
+  DEFAULT_TEAM_ID as TEAM,
+  makeQuotedYapper,
+  makeTeam,
+  makeUser,
+  prisma,
+  resetDatabase,
+} from "./setup";
 import { consumeReset, inspectReset, issueReset } from "@/lib/services/password-reset";
-import { authenticate, registerAccount } from "@/lib/services/accounts";
+import { authenticate, joinTeam, registerAccount } from "@/lib/services/accounts";
 
 /**
  * Getting back in without an email address.
@@ -25,7 +32,7 @@ describe("a way back in", () => {
   });
 
   test("the link names who it is for, before anyone types a password", async () => {
-    const issued = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin });
+    const issued = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin, issuerIsOperator: false });
     assert.ok(issued.ok);
 
     const subject = await inspectReset(issued.token);
@@ -35,7 +42,7 @@ describe("a way back in", () => {
   });
 
   test("it sets the password and will not work twice", async () => {
-    const issued = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin });
+    const issued = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin, issuerIsOperator: false });
     assert.ok(issued.ok);
 
     assert.equal((await consumeReset(issued.token, "a-brand-new-one")).ok, true);
@@ -52,9 +59,9 @@ describe("a way back in", () => {
   });
 
   test("issuing a new link spends the one before it", async () => {
-    const first = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin });
+    const first = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin, issuerIsOperator: false });
     assert.ok(first.ok);
-    const second = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin });
+    const second = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin, issuerIsOperator: false });
     assert.ok(second.ok);
 
     assert.equal((await inspectReset(first.token)).ok, false, "only one live link at a time");
@@ -62,7 +69,7 @@ describe("a way back in", () => {
   });
 
   test("using it ends every session that account had", async () => {
-    const issued = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin });
+    const issued = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin, issuerIsOperator: false });
     assert.ok(issued.ok);
     await prisma.session.create({
       data: { token: "stale", userId: locked, expiresAt: new Date(Date.now() + 86_400_000) },
@@ -77,7 +84,7 @@ describe("a way back in", () => {
   });
 
   test("an expired link is refused", async () => {
-    const issued = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin });
+    const issued = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin, issuerIsOperator: false });
     assert.ok(issued.ok);
     await prisma.passwordReset.update({
       where: { token: issued.token },
@@ -89,7 +96,7 @@ describe("a way back in", () => {
   });
 
   test("a short password is refused before the link is spent", async () => {
-    const issued = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin });
+    const issued = await issueReset({ teamId: TEAM, userId: locked, issuedById: admin, issuerIsOperator: false });
     assert.ok(issued.ok);
 
     assert.equal((await consumeReset(issued.token, "short")).ok, false);
@@ -100,14 +107,64 @@ describe("a way back in", () => {
     const other = await makeTeam("elsewhere", "Elsewhere");
     const stranger = await makeUser("Stranger", other.id);
 
-    const crossed = await issueReset({ teamId: TEAM, userId: stranger.id, issuedById: admin });
+    const crossed = await issueReset({ teamId: TEAM, userId: stranger.id, issuedById: admin, issuerIsOperator: false });
     assert.equal(crossed.ok, false);
     assert.equal(await prisma.passwordReset.count({ where: { userId: stranger.id } }), 0);
   });
 
   test("someone who was only ever quoted has no password to reset", async () => {
-    const quoted = await makeUser("Quoted Only");
-    const refused = await issueReset({ teamId: TEAM, userId: quoted.id, issuedById: admin });
+    const quoted = await makeQuotedYapper("Quoted Only");
+    const refused = await issueReset({ teamId: TEAM, userId: quoted.id, issuedById: admin, issuerIsOperator: false });
     assert.equal(refused.ok, false);
+  });
+});
+
+/**
+ * A password is one per account, not one per archive, so a reset reaches every
+ * archive that account belongs to. That makes issuing one a team decision only
+ * while the account is confined to that team.
+ */
+describe("a reset stops at the edge of what an owner decides", () => {
+  test("it is refused for an account that belongs to another archive too", async () => {
+    await resetDatabase();
+    const owner = await makeUser("Owner");
+    const account = await registerAccount("traveller", "first-password", "Traveller", TEAM);
+    assert.ok(account.ok);
+
+    const elsewhere = await makeTeam("elsewhere", "Elsewhere");
+    await joinTeam(account.userId, elsewhere.id);
+
+    const refused = await issueReset({
+      teamId: TEAM,
+      userId: account.userId,
+      issuedById: owner.id,
+      issuerIsOperator: false,
+    });
+    assert.equal(refused.ok, false, "one archive's owner cannot open a door into another");
+
+    // The operator may, because they can already enter any archive openly.
+    const allowed = await issueReset({
+      teamId: TEAM,
+      userId: account.userId,
+      issuedById: owner.id,
+      issuerIsOperator: true,
+    });
+    assert.equal(allowed.ok, true);
+  });
+
+  test("the person who runs the instance cannot be reset by a team owner", async () => {
+    await resetDatabase();
+    const owner = await makeUser("Owner");
+    const account = await registerAccount("operator", "first-password", "Operator", TEAM);
+    assert.ok(account.ok);
+    await prisma.user.update({ where: { id: account.userId }, data: { role: "ADMIN" } });
+
+    const refused = await issueReset({
+      teamId: TEAM,
+      userId: account.userId,
+      issuedById: owner.id,
+      issuerIsOperator: false,
+    });
+    assert.equal(refused.ok, false, "taking the instance is not a team decision");
   });
 });

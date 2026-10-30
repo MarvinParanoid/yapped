@@ -41,6 +41,9 @@ async function main(): Promise<void> {
     teamId: membership.teamId,
     userId: user.id,
     issuedById: user.id,
+    // Run by whoever holds the machine, which is above every role in the app:
+    // this is the door that exists for when the app's own doors are shut.
+    issuerIsOperator: true,
   });
   if (!result.ok) throw new Error(result.code);
 
