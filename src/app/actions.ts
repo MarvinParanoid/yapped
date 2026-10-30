@@ -532,12 +532,9 @@ export async function removeMemberAction(
  * and a server that guesses it gets it wrong behind a proxy.
  */
 export async function issueResetAction(userId: string): Promise<AdminState & { token?: string }> {
+  // Admins may hand a member back into their own account; the service refuses
+  // the one case that would be an escalation — an admin resetting the owner.
   const viewer = await requireTeamAdmin("/admin");
-  // Handing someone a way into an account is a roster decision, not a
-  // moderation one — the same bar as removing them or changing their role.
-  if (!canManageMembers(viewer)) {
-    return { error: await say({ code: "OWNER_ONLY_RESET" }) };
-  }
   const result = await issueReset({
     teamId: viewer.team.id,
     userId,

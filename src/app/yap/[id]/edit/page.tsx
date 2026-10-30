@@ -24,7 +24,7 @@ export default async function EditYapPage({ params }: { params: Promise<{ id: st
 
   // The same rule the service enforces, asked before the form is drawn rather
   // than after it is filled in: whoever filed it, or whoever moderates here.
-  const mine = yap.submittedBy?.id === viewer.user.id;
+  const mine = yap.submittedBy?.id === viewer.user.id || yap.author.id === viewer.user.id;
   if (!mine && !canModerate(viewer)) redirect(`/yap/${yapId}`);
 
   const d = await getDictionary();

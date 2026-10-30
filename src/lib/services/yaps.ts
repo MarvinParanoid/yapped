@@ -760,10 +760,18 @@ export async function editYap(
 
   const yap = await prisma.yap.findFirst({
     where: { id: yapId, teamId },
-    select: { submittedById: true, deletedAt: true },
+    select: { authorId: true, submittedById: true, deletedAt: true },
   });
   if (!yap || yap.deletedAt) return { ok: false };
-  if (yap.submittedById !== userId && !(await canModerateTeam(teamId, userId))) {
+  // Whoever filed it, whoever said it, or whoever moderates here.
+  //
+  // The author is in that list because a misquote is theirs to correct — they
+  // are the only one who knows what they actually said. It is a real trade:
+  // witnesses who corroborated the old wording stay attached to the new one,
+  // so the archive trusts the author not to rewrite history on the quiet.
+  // Disputing is still the louder option, and it leaves a mark.
+  const theirs = yap.submittedById === userId || yap.authorId === userId;
+  if (!theirs && !(await canModerateTeam(teamId, userId))) {
     return { ok: false };
   }
 

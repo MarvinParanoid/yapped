@@ -115,7 +115,9 @@ export default async function YapDetailPage({ params, searchParams }: Params) {
               <YapMenu
                 yapId={yap.id}
                 code={yap.code}
-                canEdit={yap.submittedBy?.id === user.id || manages}
+                canEdit={
+                  yap.submittedBy?.id === user.id || yap.author.id === user.id || manages
+                }
                 canDelete={yap.submittedBy?.id === user.id || manages}
               />
             </div>

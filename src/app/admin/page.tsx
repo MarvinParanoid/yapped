@@ -6,7 +6,7 @@ import { InviteManager } from "@/components/admin/invite-manager";
 import { MemberTable } from "@/components/admin/member-table";
 import { RenameTeam, TeamTimezone } from "@/components/admin/team-settings";
 import { Panel } from "@/components/ui/panel";
-import { canManageMembers, requireTeamAdmin } from "@/lib/auth/team";
+import { canManageMembers, canModerate, requireTeamAdmin } from "@/lib/auth/team";
 import { fill } from "@/lib/i18n/locale";
 import { getDictionary } from "@/lib/i18n/server";
 import { formatCount, formatDate } from "@/lib/format";
@@ -28,6 +28,8 @@ export default async function AdminPage() {
   // operator crosses it too, because someone has to be able to fix a team that
   // locked itself out.
   const canManage = canManageMembers(viewer);
+  // Wider on purpose: getting a colleague back in is help, not a roster change.
+  const canReset = canModerate(viewer);
   const d = await getDictionary();
   const months = d.profile.months.split(" ");
 
@@ -87,7 +89,12 @@ export default async function AdminPage() {
         </Panel>
 
         <Panel label={fill(d.admin.membersCount, { n: formatCount(members.length) })} bodyClassName="p-0">
-          <MemberTable members={members} canManage={canManage} viewerId={viewer.user.id} />
+          <MemberTable
+            members={members}
+            canManage={canManage}
+            canReset={canReset}
+            viewerId={viewer.user.id}
+          />
         </Panel>
 
         <Panel label={d.admin.recentRecords} bodyClassName="p-0">

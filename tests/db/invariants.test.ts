@@ -492,3 +492,53 @@ describe("search agrees with the cards about what is contested", () => {
     assert.equal(await countYaps({ teamId: TEAM, filter: parseSearch("has:dispute") }), 1);
   });
 });
+
+/**
+ * A misquote is the quoted person's to correct.
+ *
+ * Editing changes the words and the lore and nothing else — aura, witnesses and
+ * the author's own position all stay — so the author fixing what they actually
+ * said is a correction, not a rewrite of the ledger.
+ */
+describe("the person quoted may correct the quote", () => {
+  test("the author can edit a record somebody else filed", async () => {
+    await resetDatabase();
+    const author = await makeUser("Author");
+    const archivist = await makeUser("Archivist");
+    const id = await createYap({
+      teamId: TEAM,
+      text: "Рот ставлу.",
+      authorId: author.id,
+      submittedById: archivist.id,
+      saidAt: new Date(),
+    });
+
+    assert.equal(
+      (await editYap(id, TEAM, author.id, { text: "Рот ставлю.", lore: null })).ok,
+      true,
+    );
+    assert.equal(
+      (await prisma.yap.findUniqueOrThrow({ where: { id } })).text,
+      "Рот ставлю.",
+    );
+  });
+
+  test("a bystander still cannot", async () => {
+    const stranger = await makeUser("Stranger");
+    const yap = await prisma.yap.findFirstOrThrow({ where: { teamId: TEAM } });
+    assert.equal(
+      (await editYap(yap.id, TEAM, stranger.id, { text: "Я этого не говорил.", lore: null })).ok,
+      false,
+    );
+  });
+
+  test("and editing is not redacting — the author cannot remove it", async () => {
+    const yap = await prisma.yap.findFirstOrThrow({ where: { teamId: TEAM } });
+    const author = await prisma.user.findFirstOrThrow({ where: { displayName: "Author" } });
+    assert.equal(
+      await softDeleteYap(yap.id, TEAM, author.id),
+      false,
+      "the archive is what was said, not what its author would prefer",
+    );
+  });
+});

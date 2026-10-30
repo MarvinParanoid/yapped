@@ -64,6 +64,17 @@ export async function issueReset(input: {
     },
   });
   if (!membership) return { ok: false, code: "NOT_A_MEMBER" };
+
+  // An admin may help a member back in, but not reach above themselves: a
+  // reset hands over an account, so letting an admin issue one for the owner
+  // would make the moderator role a way to take the archive.
+  if (!input.issuerIsOperator && membership.role === "OWNER") {
+    const issuer = await prisma.membership.findUnique({
+      where: { teamId_userId: { teamId: input.teamId, userId: input.issuedById } },
+      select: { role: true },
+    });
+    if (issuer?.role !== "OWNER") return { ok: false, code: "OWNER_ONLY_RESET" };
+  }
   // Someone who was only ever quoted has no password to reset — they claim
   // their records by registering, which is a different door.
   if (!membership.user.username) return { ok: false, code: "NO_ACCOUNT_YET" };

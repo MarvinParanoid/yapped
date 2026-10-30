@@ -10,6 +10,7 @@ import {
 } from "./setup";
 import { consumeReset, inspectReset, issueReset } from "@/lib/services/password-reset";
 import { authenticate, joinTeam, registerAccount } from "@/lib/services/accounts";
+import { setMemberRole } from "@/lib/services/teams";
 
 /**
  * Getting back in without an email address.
@@ -166,5 +167,55 @@ describe("a reset stops at the edge of what an owner decides", () => {
       issuerIsOperator: false,
     });
     assert.equal(refused.ok, false, "taking the instance is not a team decision");
+  });
+});
+
+/**
+ * An admin may help somebody back in, but not reach above themselves.
+ */
+describe("who may hand out a way back in", () => {
+  test("an admin can reset an ordinary member", async () => {
+    await resetDatabase();
+    const owner = await makeUser("Owner");
+    await setMemberRole(TEAM, owner.id, "OWNER");
+    const admin = await makeUser("Admin");
+    await setMemberRole(TEAM, admin.id, "ADMIN");
+    const member = await makeUser("Member");
+
+    const issued = await issueReset({
+      teamId: TEAM,
+      userId: member.id,
+      issuedById: admin.id,
+      issuerIsOperator: false,
+    });
+    assert.equal(issued.ok, true, "helping a colleague back in is not a roster change");
+  });
+
+  test("an admin cannot reset the owner", async () => {
+    await resetDatabase();
+    const owner = await makeUser("Owner");
+    await setMemberRole(TEAM, owner.id, "OWNER");
+    const admin = await makeUser("Admin");
+    await setMemberRole(TEAM, admin.id, "ADMIN");
+
+    const refused = await issueReset({
+      teamId: TEAM,
+      userId: owner.id,
+      issuedById: admin.id,
+      issuerIsOperator: false,
+    });
+    assert.equal(refused.ok, false, "otherwise moderating is a way to take the archive");
+
+    // The owner may still reset another owner, and the operator anyone.
+    const second = await makeUser("Second owner");
+    await setMemberRole(TEAM, second.id, "OWNER");
+    assert.equal(
+      (await issueReset({ teamId: TEAM, userId: second.id, issuedById: owner.id, issuerIsOperator: false })).ok,
+      true,
+    );
+    assert.equal(
+      (await issueReset({ teamId: TEAM, userId: owner.id, issuedById: admin.id, issuerIsOperator: true })).ok,
+      true,
+    );
   });
 });

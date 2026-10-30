@@ -41,7 +41,10 @@ export async function YapCard({
   // The menu used to offer these to the submitter only, while editYap and
   // softDeleteYap have always accepted a moderator too — the interface was
   // quietly stricter than the rule it was drawn from.
-  const canManage = yap.submittedBy?.id === viewerId || viewerModerates;
+  // Redacting is for whoever filed it or moderates; correcting the words
+  // also belongs to the person quoted.
+  const canDelete = yap.submittedBy?.id === viewerId || viewerModerates;
+  const canEdit = canDelete || yap.author.id === viewerId;
   // Steady and dormant records say nothing — an indicator on every card is
   // noise, not information.
   const moving =
@@ -58,7 +61,7 @@ export async function YapCard({
             <QuoteText text={yap.text} scale="compact" />
           </Link>
           <div className="shrink-0">
-            <YapMenu yapId={yap.id} code={yap.code} canEdit={canManage} canDelete={canManage} />
+            <YapMenu yapId={yap.id} code={yap.code} canEdit={canEdit} canDelete={canDelete} />
           </div>
         </div>
 
@@ -152,7 +155,7 @@ export async function YapCard({
                   )}`}
                 </Stamp>
               ) : null}
-              <YapMenu yapId={yap.id} code={yap.code} canEdit={canManage} canDelete={canManage} />
+              <YapMenu yapId={yap.id} code={yap.code} canEdit={canEdit} canDelete={canDelete} />
             </div>
           </div>
 

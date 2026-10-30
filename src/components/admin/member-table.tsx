@@ -15,10 +15,13 @@ const ROLES: TeamRole[] = ["OWNER", "ADMIN", "MEMBER"];
 export function MemberTable({
   members,
   canManage,
+  canReset,
   viewerId,
 }: {
   members: MemberRow[];
   canManage: boolean;
+  /** Admins may hand someone back into their account; the roster stays the owner's. */
+  canReset: boolean;
   viewerId: string;
 }) {
   const router = useRouter();
@@ -83,7 +86,7 @@ export function MemberTable({
               {/* Somebody who cannot get in cannot ask for this themselves,
                   so an administrator mints the link and hands it over. The
                   password is set by its holder — never seen here. */}
-              {canManage && member.hasAccount ? (
+              {canReset && member.hasAccount ? (
                 <button
                   type="button"
                   disabled={pending}
