@@ -8,41 +8,85 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Editorial voice
+# Editorial voice — meme-bureaucratic
 
-Yapped treats trivial workplace statements as matters of permanent
-institutional significance. That contrast is the product. **The system never
-acknowledges the joke** — it files, numbers, corroborates and ranks, with a
-straight face, and lets the reader notice.
+Yapped reads as though a government department found corporate brainrot, placed
+it under state registration, and built an information system to document it.
+**The system never acknowledges the joke.** It files, numbers, corroborates and
+ranks with a straight face, and lets the reader notice.
 
-1. Deadpan bureaucracy beats a punchline. The humour is in the disproportion,
-   not in the wording trying to be funny.
-2. **One strong joke per screen, at most.** A page where every label is making
-   an effort has no contrast left to work with.
-3. **Most copy should not be funny at all.** Errors, buttons, form labels and
-   navigation are infrastructure: clear and predictable. An error that jokes
-   about itself is a worse error.
-4. Short beats elaborate. A long joke in a form is a long form.
-5. Never trade semantic accuracy, accessibility or safety for a line. The
-   archive distinguishes the author of a statement, whoever filed it, a witness,
-   whoever disputes it, and whoever administers the archive — those stay exact.
-6. Descriptions attach to records, never to colleagues. Mocking the statement is
-   the premise; mocking the person is not.
-7. No emoji, no winking, no explaining the joke.
+The motto of the editorial policy: *«Сказал по приколу. Приобщили всерьёз».*
 
-**English and Russian are authored separately.** Neither is a translation of the
-other, and some asymmetry is deliberate. The Russian rule — archival, civil
-service and police-file register, and the vocabulary it settled on — is written
-at the top of `src/lib/i18n/ru.ts`, next to the strings it governs.
+## Three ingredients
 
-Russian must also never need to know anyone's gender: no `сказал(а)`, no
-`внёс(ла)`, no masculine possessives for a member. Prefer a short label with no
-verb agreement (`автор: {name}`) over a sentence that has to choose.
+**Officialese.** The vocabulary of records management, investigation files and
+financial regulation: фигурант, показания, приобщено, установленный факт,
+реестр, на учёте. In English: on the record, entered into the register, filed,
+corroborated, balance sheet.
 
-Established product terms stay as they are, in both languages: yap, yapper,
-aura, lore, evidence, Elo, battle, BASED.
+**Meme.** Internet vocabulary used as if it were approved terminology — аура,
+кринж, лор, brainrot, Elo. Never dropped in at random; it has to sit inside the
+administrative sentence as though nobody finds it unusual.
+
+**Disproportion.** The humour is the gap between how small the event is and how
+seriously the institution treats it. "No witnesses" becomes «Свидетели не
+установлены. Все внезапно отошли.»
+
+## Three intensities
+
+**Level 0 — functional.** Buttons, fields, confirmations, destructive actions,
+errors. Clarity beats voice, every time. Сохранить. Отмена. Эта сильнее.
+An error that jokes about itself is a worse error.
+
+**Level 1 — house style.** Section headings, metric names, statuses, captions.
+Фигуранты. Архивариусы. Приобщено к материалам.
+
+**Level 2 — maximum.** Empty states, Wrapped, achievements, rare events. This is
+where an institution is allowed to say too much: «ПО ДАННОМУ ЗАПРОСУ КОМПРОМАТ
+ОТСУТСТВУЕТ. ПОКА».
+
+**Most copy is Level 0 or 1.** One strong joke per screen is the ceiling. A page
+where every label is trying has no contrast left to work with.
+
+## Russian and English
+
+Two independently authored voices, not translations of each other. Russian draws
+on state registers, investigation protocols and post-irony; English on corporate
+compliance, legal discovery and terminally online humour. Meaning, function and
+intensity match — the jokes do not have to. Never translate a Russian
+bureaucratic idiom word for word if it reads as nothing in English.
+
+Russian must never need to know anyone's gender: no `сказал(а)`, no `внёс(ла)`,
+no masculine possessives for a member. Prefer a label with no verb to agree
+(`автор: {name}`) over a sentence that has to choose.
+
+## Terminology, kept exact
+
+оратор / yapper · архивариус / archivist · цитата, запись / yap, record ·
+свидетель / witness · показания / testimony · оспаривание / dispute ·
+предыстория / lore · улика / evidence · аура / aura · Elo.
+
+Aura and Elo are different numbers and are never used for one another. A record
+is not called confirmed unless the data says so; certification is its own state,
+not a synonym for "has witnesses". **Never trade semantic accuracy for a line.**
+
+## Never translated
+
+Quotes, people's names, lore, witness statements — anything a person typed.
+These are the archive's materials; their original wording is the point.
+
+## Good and bad
+
+Good: «К сожалению, это было сказано.» · «Нехарактерно профессиональный месяц.»
+· «Архив ненадолго захлебнулся. Это зафиксировано.» · `WHO YAPPED HARDER?` ·
+`THE INTERNET FORGETS. WE DON'T.`
+
+Bad: generic SaaS phrasing · memes with no administrative frame · police
+vocabulary on every button · a long joke inside a form · emoji · anything
+unkind about a real colleague. The record is the target of the joke, never the
+person.
 
 All interface text lives in `src/lib/i18n`. `tests/unit/surfaces.test.ts` fails
 the build when a string is written into the markup instead — it checks text
-nodes, props, ternaries and template literals, because copy has hidden in all
-four.
+nodes, props, ternaries, template literals and text mixed with expressions,
+because copy has hidden in all five.

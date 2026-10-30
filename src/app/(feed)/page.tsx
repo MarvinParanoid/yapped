@@ -220,7 +220,10 @@ export default async function FeedPage({
             {yaps.length === 0 ? (
               <EmptyState
                 hint={
-                  d.empty.noResultsHint
+                  // Two different emptinesses: a query that found nothing, and
+                  // a window that simply has nothing in it. Collapsing them
+                  // told people their search failed when they had not searched.
+                  filtering ? d.empty.noResultsHint : d.empty.nothingInWindow
                 }
               />
             ) : (
