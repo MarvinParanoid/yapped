@@ -205,6 +205,7 @@ export const en = {
     listedFew: "{n} records listed",
     listedMany: "{n} records listed",
     fromIndex: "from {aura}",
+    fromZero: "from 0",
     yearsAgoOne: "{n} year ago",
     yearsAgoFew: "{n} years ago",
     yearsAgoMany: "{n} years ago",
@@ -226,7 +227,7 @@ export const en = {
     rankedByElo: "Ranked by head-to-head rating",
     fieldTooThin: "The field is too thin.",
     fieldTooThinBody:
-      "the arena needs at least {min} records to ask a question worth answering. there {n} on file — {needed} more and it opens.",
+      "the arena needs at least {min} records to ask a question worth answering. the archive holds {n} — {needed} more and it opens.",
     allJudged: "You have judged them all.",
     allJudgedBody:
       "Every possible pairing of the {n} records on file has had your vote. The archive has to grow before the arena can ask you anything new.",
@@ -316,7 +317,7 @@ export const en = {
     restore: "restore",
     redactedAt: "redacted {date}",
     removalNote:
-      "removing someone revokes their access and ends their sessions. their statements stay on record — the archive is what was said, not who is still here.",
+      "removing someone revokes their access to this archive. their statements stay on record — the archive is what was said, not who is still here.",
     openedOn: "opened {date}",
     everyArchive: "every archive →",
     instanceOperator: "Instance operator",
@@ -497,6 +498,7 @@ export const en = {
   },
 
   record: {
+    menuFor: "Options for record {code}",
     edit: "edit",
     editHeading: "Correct the wording",
     editNote:

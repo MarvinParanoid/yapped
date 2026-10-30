@@ -69,7 +69,7 @@ export default async function InstancePage() {
       </div>
 
       <div className="mx-auto max-w-[1200px] px-4 py-8 pb-20 sm:px-6 lg:px-8">
-        <Panel label={`Archives — ${formatCount(teams.length)}`} bodyClassName="p-0">
+        <Panel label={`${d.admin.everyArchiveHeading} — ${formatCount(teams.length)}`} bodyClassName="p-0">
           <ul>
             {teams.map((team) => {
               const heads = owners.get(team.id) ?? [];

@@ -93,6 +93,10 @@ describe("interface text", () => {
     // both were silent while the sentence-in-the-markup rule passed.
     const attribute = /([A-Za-z][\w-]*)="([^"\n]+)"/g;
     const ternary = /\?\s*"([^"\n]+)"\s*:\s*"([^"\n]+)"/g;
+    // `title={`Movers — ${window}`}` hid three strings from every rule above:
+    // not a text node, not a quoted attribute, not a ternary. Only the literal
+    // part of a template is checked — the ${...} holes are expressions.
+    const template = /\{`([^`]*)`\}/g;
     // Props whose value is an identifier, a URL or a class list, never a
     // sentence — a match there is a false alarm, and one false alarm is how a
     // rule like this gets deleted.
@@ -117,6 +121,22 @@ describe("interface text", () => {
         const [, attr, text] = match;
         if (technical.test(attr!) || !prose.test(text!)) continue;
         offenders.push(`${where}: ${attr}=${JSON.stringify(text)}`);
+      }
+
+      for (const match of source.matchAll(template)) {
+        const raw = match[1]!;
+        // Strip the holes; what is left is the copy the author typed.
+        const text = raw.replace(/\$\{[^}]*\}/g, " ").trim();
+        if (!text || code.test(text)) continue;
+        // A hyphen or colon means a class list, not a sentence.
+        if (/[-:]/.test(text)) continue;
+        // A label built around a value is usually one word and a separator —
+        // `Movers — ${window}` — so the two-word rule never sees it. Inside a
+        // template with a hole in it, one real word is enough: a URL or an
+        // expression has already been excluded by the characters above.
+        const composed = /\$\{/.test(raw) && /[A-Za-z]{4,}/.test(text);
+        if (!composed && !prose.test(text)) continue;
+        offenders.push(`${where}: ${JSON.stringify(text)}`);
       }
 
       for (const match of source.matchAll(ternary)) {

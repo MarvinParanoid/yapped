@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { deleteYapAction } from "@/app/actions";
 import { useD } from "@/lib/i18n/client";
+import { fill } from "@/lib/i18n/locale";
 
 export function YapMenu({
   yapId,
@@ -66,7 +67,7 @@ export function YapMenu({
     <details ref={ref} className="relative">
       <summary
         className="flex h-6 w-6 cursor-pointer list-none items-center justify-center text-muted transition-colors duration-100 hover:text-ink [&::-webkit-details-marker]:hidden"
-        aria-label={`Options for yap ${code}`}
+        aria-label={fill(d.record.menuFor, { code })}
       >
         ⋮
       </summary>

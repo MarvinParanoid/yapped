@@ -28,12 +28,25 @@ const WINDOWS = [
   { hours: 24 * 90, label: "90d" },
 ];
 
-function percent(value: number | null): string {
-  if (value === null) return "from 0";
+function percent(value: number | null, fromZero: string): string {
+  // Nothing to compare against: say so rather than divide by it.
+  if (value === null) return fromZero;
   return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
 }
 
-function Table({ title, rows, empty }: { title: string; rows: MarketRow[]; empty: string }) {
+function Table({
+  title,
+  rows,
+  empty,
+  newLabel,
+  fromZero,
+}: {
+  title: string;
+  rows: MarketRow[];
+  empty: string;
+  newLabel: string;
+  fromZero: string;
+}) {
   return (
     <section className="border border-ink">
       <header className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2">
@@ -68,7 +81,7 @@ function Table({ title, rows, empty }: { title: string; rows: MarketRow[]; empty
                   {row.delta > 0 ? `+${formatCount(row.delta)}` : "—"}
                 </span>
                 <span className="mono tabnums w-[74px] shrink-0 text-right text-[14px] font-bold">
-                  {row.state === "NEW" ? "NEW" : percent(row.percent)}
+                  {row.state === "NEW" ? newLabel : percent(row.percent, fromZero)}
                 </span>
                 <span className="mono tabnums hidden w-[74px] shrink-0 text-right text-[14px] sm:block">
                   {formatAura(row.now)}
@@ -115,7 +128,7 @@ export default async function MarketPage({
                     a percentage of zero. */}
                 {market.indexPercent === null
                   ? formatAura(market.indexNow)
-                  : percent(market.indexPercent)}
+                  : percent(market.indexPercent, d.sections.fromZero)}
               </span>
               <span className="label mt-2 block">
                 {market.indexPercent === null
@@ -177,19 +190,25 @@ export default async function MarketPage({
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="lg:col-span-2">
               <Table
-                title={`Movers — ${selected.label}`}
+                title={`${d.sections.movers} — ${selected.label}`}
                 rows={market.movers}
+                newLabel={d.feed.momentumNew}
+                fromZero={d.sections.fromZero}
                 empty={d.empty.nothingMoved}
               />
             </div>
             <Table
               title={d.sections.newListings}
               rows={market.newcomers}
+              newLabel={d.feed.momentumNew}
+              fromZero={d.sections.fromZero}
               empty={d.empty.noRecordsFiled}
             />
             <Table
               title={d.sections.dormant}
               rows={market.dormant}
+              newLabel={d.feed.momentumNew}
+              fromZero={d.sections.fromZero}
               empty={d.empty.everythingReacted}
             />
           </div>
