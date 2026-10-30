@@ -17,6 +17,7 @@ import {countYaps,
   toggleReaction,
 } from "@/lib/services/yaps";
 import { findOrCreateYapper, getLeaderboard, getYapperProfile } from "@/lib/services/yappers";
+import { canManageMembers, canModerate } from "@/lib/auth/team";
 import { getArenaState } from "@/lib/services/battles";
 import { joinTeam, previewClaim, registerAccount, validateRegistration } from "@/lib/services/accounts";
 import {
@@ -458,3 +459,36 @@ async function removeMemberFails(teamId: string, userId: string): Promise<boolea
   const result = await removeMember(teamId, userId);
   return result.ok === false;
 }
+
+/**
+ * Curating the records and deciding who is in the room are different powers.
+ *
+ * An ADMIN corrects a misquote and redacts one. Only the owner changes roles,
+ * removes people, or hands somebody a way back into an account — and a reset
+ * link is that last one, which is why it sits at the owner's bar and not the
+ * moderator's.
+ */
+describe("the roster is the owner's", () => {
+  test("a team admin moderates records but does not manage people", async () => {
+    await resetDatabase();
+    const owner = await makeUser("Owner");
+    const moderator = await makeUser("Moderator");
+    await setMemberRole(TEAM, owner.id, "OWNER");
+    await setMemberRole(TEAM, moderator.id, "ADMIN");
+
+    const asModerator = {
+      user: { id: moderator.id, isAdmin: false } as never,
+      team: { id: TEAM, name: "T", slug: "t", role: "ADMIN" as const, timezone: "UTC" },
+      teams: [],
+    };
+    const asOwner = {
+      user: { id: owner.id, isAdmin: false } as never,
+      team: { id: TEAM, name: "T", slug: "t", role: "OWNER" as const, timezone: "UTC" },
+      teams: [],
+    };
+
+    assert.equal(canModerate(asModerator), true, "records, yes");
+    assert.equal(canManageMembers(asModerator), false, "people, no");
+    assert.equal(canManageMembers(asOwner), true);
+  });
+});

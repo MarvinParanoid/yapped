@@ -447,6 +447,7 @@ export const en = {
     NOT_YOURSELF: "You cannot remove yourself.",
     PICK_ANOTHER_NAME: "Pick a different name.",
     SAVED: "Saved.",
+    OWNER_ONLY_RESET: "Only the archive's owner hands out a way back into an account.",
     NO_ACCOUNT_YET: "That person has no account here yet — they claim their records by registering.",
     PASSWORDS_DIFFER: "Those two do not match.",
     RESET_UNUSABLE: "That link has been used already, or it has expired. Ask for a new one.",

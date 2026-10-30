@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { createSession, destroySession, getSessionUser } from "@/lib/auth/session";
 import {
   canModerate,
+  canManageMembers,
   getViewer,
   listMemberships,
   requireOperator,
@@ -491,7 +492,7 @@ export async function setMemberRoleAction(
 ): Promise<{ ok: boolean; error?: string }> {
   const viewer = await requireTeamAdmin("/admin");
   // Owners are the only ones who can hand out or take back ownership.
-  if (viewer.team.role !== "OWNER" && !viewer.user.isAdmin) {
+  if (!canManageMembers(viewer)) {
     return { ok: false, error: await say({ code: "OWNER_ONLY_ROLES" }) };
   }
   const result = await setMemberRole(viewer.team.id, userId, role);
@@ -503,7 +504,7 @@ export async function removeMemberAction(
   userId: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const viewer = await requireTeamAdmin("/admin");
-  if (viewer.team.role !== "OWNER" && !viewer.user.isAdmin) {
+  if (!canManageMembers(viewer)) {
     return { ok: false, error: await say({ code: "OWNER_ONLY_REMOVE" }) };
   }
   if (userId === viewer.user.id) return { ok: false, error: await say({ code: "NOT_YOURSELF" }) };
@@ -519,6 +520,11 @@ export async function removeMemberAction(
  */
 export async function issueResetAction(userId: string): Promise<AdminState & { token?: string }> {
   const viewer = await requireTeamAdmin("/admin");
+  // Handing someone a way into an account is a roster decision, not a
+  // moderation one — the same bar as removing them or changing their role.
+  if (!canManageMembers(viewer)) {
+    return { error: await say({ code: "OWNER_ONLY_RESET" }) };
+  }
   const result = await issueReset({
     teamId: viewer.team.id,
     userId,

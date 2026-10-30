@@ -6,7 +6,7 @@ import { InviteManager } from "@/components/admin/invite-manager";
 import { MemberTable } from "@/components/admin/member-table";
 import { RenameTeam, TeamTimezone } from "@/components/admin/team-settings";
 import { Panel } from "@/components/ui/panel";
-import { requireTeamAdmin } from "@/lib/auth/team";
+import { canManageMembers, requireTeamAdmin } from "@/lib/auth/team";
 import { fill } from "@/lib/i18n/locale";
 import { getDictionary } from "@/lib/i18n/server";
 import { formatCount, formatDate } from "@/lib/format";
@@ -27,7 +27,7 @@ export default async function AdminPage() {
   // Ownership is the line for changing who else is in the room; the instance
   // operator crosses it too, because someone has to be able to fix a team that
   // locked itself out.
-  const canManage = viewer.team.role === "OWNER" || viewer.user.isAdmin;
+  const canManage = canManageMembers(viewer);
   const d = await getDictionary();
   const months = d.profile.months.split(" ");
 

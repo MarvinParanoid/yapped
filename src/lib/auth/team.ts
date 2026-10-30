@@ -127,6 +127,21 @@ export function canModerate(viewer: Viewer): boolean {
   return viewer.user.isAdmin || viewer.team.role !== "MEMBER";
 }
 
+/**
+ * Who may change the roster — roles, removals, and handing someone a way back
+ * into their own account.
+ *
+ * Deliberately narrower than `canModerate`. An ADMIN curates the records: they
+ * correct a misquote and redact one. Deciding who is in the room, and who can
+ * get back into an account, is the owner's. The two were drifting: the admin
+ * page has always drawn these controls for the owner alone while the actions
+ * behind them accepted any moderator, so a crafted request did what the
+ * interface refused to offer. One function now answers the question for both.
+ */
+export function canManageMembers(viewer: Viewer): boolean {
+  return viewer.user.isAdmin || viewer.team.role === "OWNER";
+}
+
 /** Looking at a team they are not in. Worth saying out loud wherever it is true. */
 export function isForeignTeam(viewer: Viewer): boolean {
   return viewer.team.role === "OPERATOR";
