@@ -4,7 +4,8 @@ import { evaluateAchievements, type Achievement, type YapperStats } from "@/lib/
 import { titleFor, type Title } from "@/lib/titles";
 import { isContested } from "@/lib/verification";
 import { validateName } from "@/lib/names";
-import type { ArchivistEntry, LeaderboardEntry, RangeKey, YapperRef } from "@/lib/types";
+import { countWeeklyTitles } from "@/lib/services/weekly";
+import type { ArchivistEntry, Employment, LeaderboardEntry, RangeKey, YapperRef } from "@/lib/types";
 
 function toYapperRef(user: {
   id: string;
@@ -22,6 +23,18 @@ function toYapperRef(user: {
     title: user.title,
     hasAccount: Boolean(user.username),
   };
+}
+
+/**
+ * Whether the archive has recorded that this person has left.
+ *
+ * It reads a membership rather than the account because that is where the fact
+ * lives — one archive's former colleague is another archive's current one. The
+ * queries below fetch the membership for the team they were already scoped to,
+ * so there is no extra round trip.
+ */
+function hasLeft(user: { memberships: Array<{ employment: Employment }> }): boolean {
+  return user.memberships[0]?.employment === "FORMER";
 }
 
 function sinceFor(range: RangeKey): Date | null {
@@ -87,7 +100,9 @@ export async function getArchivistLeaderboard(
 
   // Anyone who did any of the three belongs here, including the person with no
   // filings and twenty verdicts.
-  const rows = new Map<string, Omit<ArchivistEntry, "yapper" | "rank">>();
+  // The counts only; `former` and `rank` are joined on once the people behind
+  // these ids have been read.
+  const rows = new Map<string, Omit<ArchivistEntry, "yapper" | "rank" | "former">>();
   const row = (id: string) => {
     const found = rows.get(id);
     if (found) return found;
@@ -109,13 +124,16 @@ export async function getArchivistLeaderboard(
   }
   if (rows.size === 0) return [];
 
-  const users = await prisma.user.findMany({ where: { id: { in: [...rows.keys()] } } });
+  const users = await prisma.user.findMany({
+    where: { id: { in: [...rows.keys()] } },
+    include: { memberships: { where: { teamId }, select: { employment: true } } },
+  });
   const userById = new Map(users.map((user) => [user.id, user]));
 
   return [...rows.entries()]
     .flatMap(([id, counts]) => {
       const user = userById.get(id);
-      return user ? [{ yapper: toYapperRef(user), ...counts }] : [];
+      return user ? [{ yapper: toYapperRef(user), former: hasLeft(user), ...counts }] : [];
     })
     .sort((a, b) => b.filedCount - a.filedCount || b.discoveredAura - a.discoveredAura)
     .slice(0, take)
@@ -143,7 +161,10 @@ export async function getLeaderboard(
   const authorIds = grouped.map((row) => row.authorId);
 
   const [users, certified, bestYaps] = await Promise.all([
-    prisma.user.findMany({ where: { id: { in: authorIds } } }),
+    prisma.user.findMany({
+      where: { id: { in: authorIds } },
+      include: { memberships: { where: { teamId }, select: { employment: true } } },
+    }),
     prisma.yap.groupBy({
       by: ["authorId"],
       where: { ...where, verification: "CERTIFIED" },
@@ -168,6 +189,7 @@ export async function getLeaderboard(
       const best = bestByAuthor.get(row.authorId);
       return {
         yapper: toYapperRef(user),
+        former: hasLeft(user),
         yapCount: row._count._all,
         totalAura: row._sum.aura ?? 0,
         reactionsReceived: row._sum.reactionCount ?? 0,
@@ -183,6 +205,13 @@ export async function getLeaderboard(
 
 export type YapperProfile = {
   yapper: YapperRef;
+  /** Still on the record, no longer on the payroll. */
+  former: boolean;
+  /**
+   * Weeks this archive has named them in. Not a badge and not a rating: no
+   * aura is granted for it and no record moves because of it.
+   */
+  weeklyTitles: number;
   joinedAt: Date;
   /** When they first went on the record, which is the date that matters. */
   yappingSince: Date | null;
@@ -235,55 +264,58 @@ export async function getYapperProfile(
 ): Promise<YapperProfile | null> {
   const user = await prisma.user.findFirst({
     where: { id, memberships: { some: { teamId } } },
+    include: { memberships: { where: { teamId }, select: { employment: true } } },
   });
   if (!user) return null;
 
   const where = { teamId, authorId: id, deletedAt: null };
 
-  const [yaps, ranking, corroborators, filedCount, testimonyGiven, awarded] = await Promise.all([
-    prisma.yap.findMany({
-      where,
-      select: {
-        id: true,
-        text: true,
-        aura: true,
-        verification: true,
-        lore: true,
-        saidAt: true,
-        acknowledgedAt: true,
-        battleWins: true,
-        battleLosses: true,
-        eloRating: true,
-        reactionCount: true,
-        witnessCount: true,
-        denialCount: true,
-        disputedAt: true,
-      },
-    }),
-    prisma.yap.groupBy({
-      by: ["authorId"],
-      where: { teamId, deletedAt: null },
-      _sum: { aura: true },
-      orderBy: { _sum: { aura: "desc" } },
-    }),
-    // Who keeps confirming they were in the room when this person spoke.
-    prisma.witness.groupBy({
-      by: ["userId"],
-      where: { stance: "PRESENT", yap: where, userId: { not: id } },
-      _count: { _all: true },
-      orderBy: { _count: { userId: "desc" } },
-      take: 5,
-    }),
-    // The archivist dimension: records this person put on the record, whoever
-    // actually said them.
-    prisma.yap.count({ where: { teamId, submittedById: id, deletedAt: null } }),
-    prisma.witness.count({ where: { userId: id, stance: "PRESENT", yap: { teamId } } }),
-    // When each badge was first awarded, in this archive.
-    prisma.userAchievement.findMany({
-      where: { teamId, userId: id },
-      select: { key: true, awardedAt: true },
-    }),
-  ]);
+  const [yaps, ranking, corroborators, filedCount, testimonyGiven, awarded, weeklyTitles] =
+    await Promise.all([
+      prisma.yap.findMany({
+        where,
+        select: {
+          id: true,
+          text: true,
+          aura: true,
+          verification: true,
+          lore: true,
+          saidAt: true,
+          acknowledgedAt: true,
+          battleWins: true,
+          battleLosses: true,
+          eloRating: true,
+          reactionCount: true,
+          witnessCount: true,
+          denialCount: true,
+          disputedAt: true,
+        },
+      }),
+      prisma.yap.groupBy({
+        by: ["authorId"],
+        where: { teamId, deletedAt: null },
+        _sum: { aura: true },
+        orderBy: { _sum: { aura: "desc" } },
+      }),
+      // Who keeps confirming they were in the room when this person spoke.
+      prisma.witness.groupBy({
+        by: ["userId"],
+        where: { stance: "PRESENT", yap: where, userId: { not: id } },
+        _count: { _all: true },
+        orderBy: { _count: { userId: "desc" } },
+        take: 5,
+      }),
+      // The archivist dimension: records this person put on the record, whoever
+      // actually said them.
+      prisma.yap.count({ where: { teamId, submittedById: id, deletedAt: null } }),
+      prisma.witness.count({ where: { userId: id, stance: "PRESENT", yap: { teamId } } }),
+      // When each badge was first awarded, in this archive.
+      prisma.userAchievement.findMany({
+        where: { teamId, userId: id },
+        select: { key: true, awardedAt: true },
+      }),
+      countWeeklyTitles(id, teamId),
+    ]);
 
   const awardedByKey = new Map(awarded.map((row) => [row.key, row.awardedAt]));
 
@@ -356,6 +388,8 @@ export async function getYapperProfile(
 
   return {
     yapper: toYapperRef(user),
+    former: hasLeft(user),
+    weeklyTitles,
     joinedAt: user.createdAt,
     yappingSince: oldest,
     stats: {

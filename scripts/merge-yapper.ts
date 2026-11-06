@@ -75,6 +75,7 @@ async function main(): Promise<void> {
     battles: await prisma.battle.count({ where: { voterId: from.id } }),
     invites: await prisma.invite.count({ where: { createdById: from.id } }),
     badges: await prisma.userAchievement.count({ where: { userId: from.id } }),
+    "weeks won": await prisma.weeklyRuling.count({ where: { winnerId: from.id } }),
     sessions: await prisma.session.count({ where: { userId: from.id } }),
   };
 
@@ -106,6 +107,10 @@ async function main(): Promise<void> {
     await tx.yap.updateMany({ where: { authorId: from.id }, data: { authorId: into.id } });
     await tx.yap.updateMany({ where: { submittedById: from.id }, data: { submittedById: into.id } });
     await tx.invite.updateMany({ where: { createdById: from.id }, data: { createdById: into.id } });
+    // A week the losing row was named in belongs to the person, not the row.
+    // Without this the ruling would cascade away with the delete below and the
+    // week would quietly be re-decided in favour of somebody else.
+    await tx.weeklyRuling.updateMany({ where: { winnerId: from.id }, data: { winnerId: into.id } });
 
     // Moves guarded by a unique constraint: where the survivor already holds an
     // equivalent row, the loser's is dropped rather than moved.
@@ -172,6 +177,7 @@ async function main(): Promise<void> {
       (await tx.battle.count({ where: { voterId: from.id } })) +
       (await tx.invite.count({ where: { createdById: from.id } })) +
       (await tx.userAchievement.count({ where: { userId: from.id } })) +
+      (await tx.weeklyRuling.count({ where: { winnerId: from.id } })) +
       (await tx.session.count({ where: { userId: from.id } })) +
       (await tx.membership.count({ where: { userId: from.id } }));
     if (stragglers > 0) {

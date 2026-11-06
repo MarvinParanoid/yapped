@@ -30,6 +30,7 @@ model Team {
   resets      PasswordReset[]
   yaps        Yap[]
   battles     Battle[]
+  rulings     WeeklyRuling[]
 }
 
 model Membership {
@@ -41,8 +42,23 @@ model Membership {
   role     TeamRole @default(MEMBER)
   joinedAt DateTime @default(now())
 
+  /// Whether this person still works here. Personnel status, not account
+  /// status: it changes nothing about access, roles, sessions or anything on
+  /// the record. It lives on the membership rather than the user because it is
+  /// a fact about this organisation — the same person may be current in one
+  /// archive and former in another, the way their badges already are.
+  ///
+  /// CURRENT is the default in the technical sense only: it means nobody has
+  /// recorded anything, not that employment has been confirmed.
+  employment Employment @default(CURRENT)
+
   @@unique([teamId, userId])
   @@index([userId])
+}
+
+enum Employment {
+  CURRENT
+  FORMER
 }
 
 enum TeamRole {
@@ -95,6 +111,7 @@ model User {
   sessions     Session[]
   achievements UserAchievement[]
   battleVotes  Battle[]          @relation("BattleVoter")
+  weeksWon     WeeklyRuling[]    @relation("WeeklyWinner")
 
   @@index([displayName])
 }
@@ -318,6 +335,43 @@ model UserAchievement {
   /// the same leak the required teamId arguments exist to prevent.
   @@unique([teamId, userId, key])
   @@index([userId])
+}
+
+/// What the committee decided about one ISO week, written down once.
+///
+/// The ruling is a record of what the archive looked like at `decidedAt`, not a
+/// live query: a week is examined the first time anybody asks about it after it
+/// has closed, and the answer then stands. Reactions that arrive later, a quote
+/// filed late, a corrected date, a redaction — none of them reopen a decision
+/// that has been published. That is the point of writing it down, and it is
+/// also why a week with nobody in it is stored as a row with no winner rather
+/// than as a missing row.
+model WeeklyRuling {
+  id          String   @id @default(cuid())
+  teamId      String
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  isoYear     Int
+  isoWeek     Int
+
+  /// The interval actually examined, resolved against the archive's clock at
+  /// the time. Stored rather than recomputed so changing the clock later does
+  /// not quietly relabel a ruling that was made under the old one.
+  periodFrom  DateTime
+  periodTo    DateTime
+
+  /// Null means the committee found nobody — a week in which nothing was said.
+  winnerId    String?
+  winner      User?    @relation("WeeklyWinner", fields: [winnerId], references: [id], onDelete: Cascade)
+
+  /// The grounds: what the winner put on the record that week, and what the
+  /// office made of it. Frozen with the rest of the decision.
+  recordCount Int      @default(0)
+  aura        Int      @default(0)
+
+  decidedAt   DateTime @default(now())
+
+  @@unique([teamId, isoYear, isoWeek])
+  @@index([teamId, winnerId])
 }
 
 /// Opaque session token in an httpOnly cookie. Magic links can later create a

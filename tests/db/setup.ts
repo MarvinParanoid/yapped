@@ -29,6 +29,7 @@ export async function resetDatabase(): Promise<string> {
     prisma.witness.deleteMany(),
     prisma.evidence.deleteMany(),
     prisma.userAchievement.deleteMany(),
+    prisma.weeklyRuling.deleteMany(),
     prisma.session.deleteMany(),
     prisma.yap.deleteMany(),
     prisma.invite.deleteMany(),
@@ -92,6 +93,13 @@ export async function makeYap(input: {
   authorId: string;
   submittedById?: string;
   saidAt?: Date;
+  /**
+   * When the archive gained the record, as opposed to when the words were
+   * said. The two are different questions — see `services/incidents` — and the
+   * weekly deadline reads this one, so anything testing a reporting period has
+   * to set it rather than let it default to the moment the test ran.
+   */
+  createdAt?: Date;
   lore?: string | null;
   aura?: number;
   teamId?: string;
@@ -104,12 +112,29 @@ export async function makeYap(input: {
       authorId: input.authorId,
       submittedById: input.submittedById ?? null,
       saidAt: input.saidAt ?? new Date(),
+      ...(input.createdAt ? { createdAt: input.createdAt } : {}),
       lore: input.lore ?? null,
       aura: input.aura ?? 0,
       acknowledgedAt:
         input.submittedById && input.submittedById === input.authorId ? new Date() : null,
     },
   });
+}
+
+/**
+ * A reaction with a timestamp of its own.
+ *
+ * Aura is reconstructed from these rather than read off `Yap.aura` wherever a
+ * past moment is involved, so a test about a reporting period has to put real
+ * rows here. BASED is worth 10 — see `lib/ranking/aura`.
+ */
+export async function react(
+  yapId: number,
+  userId: string,
+  type: "BASED" | "DEAD" | "REAL" | "CRINGE" | "STONE",
+  at: Date,
+) {
+  return prisma.reaction.create({ data: { yapId, userId, type, createdAt: at } });
 }
 
 export { prisma };

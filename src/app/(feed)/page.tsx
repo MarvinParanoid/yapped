@@ -5,6 +5,7 @@ import { SidebarElsewhere } from "@/components/sidebar-elsewhere";
 import { SidebarLeaders } from "@/components/sidebar-leaders";
 import { StatTicker } from "@/components/stat-ticker";
 import { YapCard } from "@/components/yap-card";
+import { OversightStrip } from "@/components/oversight-strip";
 import { EmptyState, FirstRun } from "@/components/ui/empty-state";
 import { Panel } from "@/components/ui/panel";
 import { assignEmphasis } from "@/lib/archival";
@@ -20,6 +21,7 @@ import { getLeaderboard } from "@/lib/services/yappers";
 import { getMomentum } from "@/lib/services/aura-history";
 import { hasAnniversaryToday } from "@/lib/services/on-this-day";
 import { listPeriods, periodLabel, periodSlug } from "@/lib/services/wrapped";
+import { getLatestIncidentReport, getQuietSpell } from "@/lib/services/incidents";
 import type { RangeKey, SortKey } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -108,12 +110,16 @@ export default async function FeedPage({
   const PER_PAGE = 25;
   const listOptions = { teamId, sort, range: effectiveRange, filter };
 
-  const [stats, yaps, total, leaders, periods] = await Promise.all([
+  const [stats, yaps, total, leaders, periods, quiet, report] = await Promise.all([
     getArchiveStats(teamId),
     listYaps({ ...listOptions, viewerId: user.id, take: PER_PAGE, skip: (page - 1) * PER_PAGE }),
     countYaps(listOptions),
     getLeaderboard(teamId, "all", 6),
     listPeriods(teamId, viewer.team.timezone),
+    // The oversight line. Search is its own mode and does not carry the
+    // department's status with it.
+    filtering ? null : getQuietSpell(teamId, viewer.team.timezone),
+    filtering ? null : getLatestIncidentReport(teamId, viewer.team.timezone),
   ]);
   // Only offered when there is actually something to remember.
   const anniversaries = await hasAnniversaryToday(teamId, new Date(), viewer.team.timezone);
@@ -176,6 +182,12 @@ export default async function FeedPage({
         )}
       >
         <div className="min-w-0">
+          {filtering ? null : (
+            <div className="mb-6">
+              <OversightStrip quiet={quiet} report={report} timeZone={viewer.team.timezone} />
+            </div>
+          )}
+
           {filtering ? null : (
             <Suspense fallback={<div className="h-[37px] border-b border-ink" />}>
               <FeedControls sort={sort} range={range} />
