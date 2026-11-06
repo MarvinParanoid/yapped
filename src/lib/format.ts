@@ -1,3 +1,5 @@
+import { shift } from "@/lib/zoned";
+
 /** Formatting used across the archive. Server-rendered, so deterministic. */
 
 /** 420 → "#00420" */
@@ -24,6 +26,27 @@ export function formatStamp(date: Date): string {
   const dd = String(date.getUTCDate()).padStart(2, "0");
   const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
   return `${dd}.${mm}.${date.getUTCFullYear()}`;
+}
+
+/**
+ * A date as the archive's own clock reads it.
+ *
+ * `formatDate` reads UTC parts, which is right for an instant that was stored
+ * from a UTC reading and wrong for a boundary that was computed in a zone: the
+ * Monday a reporting period starts on is 23:00 the previous Sunday in UTC, and
+ * printing that as Sunday would be off by a day on a label that is *about* the
+ * boundary. `shift` relabels the wall clock as UTC, which is exactly the shape
+ * `formatDate` already reads.
+ *
+ * New surfaces only. The thirteen existing call sites still print UTC, which
+ * is a known and separately tracked limitation.
+ */
+export function formatLocalDate(
+  instant: Date,
+  timeZone: string,
+  months: readonly string[] = MONTHS,
+): string {
+  return formatDate(shift(instant, timeZone), months);
 }
 
 export function formatCount(value: number): string {

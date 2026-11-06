@@ -4,6 +4,7 @@ import { validateName } from "@/lib/names";
 import { knownZone } from "@/lib/zoned";
 import type { Prisma } from "@/generated/prisma/client";
 import type { TeamRole } from "@/lib/auth/team";
+import type { Employment } from "@/lib/types";
 
 export type MemberRow = {
   userId: string;
@@ -16,6 +17,8 @@ export type MemberRow = {
   hasAccount: boolean;
   yapCount: number;
   filedCount: number;
+  /** Personnel status. Nothing about it touches the account or the record. */
+  employment: Employment;
 };
 
 export type TeamOverview = {
@@ -76,6 +79,7 @@ export async function listMembers(teamId: string): Promise<MemberRow[]> {
     hasAccount: Boolean(row.user.passwordHash),
     yapCount: saidBy.get(row.userId) ?? 0,
     filedCount: filedBy.get(row.userId) ?? 0,
+    employment: row.employment,
   }));
 
   // Join order is useless here: most rows are people the archive quotes who
@@ -259,6 +263,44 @@ export async function removeMember(teamId: string, userId: string): Promise<Role
  * runtime does not recognise it: silently filing everything under UTC because
  * of a typo is how you end up distrusting every date in here.
  */
+const EMPLOYMENTS: readonly Employment[] = ["CURRENT", "FORMER"];
+
+export function isEmployment(value: unknown): value is Employment {
+  return typeof value === "string" && (EMPLOYMENTS as readonly string[]).includes(value);
+}
+
+/**
+ * Record that somebody has left, or that they have not.
+ *
+ * Deliberately the smallest write in the file. It touches one column on one
+ * membership: no session is ended, no role changes, no record moves, and
+ * nothing is recalculated. Access and employment are different mechanisms and
+ * the archive is the one place where that distinction has to hold — a person
+ * who left two years ago is still a figure in it, and a person who is still
+ * here can be locked out for reasons that have nothing to do with payroll.
+ *
+ * Setting the status it already has is a no-op rather than a second row: the
+ * status is a fact about the membership, not a log of personnel decisions.
+ */
+export async function setEmployment(
+  teamId: string,
+  userId: string,
+  employment: Employment,
+): Promise<RoleChange> {
+  const membership = await prisma.membership.findUnique({
+    where: { teamId_userId: { teamId, userId } },
+    select: { employment: true },
+  });
+  if (!membership) return { ok: false, code: "NOT_A_MEMBER" };
+  if (membership.employment === employment) return { ok: true };
+
+  await prisma.membership.update({
+    where: { teamId_userId: { teamId, userId } },
+    data: { employment },
+  });
+  return { ok: true };
+}
+
 export async function setTeamTimezone(teamId: string, zone: string): Promise<RoleChange> {
   const wanted = zone.trim();
   if (!wanted || knownZone(wanted) !== wanted) return { ok: false, code: "TIMEZONE_UNKNOWN" };

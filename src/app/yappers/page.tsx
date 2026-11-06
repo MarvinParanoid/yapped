@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
+import { FormerMark } from "@/components/ui/former-mark";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatCount } from "@/lib/format";
 import { formatAura } from "@/lib/ranking/aura";
@@ -108,8 +109,20 @@ export default async function YappersPage({
                   <span className="flex min-w-0 items-center gap-3">
                     <Avatar name={entry.yapper.displayName} src={entry.yapper.avatarUrl} size={34} />
                     <span className="min-w-0">
-                      <span className="block truncate text-[15px] font-bold leading-tight">
-                        {entry.yapper.displayName}
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="truncate text-[15px] font-bold leading-tight">
+                          {entry.yapper.displayName}
+                        </span>
+                        {/* From `md` up only. Below it this cell is down to
+                            54px at 320 — narrow enough that the person's own
+                            title is already truncated away — and a mark that
+                            squeezes the name to nothing is worse than a mark
+                            the profile carries instead. */}
+                        {entry.former ? (
+                          <span className="hidden md:block">
+                            <FormerMark label={d.employment.former} />
+                          </span>
+                        ) : null}
                       </span>
                       {entry.yapper.title ? (
                         <span className="label block truncate">{entry.yapper.title}</span>
@@ -202,8 +215,20 @@ export default async function YappersPage({
                   <span className="flex min-w-0 items-center gap-3">
                     <Avatar name={entry.yapper.displayName} src={entry.yapper.avatarUrl} size={34} />
                     <span className="min-w-0">
-                      <span className="block truncate text-[15px] font-bold leading-tight">
-                        {entry.yapper.displayName}
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="truncate text-[15px] font-bold leading-tight">
+                          {entry.yapper.displayName}
+                        </span>
+                        {/* From `md` up only. Below it this cell is down to
+                            54px at 320 — narrow enough that the person's own
+                            title is already truncated away — and a mark that
+                            squeezes the name to nothing is worse than a mark
+                            the profile carries instead. */}
+                        {entry.former ? (
+                          <span className="hidden md:block">
+                            <FormerMark label={d.employment.former} />
+                          </span>
+                        ) : null}
                       </span>
                       {entry.yapper.title ? (
                         <span className="label block truncate">{entry.yapper.title}</span>

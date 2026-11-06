@@ -276,6 +276,32 @@ would be a different fact for everyone. It governs Wrapped's hour histogram and 
 boundaries and `/on-this-day`'s notion of today; date *display* is still UTC, which is wrong
 only within the offset of midnight.
 
+**WeeklyRuling** — what the committee decided about one ISO week. `teamId`, `isoYear`,
+`isoWeek` (`@@unique`), `periodFrom`/`periodTo`, `winnerId?`, `recordCount`, `aura`,
+`decidedAt`. A week's file **closes at midday on the Monday after it**, on the archive's clock,
+and every input is cut at that one instant: which records count (said inside the week *and*
+entered by the deadline), whether they count (not redacted as of it) and what they were worth
+(aura rebuilt by `auraAsOf` from reaction timestamps, not read off the denormalized total). So
+the verdict is a function of the archive and the deadline rather than of the clock when
+somebody first looks — opening the page at 12:01 on Monday and again on Thursday gives the same
+answer. It is then written down and read rather than recomputed. A week with nobody in it is
+stored as a row with no winner, because "nobody" is a finding. Before the deadline the same
+calculation runs with `now` as the cutoff, is labelled provisional and is deliberately **not**
+stored. The one input that cannot be reconstructed: withdrawing a reaction deletes its row, so
+a reaction cast before the deadline and taken back afterwards is gone — which matters only in
+the window before the ruling is stored.
+
+**Incidents versus titles.** Two readings of the same rows, and the report prints both because
+they genuinely disagree. An *incident* is a record being **entered** (`createdAt`): finding a
+two-year-old quote and filing it today is today's event. A *title* is about who was talking, so
+the yapper of the week is counted by `saidAt` — nothing else would survive somebody entering a
+year of backlog in an afternoon. `services/incidents.ts` holds the weekly report and the
+"days without a verbal incident" counter; the counter subtracts two local calendar dates rather
+than dividing an elapsed duration, which is both what the sign on a factory wall means and the
+only version that survives daylight saving. Report figures are **computed, not snapshotted** —
+a redaction removes a record from last month's totals, and the page says so. Only the ruling at
+the centre is a decision on file.
+
 **Witness** — one colleague going on the record about whether a statement happened.
 `id`, `yapId`, `userId`, `stance (PRESENT|DENIED)`, `createdAt`, `@@unique([yapId, userId])`.
 A person holds exactly one position per record and may switch it or withdraw it. `witnessCount`

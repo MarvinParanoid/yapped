@@ -42,8 +42,10 @@ import {
 } from "@/lib/services/invites";
 import {
   createTeam,
+  isEmployment,
   removeMember,
   renameTeam,
+  setEmployment,
   setMemberRole,
   setTeamTimezone,
 } from "@/lib/services/teams";
@@ -511,6 +513,28 @@ export async function setMemberRoleAction(
   const result = await setMemberRole(viewer.team.id, userId, role);
   revalidatePath("/admin");
   return result.ok ? { ok: true } : { ok: false, error: await say(result) };
+}
+
+/**
+ * Mark somebody as having left, or put them back.
+ *
+ * A moderator's call rather than the owner's: this annotates the roster, it
+ * does not change who is in it. Nothing downstream of it moves — see
+ * `setEmployment` for what it deliberately does not do.
+ */
+export async function setEmploymentAction(
+  userId: string,
+  employment: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const viewer = await requireTeamAdmin("/admin");
+  if (!isEmployment(employment)) return { ok: false, error: await say({ code: "REFUSED" }) };
+
+  const result = await setEmployment(viewer.team.id, userId, employment);
+  if (!result.ok) return { ok: false, error: await say(result) };
+  revalidatePath("/admin");
+  revalidatePath("/yappers");
+  revalidatePath(`/yapper/${userId}`);
+  return { ok: true };
 }
 
 export async function removeMemberAction(

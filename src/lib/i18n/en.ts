@@ -190,6 +190,90 @@ export const en = {
     months: "JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC",
   },
 
+  /**
+   * The weekly ruling. Level 2 copy — a committee is allowed to say too much
+   * about a quiet week; the numbers beside it stay Level 0.
+   */
+  weekly: {
+    title: "YAPPER OF THE WEEK",
+    subtitle: "Distinguished by exceptional verbal activity during the reporting period.",
+    committee: "The committee reviewed the evidence. Further questions have arisen.",
+    noSubject: "THE COMMITTEE FAILED TO IDENTIFY A SUBJECT.",
+    period: "week {week} · {year}",
+    groundsOne: "{n} statement",
+    groundsFew: "{n} statements",
+    groundsMany: "{n} statements",
+    openFile: "Open the file",
+    titleCount: "YAPPER OF THE WEEK × {n}",
+  },
+
+  /**
+   * The department's current reading of the situation. Level 2 copy: an
+   * institution is allowed to say too much about a quiet week.
+   */
+  incidents: {
+    daysWithout: "Days without a verbal incident",
+    neverAny: "NO INCIDENTS ON FILE.",
+    neverAnyNote: "the department has nothing to count from yet",
+    lastIncident: "last registered {date}",
+    dayOne: "{n} day",
+    dayFew: "{n} days",
+    dayMany: "{n} days",
+    ONGOING: "CONDITIONS REMAIN ACTIVE",
+    STABILISED: "SITUATION TEMPORARILY CONTAINED",
+    SUSPICIOUS: "SUSPICIOUSLY QUIET",
+    NO_MATERIAL: "NO NEW MATERIAL HAS REACHED THE DEPARTMENT",
+    LOST_CONTROL: "POSSIBLE LOSS OF OVERSIGHT OVER VERBAL ACTIVITY",
+  },
+
+  report: {
+    title: "Weekly incident report",
+    department: "Department of Verbal Oversight",
+    open: "Open the report",
+    period: "Reporting period",
+    weekOf: "week {week} · {year}",
+    FINAL: "file closed",
+    PROVISIONAL: "file open",
+    provisionalNote: "this week's file closes {date}. the figures below are not final.",
+    registered: "Incidents",
+    speakers: "Subjects",
+    reactions: "Reactions",
+    versusPrevious: "Against the previous period",
+    noBaseline: "no earlier period on file",
+    flat: "unchanged",
+    byEntry: "counted by the date each record was entered",
+    bySpeech: "counted by the date each statement was made",
+    loudest: "Statement of greatest resonance",
+    loudestAtClose: "aura as it stood when the file closed",
+    loudestNow: "aura as it stands now — the file is still open",
+    nothingRegistered: "NOTHING WAS REGISTERED THIS PERIOD.",
+    nothingRegisteredNote: "the department has no incidents to account for",
+    conclusion: "Findings of the committee",
+    earlier: "Earlier period",
+    later: "Later period",
+    notOnFile: "NO REPORT FOR THAT PERIOD.",
+    notOnFileNote: "the department had not opened its files yet",
+    computedNote:
+      "the figures are read from the archive as it stands today, so a redaction removes a record from them. the title alone is a decision on file, and that does not move.",
+    FIRST_PERIOD: "First reporting period. No baseline on file.",
+    NOTHING_NEW: "No new material received. The review continues.",
+    WENT_SILENT: "Verbal activity has ceased. Causes are being established.",
+    DOWN: "Incident volume has fallen. The improvement is statistical.",
+    STEADY:
+      "Conditions remained unstable throughout the period. No evidence that the subjects have drawn conclusions.",
+    UP: "Incident volume has risen. The department expresses measured concern.",
+  },
+
+  employment: {
+    former: "FORMER YAP UNIT",
+    formerNote: "Employment terminated. Yap unit remains on record.",
+    status: "Employment",
+    CURRENT: "Current",
+    FORMER: "Former employee",
+    adminNote:
+      "a personnel note, not an account one. access, role, sessions, aura, elo and every record stay exactly where they were — the archive is what was said, and that does not resign.",
+  },
+
   sections: {
     daysAgo: "{n} days ago",
     auraThatDay: "aura that day",
@@ -506,6 +590,7 @@ export const en = {
     market: "Aura market",
     onThisDay: "On this day",
     wrapped: "Wrapped",
+    weeklyReport: "Weekly incident report",
     administration: "Administration",
     instance: "Instance",
   },

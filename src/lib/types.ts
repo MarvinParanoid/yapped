@@ -2,6 +2,13 @@ import type { ReactionCounts, ReactionKey } from "@/lib/ranking/aura";
 import type { Verification } from "@/lib/verification";
 
 export type YapStatus = "ARCHIVED" | "REDACTED";
+
+/**
+ * Whether someone still works here. A personnel fact, carried separately from
+ * everything the archive scores — see `services/teams.setEmployment`.
+ */
+export type Employment = "CURRENT" | "FORMER";
+
 export type WitnessStance = "PRESENT" | "DENIED";
 export type Classification = "ROUTINE" | "QUESTIONABLE" | "UNHINGED" | "CLASSIFIED";
 
@@ -67,6 +74,8 @@ export type RangeKey = "today" | "week" | "month" | "all";
 /** Ranked for what someone brought in, rather than what they said. */
 export type ArchivistEntry = {
   yapper: YapperRef;
+  /** Still on the record, no longer on the payroll. */
+  former: boolean;
   filedCount: number;
   /** Aura on the records they filed — how good the find was, not how many. */
   discoveredAura: number;
@@ -77,6 +86,8 @@ export type ArchivistEntry = {
 
 export type LeaderboardEntry = {
   yapper: YapperRef;
+  /** Still on the record, no longer on the payroll. */
+  former: boolean;
   yapCount: number;
   totalAura: number;
   reactionsReceived: number;

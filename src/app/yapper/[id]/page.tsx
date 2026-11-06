@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { YapCard } from "@/components/yap-card";
 import { Avatar } from "@/components/ui/avatar";
+import { FormerMark } from "@/components/ui/former-mark";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Panel } from "@/components/ui/panel";
 import { assignEmphasis } from "@/lib/archival";
@@ -102,6 +103,28 @@ export default async function YapperPage({ params }: Params) {
                     ? fill(d.profile.yappingSince, { when: `${d.profile.months.split(" ")[since.getUTCMonth()]} ${since.getUTCFullYear()}` })
                     : d.profile.noStatements}
                 </p>
+
+                {/* Two annotations, neither of them a score: a count of weeks
+                    this archive named them in, and whether they still work
+                    here. Nothing below this line is affected by either. */}
+                {profile.weeklyTitles > 0 || profile.former ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {profile.weeklyTitles > 0 ? (
+                      <span className="label-strong border border-acid px-2 py-1 text-acid">
+                        {fill(d.weekly.titleCount, { n: profile.weeklyTitles })}
+                      </span>
+                    ) : null}
+                    {profile.former ? (
+                      <FormerMark label={d.employment.former} tone="ink" />
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {profile.former ? (
+                  <p className="label mt-2 max-w-[40ch] leading-[1.6]">
+                    {d.employment.formerNote}
+                  </p>
+                ) : null}
               </div>
             </div>
 

@@ -58,3 +58,19 @@ export function knownZone(candidate: string | null | undefined): string {
     return "UTC";
   }
 }
+
+/**
+ * The inverse of `shift`: a wall-clock reading in the zone, back to the instant
+ * that reading names.
+ *
+ * The offset has to be read at the instant being solved for, not at the local
+ * reading, and the two disagree on exactly one day a year. So: one guess using
+ * the offset at the naive reading, then one correction using the offset at that
+ * guess — which is already within an hour of the answer, and therefore on the
+ * correct side of a daylight-saving seam.
+ */
+export function unshift(localAsUtc: Date, timeZone: string): Date {
+  const naive = localAsUtc.getTime();
+  const guess = new Date(naive - offsetMinutes(localAsUtc, timeZone) * 60000);
+  return new Date(naive - offsetMinutes(guess, timeZone) * 60000);
+}
